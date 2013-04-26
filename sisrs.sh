@@ -135,7 +135,7 @@ echo ==== Done Piling Up and Mapping Contigs ====
 
 #put base for each site in a dictionary (allows no variation when calling sites)
 for FOLDER in $FOLDERLIST; do
-    ( python get_pruned_dict_v1.py ${FOLDER} ${MINREAD} ) &
+    ( python make_pruned_dict.py ${FOLDER} ${MINREAD} ) &
 done
 wait
 echo ==== Done Identifying Fixed Sites Without Error ====
@@ -143,9 +143,9 @@ echo ==== Done Identifying Fixed Sites Without Error ====
 fi  #end of skip
 
 if [ -n "${REFFILE}" ]; then
-    ( python get_alignment_v1.py ${MISSING} ${REFFILE} ${MAINFOLDER} ) &
+    ( python get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER} ) &
 else
-    ( python get_alignment_v1.py ${MISSING} X ${MAINFOLDER} ) &
+    ( python get_alignment.py ${MISSING} X ${MAINFOLDER} ) &
 fi
 wait
 echo ==== DONE ====
