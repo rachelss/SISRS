@@ -128,8 +128,6 @@ if [ -n "${REFFILE}" ]; then
     NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
     bowtie2-build ${REFFILE} ${NAME}        #bowtie2-build [options]* <reference_in> <bt2_base>
     ( bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${MAINFOLDER}/velvetoutput/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${MAINFOLDER}/velvetoutput/align_contigs.sam )    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
-    bwa index -a bwtsw ${REFFILE} #index reference first
-    bwa bwasw -t ${PROCESSORS} ${REFFILE} ${MAINFOLDER}/velvetoutput/contigs.fa > ${MAINFOLDER}/velvetoutput/align_contigs_bwa.sam
 fi
 echo ==== Done Piling Up and Mapping Contigs ====
 
