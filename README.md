@@ -1,4 +1,3 @@
-
 SISRS
 =====
 
@@ -16,8 +15,8 @@ This program is distributed in the hope that it will be useful, but without any 
 Requirements
 ============
 
-* Velvet (including the perl script for merging paired reads)
-* Bowtie2
+* Velvet (including the perl script for merging paired reads) - http://www.ebi.ac.uk/~zerbino/velvet/
+* Bowtie2 - http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 * Python 2.7
 
 Input
@@ -30,7 +29,9 @@ Data must be paired reads specified by R1 and R2 in the (otherwise identical) fi
 Running SISRS
 =============
 
-SISRS can be run as 'bash sisrs.sh' from the command line. By default, SISRS assumes that
+SISRS can be run as 'sisrs' from the command line if it is installed in a location listed in your path. Otherwise run SISRS as <directory/sisrs. 
+
+By default, SISRS assumes that
 * A reference genome is not available.
 * The K-mer size to be used by Velvet in contig assembly is 21.
 * Only one processor is available.
