@@ -1,0 +1,169 @@
+#!/usr/bin/env bash
+#you must compile velvet prior to running sisrs - see the manual for appropriate compilation parameters
+#you must install bowtie2
+#you must install samtools
+#this script uses python2.7 - it has not been tested with python3
+#run format: ./sisrs_v1.sh plus flags
+#reads must be paired, where the filename contains either R1 or R2
+
+help() {
+    echo "
+    
+    SISRS: SNP Identification from Short Read Sequences
+    Version 1.0
+    Copyright: Rachel Schwartz
+    Rachel.Schwartz@asu.edu
+    https://github.com/rachelss/SISRS
+
+By default, SISRS assumes that
+
+    A reference genome is not available.
+    The K-mer size to be used by Velvet in contig assembly is 21.
+    Only one processor is available.
+    Files are in fastq format.
+    A site is only required to have data for two species to be included in the final alignment.
+    Folders containing reads are in the present working directory.
+    A minimum of three reads are required to call the base at a site for a taxon.
+
+Default settings can be changed using the following flags:
+
+    -r : use to specify the location of the reference genome (must be a fasta file)
+    -k : use to specify k-mer size
+    -p : use to specify the number of processors available
+    -f : use to specify reads in fasta format
+    -m : use to specify the number of species allowed to have missing data at a site
+    -a : use to specify the folder containing the folders of reads
+    -n : use to specify the number of reads required to call a base at a site
+    -s : use to skip all steps except the one identifying whether sites are variable among taxa
+
+    Example command: bash sisrs.sh -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/"
+    }
+
+#use defaults or input values
+KMER=21
+MINREAD=3
+PROCESSORS=1
+FORMAT=fastq
+MAINFOLDER=.
+
+while getopts r:k:p:f:m:a:n:sh option
+do
+case "${option}"
+    in
+        r) REFFILE=${OPTARG};;
+        k) KMER=${OPTARG};;
+        p) PROCESSORS=${OPTARG};;
+        f) FORMAT=${OPTARG};;
+        m) MISSING=${OPTARG};;
+        a) MAINFOLDER=${OPTARG};;
+        n) MINREAD=${OPTARG};;
+        s) SKIP=1;;
+        h) help; exit;;
+        \? ) echo "Unknown option" >&2; exit 1;;
+        esac
+done
+
+if [ -z $1 ]; then
+    echo "You are using the default values. If this is incorrect, rerun SISRS using the correct flags. For more information run sisrs -h"
+fi
+
+DIR="$( cd ../"$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
+VELVETLOC=$( dirname $( find / -name velvetg 2> /dev/null ) )
+if [ -z "$VELVETLOC" ]; then
+    echo "Velvet must be installed to run SISRS. Aborting."
+    exit 1
+fi
+SHUFFLELOC=$( dirname $( find / -name shuffleSequences_fastq.pl 2> /dev/null ) )
+if [ -z "$SHUFFLELOC" ]; then
+    echo "shuffleSequences_fastq.pl must be installed to run SISRS. Aborting."
+    exit 1
+fi
+FILELIST=$( find ${MAINFOLDER} -name *R1*${FORMAT} )
+FOLDERLIST=$( dirname ${FILELIST} | sort -u | uniq )
+
+if [ -z "$MISSING" ]; then
+    MISSING=0
+    for i in $FOLDERLIST
+    do
+        MISSING=$(($MISSING + 1))
+    done
+    MISSING=$(($MISSING - 2))
+fi
+
+#use skip flag to skip everything but SNP finding - eg for different amounts of missing data
+if [ -z "$SKIP" ]; then
+
+#make reference contigs - velveth
+#shuffle paired end reads together first
+for FILE in $FILELIST; do
+    ( perl ${SHUFFLELOC}/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') ) &
+done
+wait
+
+if [ -n "${REFFILE}" ]; then
+    ${VELVETLOC}/velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
+else
+    ${VELVETLOC}/velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
+fi
+echo ==== Velveth is finished ====
+
+#run velvet - output contigs
+${VELVETLOC}/velvetg ${MAINFOLDER}/velvetoutput
+echo ==== Velvetg is finished ====
+
+#index contigs
+bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs
+
+#align reads to contigs - run one processor per, in background
+for FILE in $FILELIST; do
+    NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
+    echo ==== Aligning ${NAME} ====
+    #N=1 allows a mismatch #x The basename of the index for the reference genome
+    ( bowtie2 -p 1 -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | gzip > ${NAME}.sam.gz ) &
+done
+wait
+echo ==== Done Aligning ====
+
+#make bam files from zipped sam
+for FILE in $FILELIST; do
+NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
+    ( samtools view -uS ${NAME}.sam.gz | samtools sort -m 17179869184 - ${NAME};\
+       samtools index ${NAME}.bam ) &
+done
+wait
+echo ==== Done Making Bam Files ====
+
+#get pileups for data
+for FILE in $FILELIST; do
+    NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
+    ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam > ${NAME}.pileups ) &
+done
+wait
+
+#map contigs to reference
+if [ -n "${REFFILE}" ]; then
+    NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
+    bowtie2-build ${REFFILE} ${NAME}        #bowtie2-build [options]* <reference_in> <bt2_base>
+    ( bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${MAINFOLDER}/velvetoutput/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${MAINFOLDER}/velvetoutput/align_contigs.sam )    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
+    bwa index -a bwtsw ${REFFILE} #index reference first
+    bwa bwasw -t ${PROCESSORS} ${REFFILE} ${MAINFOLDER}/velvetoutput/contigs.fa > ${MAINFOLDER}/velvetoutput/align_contigs_bwa.sam
+fi
+echo ==== Done Piling Up and Mapping Contigs ====
+
+#put base for each site in a dictionary (allows no variation when calling sites)
+for FOLDER in $FOLDERLIST; do
+    ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} ) &
+done
+wait
+echo ==== Done Identifying Fixed Sites Without Error ====
+
+fi  #end of skip
+
+if [ -n "${REFFILE}" ]; then
+    ( ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER} ) &
+else
+    ( ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} X ${MAINFOLDER} ) &
+fi
+wait
+echo ==== DONE ====
