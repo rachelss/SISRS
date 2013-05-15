@@ -72,7 +72,7 @@ DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DIR=$( dirname ${DIRS} ) 
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
 command -v velveth >/dev/null 2>&1 || { echo >&2 "Velvet must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
-command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "bowtie2 must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
+command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "Bowtie2 must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
 FILELIST=$( find ${MAINFOLDER} -name *R1*${FORMAT} )
 FOLDERLIST=$( dirname ${FILELIST} | sort -u | uniq )
 
