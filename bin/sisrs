@@ -71,9 +71,8 @@ fi
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 DIR=$( dirname ${DIRS} ) 
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
-command -v velveth >/dev/null 2>&1 || { echo >&2 "Velvet must be installed to run SISRS. Aborting."; exit 1; }
-command -v shuffleSequences_fastq.pl >/dev/null 2>&1 || { echo >&2 "shuffleSequences_fastq.pl must be installed to run SISRS. Aborting."; exit 1; }
-command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "bowtie2 must be installed to run SISRS. Aborting."; exit 1; }
+command -v velveth >/dev/null 2>&1 || { echo >&2 "Velvet must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
+command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "bowtie2 must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
 FILELIST=$( find ${MAINFOLDER} -name *R1*${FORMAT} )
 FOLDERLIST=$( dirname ${FILELIST} | sort -u | uniq )
 
@@ -92,7 +91,7 @@ if [ -z "$SKIP" ]; then
 #make reference contigs - velveth
 #shuffle paired end reads together first
 for FILE in $FILELIST; do
-    ( perl shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') )
+    ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') )
 done
 
 if [ -n "${REFFILE}" ]; then
