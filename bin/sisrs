@@ -125,7 +125,6 @@ echo ==== Done Aligning ====
 fi #also skipped aligning reads if SKIP>1
 
 if [ "$SKIP" -lt 3 ]; then
-
 #make bam files from zipped sam
 for FILE in $FILELIST; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
@@ -155,7 +154,6 @@ for FOLDER in $FOLDERLIST; do
     ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} )
 done
 echo ==== Done Identifying Fixed Sites Without Error ====
-
 fi  #end of skip
 
 if [ -n "${REFFILE}" ]; then
