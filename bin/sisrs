@@ -35,7 +35,7 @@ Default settings can be changed using the following flags:
     -m : use to specify the number of species allowed to have missing data at a site
     -a : use to specify the folder containing the folders of reads
     -n : use to specify the number of reads required to call a base at a site
-    -s : use to skip all steps except the one identifying whether sites are variable among taxa
+    -s : use to specify the steps to skip: 1 skips finding contigs, 2 also skips aligning reads to contigs; 3 skips to just identifying whether sites are variable among taxa
 
     Example command: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/"
     }
@@ -46,8 +46,9 @@ MINREAD=3
 PROCESSORS=1
 FORMAT=fastq
 MAINFOLDER=.
+SKIP=0
 
-while getopts r:k:p:f:m:a:n:sh option
+while getopts r:k:p:f:m:a:n:s:h option
 do
 case "${option}"
     in
@@ -58,7 +59,7 @@ case "${option}"
         m) MISSING=${OPTARG};;
         a) MAINFOLDER=${OPTARG};;
         n) MINREAD=${OPTARG};;
-        s) SKIP=1;;
+        s) SKIP=${OPTARG};;
         h) help; exit;;
         \? ) echo "Unknown option" >&2; exit 1;;
         esac
@@ -85,8 +86,8 @@ if [ -z "$MISSING" ]; then
     MISSING=$(($MISSING - 2))
 fi
 
-#use skip flag to skip everything but SNP finding - eg for different amounts of missing data
-if [ -z "$SKIP" ]; then
+#use skip flag to skip various parts of the script
+if [ "$SKIP" -lt 1 ]; then
 
 #make reference contigs - velveth
 #shuffle paired end reads together first
@@ -108,6 +109,10 @@ echo ==== Velvetg is finished ====
 #index contigs
 bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs
 
+fi  #skipped making contigs if SKIP>0
+
+if [ "$SKIP" -lt 2 ]; then
+
 #align reads to contigs
 for FILE in $FILELIST; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
@@ -116,6 +121,10 @@ for FILE in $FILELIST; do
     ( bowtie2 -p 1 -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | gzip > ${NAME}.sam.gz )
 done
 echo ==== Done Aligning ====
+
+fi #also skipped aligning reads if SKIP>1
+
+if [ "$SKIP" -lt 3 ]; then
 
 #make bam files from zipped sam
 for FILE in $FILELIST; do
@@ -138,7 +147,9 @@ if [ -n "${REFFILE}" ]; then
     ( bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${MAINFOLDER}/velvetoutput/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${MAINFOLDER}/velvetoutput/align_contigs.sam )    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
 fi
 echo ==== Done Piling Up and Mapping Contigs ====
+fi  #also skipped bam, pileups, reference mapping if SKIP>2
 
+if [ "$SKIP" -lt 4 ]; then
 #put base for each site in a dictionary (allows no variation when calling sites)
 for FOLDER in $FOLDERLIST; do
     ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} )
