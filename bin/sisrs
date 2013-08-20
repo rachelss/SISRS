@@ -108,7 +108,7 @@ echo ==== Velvetg is finished ====
 #index contigs
 bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs
 
-#align reads to contigs - run one processor per, in background
+#align reads to contigs
 for FILE in $FILELIST; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
     echo ==== Aligning ${NAME} ====
