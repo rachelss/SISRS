@@ -69,8 +69,8 @@ if [ -z $1 ]; then
     echo "You are using the default values. If this is incorrect, rerun SISRS using the correct flags. For more information run sisrs -h"
 fi
 
-DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-DIR=$( dirname ${DIRS} ) 
+DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
+DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
 command -v velveth >/dev/null 2>&1 || { echo >&2 "Velvet must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
 command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "Bowtie2 must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
