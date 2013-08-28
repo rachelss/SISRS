@@ -83,7 +83,7 @@ for loc in alllocs: #go through each location
     elif(len(basecounts))>2: #not biallelic - flag for full dict
         flag=1
     if flag<2: #if there is variation and it's not due to a singleton
-        print loc+' is a SNP'
+#        print loc+' is a SNP'
         numsnps+=1
         aligndic['locations'].append(loc) #add position name to list
         for species in pathlist: #add base to the list for that species (or add 'N')
@@ -92,7 +92,7 @@ for loc in alllocs: #go through each location
             else:
                 aligndic[species].append('N')
         if flag==0:
-            print 'biallelic'
+#            print 'biallelic'
             numbi+=1
             aligndic2['locations'].append(loc) #add position name to list
             for species in pathlist: #add base to the list for that species (or add 'N')
@@ -100,7 +100,7 @@ for loc in alllocs: #go through each location
                     aligndic2[species].append(allbases[species][loc])
                 else:
                     aligndic2[species].append('N')
-        print snp
+#        print snp
 print str(numsnps)+' snps'
 print str(numbi)+' biallelic snps'
 
