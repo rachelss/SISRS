@@ -88,7 +88,7 @@ FOLDERLIST=( $SFOLDERLIST )     #unique folder list as array
 
 if [ -z "$MISSING" ]; then      #allowed to have all missing except 2 unless otherwise specified
     MISSING=0
-    for i in ${FOLDERLIST[@]}
+    for i in "${FOLDERLIST[@]}"
     do
         MISSING=$(($MISSING + 1))
     done
@@ -143,7 +143,7 @@ done
 echo ==== Done Making Bam Files ====
 
 #get pileups for data
-for FILE in $FILELIST; do
+for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
     ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam > ${NAME}.pileups )
 done
