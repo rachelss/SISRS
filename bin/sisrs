@@ -71,15 +71,24 @@ fi
 
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
-MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
+MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
 command -v velveth >/dev/null 2>&1 || { echo >&2 "Velvet must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
 command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "Bowtie2 must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
-FILELIST=$( find ${MAINFOLDER} -name *R1*${FORMAT} )
-FOLDERLIST=$( dirname ${FILELIST} | sort -u | uniq )
+FILELIST_STRING=$( find "${MAINFOLDER}" -name "*R1*${FORMAT}" )     #all FORMAT file paths as a string
+FILELIST=( ${FILELIST_STRING} )     #convert to array
+declare -a ALLFOLDERLIST=()
+for F in "${FILELIST[@]}"; do       #array of directories containing FORMAT files
+    D="$( dirname "${F}" )"
+    ALLFOLDERLIST+=("${D}")
+#    echo "${F}"
+#    echo "${D}"
+done
+SFOLDERLIST=$(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')  #sorted unique list of folders with paired FORMAT files
+FOLDERLIST=( $SFOLDERLIST )     #unique folder list as array
 
-if [ -z "$MISSING" ]; then
+if [ -z "$MISSING" ]; then      #allowed to have all missing except 2 unless otherwise specified
     MISSING=0
-    for i in $FOLDERLIST
+    for i in ${FOLDERLIST[@]}
     do
         MISSING=$(($MISSING + 1))
     done
@@ -91,7 +100,7 @@ if [ "$SKIP" -lt 1 ]; then
 
 #make reference contigs - velveth
 #shuffle paired end reads together first
-for FILE in $FILELIST; do
+for FILE in "${FILELIST[@]}"; do
     ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') )
 done
 
@@ -114,7 +123,7 @@ fi  #skipped making contigs if SKIP>0
 if [ "$SKIP" -lt 2 ]; then
 
 #align reads to contigs
-for FILE in $FILELIST; do
+for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
     echo ==== Aligning ${NAME} ====
     #N=1 allows a mismatch #x The basename of the index for the reference genome
@@ -126,7 +135,7 @@ fi #also skipped aligning reads if SKIP>1
 
 if [ "$SKIP" -lt 3 ]; then
 #make bam files from zipped sam
-for FILE in $FILELIST; do
+for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
     ( samtools view -uS ${NAME}.sam.gz | samtools sort - ${NAME};\
        samtools index ${NAME}.bam )
@@ -150,7 +159,7 @@ fi  #also skipped bam, pileups, reference mapping if SKIP>2
 
 if [ "$SKIP" -lt 4 ]; then
 #put base for each site in a dictionary (allows no variation when calling sites)
-for FOLDER in $FOLDERLIST; do
+for FOLDER in "${FOLDERLIST[@]}"; do
     ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} )
 done
 echo ==== Done Identifying Fixed Sites Without Error ====
