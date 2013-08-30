@@ -127,7 +127,12 @@ for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
     echo ==== Aligning ${NAME} ====
     #N=1 allows a mismatch #x The basename of the index for the reference genome
-    ( bowtie2 -p 1 -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | gzip > ${NAME}.sam.gz )
+    if [ "${FORMAT}" == "fastq" ]; then
+    (    bowtie2 -p 1 -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | gzip > ${NAME}.sam.gz )
+    else
+    (    bowtie2 -p 1 -N 1 -f --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | gzip > ${NAME}.sam.gz )
+    fi
+    
 done
 echo ==== Done Aligning ====
 
