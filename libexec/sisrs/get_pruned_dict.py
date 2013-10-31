@@ -5,8 +5,7 @@ import cPickle
 
 allbases=dict()
 path=sys.argv[1]
-minread=sys.argv[2]
-minread=int(minread)
+minread=int(sys.argv[2])
 for fi in os.listdir(path):
     if fi.endswith("pileups"):
 #        print fi

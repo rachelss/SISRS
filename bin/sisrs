@@ -112,7 +112,7 @@ fi
 echo ==== Velveth is finished ====
 
 #run velvet - output contigs
-velvetg ${MAINFOLDER}/velvetoutput
+velvetg ${MAINFOLDER}/velvetoutput -exp_cov auto -cov_cutoff auto# -min_contig_lgth 100
 echo ==== Velvetg is finished ====
 
 #index contigs
@@ -150,7 +150,7 @@ echo ==== Done Making Bam Files ====
 #get pileups for data
 for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
-    ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam > ${NAME}.pileups )
+    ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam -A > ${NAME}.pileups )
 done
 
 #map contigs to reference
