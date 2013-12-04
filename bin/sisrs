@@ -123,16 +123,21 @@ fi  #skipped making contigs if SKIP>0
 if [ "$SKIP" -lt 2 ]; then
 
 #align reads to contigs
+NPROC=0
 for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
     echo ==== Aligning ${NAME} ====
     #N=1 allows a mismatch #x The basename of the index for the reference genome
     if [ "${FORMAT}" == "fastq" ]; then
-    (    bowtie2 -p 1 -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | gzip > ${NAME}.sam.gz )
+        ( bowtie2 -p 1 -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su - | samtools sort - ${NAME} ) &
     else
-    (    bowtie2 -p 1 -N 1 -f --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | gzip > ${NAME}.sam.gz )
+        ( bowtie2 -p 1 -N 1 -f --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) |  samtools view -Su - | samtools sort - ${NAME} ) &
     fi
-    
+    NPROC=$(($NPROC+1))
+    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+        wait
+        NPROC=0
+    fi
 done
 echo ==== Done Aligning ====
 
@@ -140,18 +145,31 @@ fi #also skipped aligning reads if SKIP>1
 
 if [ "$SKIP" -lt 3 ]; then
 #make bam files from zipped sam
+NPROC=0
 for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
-    ( samtools view -uS ${NAME}.sam.gz | samtools sort - ${NAME};\
-       samtools index ${NAME}.bam )
+    ( samtools index ${NAME}.bam ) &
+    NPROC=$(($NPROC+1))
+    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+        wait
+        NPROC=0
+    fi
 done
+wait
 echo ==== Done Making Bam Files ====
 
 #get pileups for data
+NPROC=0
 for FILE in "${FILELIST[@]}"; do
     NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
-    ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam -A > ${NAME}.pileups )
+    ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam -A > ${NAME}.pileups ) &
+    NPROC=$(($NPROC+1))
+    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+        wait
+        NPROC=0
+    fi
 done
+wait
 
 #map contigs to reference
 if [ -n "${REFFILE}" ]; then
@@ -164,9 +182,16 @@ fi  #also skipped bam, pileups, reference mapping if SKIP>2
 
 if [ "$SKIP" -lt 4 ]; then
 #put base for each site in a dictionary (allows no variation when calling sites)
+NPROC=0
 for FOLDER in "${FOLDERLIST[@]}"; do
-    ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} )
+    ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} ) &
+    NPROC=$(($NPROC+1))
+    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+        wait
+        NPROC=0
+    fi
 done
+wait
 echo ==== Done Identifying Fixed Sites Without Error ====
 fi  #end of skip
 
