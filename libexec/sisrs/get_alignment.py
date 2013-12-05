@@ -151,7 +151,10 @@ def write_alignment(fi,nchar):
             if (pos-1) < len(ref[chr]):
                 refbase=ref[chr][(pos-1)] #chr in dictionary, site within seq-as-list   0 based position
                 if flag == '1':
-                    refbase = basecomplement[refbase]
+                    if refbase in basecomplement:
+                        refbase = basecomplement[refbase]
+                    else:
+                        refbase = 'N'
                 aligndic['reference'].append(refbase.upper())
             else:
                 loc2='X'

@@ -48,10 +48,11 @@ FORMAT=fastq
 MAINFOLDER=.
 SKIP=0
 
-while getopts r:k:p:f:m:a:n:s:h option
+while getopts g:r:k:p:f:m:a:n:s:h option
 do
 case "${option}"
     in
+        g) GENOMESIZE=${OPTARG};;
         r) REFFILE=${OPTARG};;
         k) KMER=${OPTARG};;
         p) PROCESSORS=${OPTARG};;
@@ -100,9 +101,39 @@ if [ "$SKIP" -lt 1 ]; then
 
 #make reference contigs - velveth
 #shuffle paired end reads together first
+NPROC=0
 for FILE in "${FILELIST[@]}"; do
-    ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') )
+    ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') ) &
+    NPROC=$(($NPROC+1))
+    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+        wait
+        NPROC=0
+    fi
 done
+wait
+
+if [ -n "${GENOMESIZE}" ]; then
+    NUMER=$((10*${GENOMESIZE}))
+    DENOM=$((100*2*${#FOLDERLIST[@]}))      #assumes 100bp reads - add option in future
+    LEFTREADS=$((${NUMER}/${DENOM}))
+    
+    #subsample data
+    NPROC=0
+    for FOLDER in "${FOLDERLIST[@]}"; do
+        ( python ${DIR}/libexec/sisrs/sub_sample_for_velvet.py ${LEFTREADS} ${FOLDER} ) &
+        NPROC=$(($NPROC+1))
+        if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+            wait
+            NPROC=0
+        fi
+    done
+    wait
+    
+    #delete non-subsampled shuffled files
+    for FILE in "${FILELIST[@]}"; do
+        rm $(echo ${FILE}|sed 's/R1/shuffled/')
+    done    
+fi
 
 if [ -n "${REFFILE}" ]; then
     velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
