@@ -10,6 +10,7 @@ i=0
 for fq in glob.glob(sys.argv[2]+"/*shuffled*fastq"):
     with open(fq, 'r') as f:
         for line in f:
+            if not line: break      #have less than desired coverage
             read_info=[line,f.next(),f.next(),f.next(),f.next(),f.next(),f.next(),f.next()]
             if i < N:        
                 sample.append(read_info)

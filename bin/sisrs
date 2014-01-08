@@ -101,6 +101,11 @@ if [ "$SKIP" -lt 1 ]; then
 
 #make reference contigs - velveth
 #shuffle paired end reads together first
+#for FILE in "${FILELIST[@]}"; do
+#    echo "${FILE}"
+#done | xargs -I % -P ${PROCESSORS} bash -c "perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl % $(echo %|sed 's/R1/R2/') $(echo %|sed 's/R1/shuffled/')"
+#wait
+#
 NPROC=0
 for FILE in "${FILELIST[@]}"; do
     ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') ) &
@@ -131,7 +136,8 @@ if [ -n "${GENOMESIZE}" ]; then
     
     #delete non-subsampled shuffled files
     for FILE in "${FILELIST[@]}"; do
-        rm $(echo ${FILE}|sed 's/R1/shuffled/')
+        NAME=$(echo ${FILE}|sed 's/R1/shuffled/')
+        rm ${NAME}
     done    
 fi
 
@@ -170,6 +176,7 @@ for FILE in "${FILELIST[@]}"; do
         NPROC=0
     fi
 done
+wait
 echo ==== Done Aligning ====
 
 fi #also skipped aligning reads if SKIP>1
