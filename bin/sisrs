@@ -28,6 +28,7 @@ By default, SISRS assumes that
 
 Default settings can be changed using the following flags:
 
+    -g : use to specify the approximate genome size - this is optional but will reduce the size of the composite assembly by using a subset of reads to approximate 5x coverage
     -r : use to specify the location of the reference genome (must be a fasta file)
     -k : use to specify k-mer size
     -p : use to specify the number of processors available
