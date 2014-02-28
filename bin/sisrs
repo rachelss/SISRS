@@ -76,162 +76,157 @@ DIR=$( dirname ${DIRS} )                                    #go one level up fro
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
 command -v velveth >/dev/null 2>&1 || { echo >&2 "Velvet must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
 command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "Bowtie2 must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
-FILELIST_STRING=$( find "${MAINFOLDER}" -name "*R1*${FORMAT}" )     #all FORMAT file paths as a string
-FILELIST=( ${FILELIST_STRING} )     #convert to array
-declare -a ALLFOLDERLIST=()
-for F in "${FILELIST[@]}"; do       #array of directories containing FORMAT files
-    D="$( dirname "${F}" )"
-    ALLFOLDERLIST+=("${D}")
-#    echo "${F}"
-#    echo "${D}"
-done
-SFOLDERLIST=$(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')  #sorted unique list of folders with paired FORMAT files
-FOLDERLIST=( $SFOLDERLIST )     #unique folder list as array
 
-if [ -z "$MISSING" ]; then      #allowed to have all missing except 2 unless otherwise specified
-    MISSING=0
-    for i in "${FOLDERLIST[@]}"
-    do
-        MISSING=$(($MISSING + 1))
-    done
-    MISSING=$(($MISSING - 2))
-fi
+#check for availability of parallel
+command -v parallel >/dev/null 2>&1 || { echo >&2 "SISRS will run faster if you install parallel."; }
+POUT=$(parallel echo ::: A)
+
+FILELIST=( $( find "${MAINFOLDER}" -name "*R1*${FORMAT}" ) )     #all FORMAT file paths as array
+declare -a ALLFOLDERLIST=()
+for F in "${FILELIST[@]}"; do ALLFOLDERLIST+=("$( dirname "${F}" )"); done       #array of directories containing FORMAT files
+FOLDERLIST=( $(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with paired FORMAT files as array
+
+#FILELISTQ=$( find ${MAINFOLDER} -name *reads*fastq )
+#FILELISTA=$( find ${MAINFOLDER} -name *reads*fasta )
+#FILELISTG=$( find ${MAINFOLDER} -name *Genomic*fasta )
+#FOLDERLIST=$( dirname ${FILELIST} | sort -u | uniq )
+#FOLDERLISTA=$( dirname ${FILELISTA} | sort -u | uniq )
+#FOLDERLISTQ=$( dirname ${FILELISTQ} | sort -u | uniq )
+#FILELISTB=( ${FILELIST[@]} ${FILELISTA[@]} )    #extra for extra files
+#FOLDERLISTB=( ${FOLDERLIST[@]} ${FOLDERLISTA[@]} )    #extra for extra files
+
+if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLIST[@]} - 2)); fi    #allowed to have all missing except 2 unless otherwise specified
 
 #use skip flag to skip various parts of the script
 if [ "$SKIP" -lt 1 ]; then
-
-#make reference contigs - velveth
-#shuffle paired end reads together first
-#for FILE in "${FILELIST[@]}"; do
-#    echo "${FILE}"
-#done | xargs -I % -P ${PROCESSORS} bash -c "perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl % $(echo %|sed 's/R1/R2/') $(echo %|sed 's/R1/shuffled/')"
-#wait
-#
-NPROC=0
-for FILE in "${FILELIST[@]}"; do
-    ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') ) &
-    NPROC=$(($NPROC+1))
-    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
-        wait
-        NPROC=0
-    fi
-done
-wait
-
-if [ -n "${GENOMESIZE}" ]; then
-    NUMER=$((10*${GENOMESIZE}))
-    DENOM=$((100*2*${#FOLDERLIST[@]}))      #assumes 100bp reads - add option in future
-    LEFTREADS=$((${NUMER}/${DENOM}))
-    
-    #subsample data
+    #make reference contigs - velveth
+    #shuffle paired end reads together first
+    #use parallel if available
+    if [ "${POUT}" = 'A' ]; then
+        parallel --jobs "${PROCESSORS}" "perl ${DIR}/sisrs_release/libexec/sisrs/shuffleSequences_fastq.pl {} $(echo {} | sed 's/R1/R2/') $(echo {} | sed 's/R1/shuffled/')" ::: "${FILELIST[@]}"
+    else
     NPROC=0
-    for FOLDER in "${FOLDERLIST[@]}"; do
-        ( python ${DIR}/libexec/sisrs/sub_sample_for_velvet.py ${LEFTREADS} ${FOLDER} ) &
+    for FILE in "${FILELIST[@]}"; do
+        ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') ) &
         NPROC=$(($NPROC+1))
-        if [ "$NPROC" -ge "${PROCESSORS}" ]; then
-            wait
+        if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
             NPROC=0
         fi
     done
     wait
+    fi
+
+    if [ -n "${GENOMESIZE}" ]; then
+        NUMER=$((10*${GENOMESIZE}))
+        DENOM=$((100*2*${#FOLDERLIST[@]}))      #assumes 100bp reads - add option in future
+        LEFTREADS=$((${NUMER}/${DENOM}))
+        
+        #subsample data
+        if [ "${POUT}" = 'A' ]; then
+            parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet.py ${LEFTREADS} {}" ::: "${FOLDERLIST[@]}"
+        else
+        NPROC=0
+        for FOLDER in "${FOLDERLIST[@]}"; do
+            ( python ${DIR}/libexec/sisrs/sub_sample_for_velvet.py ${LEFTREADS} ${FOLDER} ) &
+            NPROC=$(($NPROC+1))
+            if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
+                NPROC=0
+            fi
+        done
+        wait
+        fi
+        
+        for FILE in "${FILELIST[@]}"; do mv $(echo ${FILE}|sed 's/R1/shuffled/') $(echo ${FILE/astq}|sed 's/R1/shuffled/')q; done    #rename non-subsampled shuffled files to fq
+    fi
+
+    if [ -n "${REFFILE}" ]; then
+        velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
+    else
+        velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
+    fi
+    echo ==== Velveth is finished ====
     
-    #delete non-subsampled shuffled files
-    for FILE in "${FILELIST[@]}"; do
-        NAME=$(echo ${FILE}|sed 's/R1/shuffled/')
-        rm ${NAME}
-    done    
-fi
-
-if [ -n "${REFFILE}" ]; then
-    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
-else
-    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
-fi
-echo ==== Velveth is finished ====
-
-#run velvet - output contigs
-velvetg ${MAINFOLDER}/velvetoutput -exp_cov auto -cov_cutoff auto# -min_contig_lgth 100
-echo ==== Velvetg is finished ====
-
-#index contigs
-bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs
-
+    velvetg ${MAINFOLDER}/velvetoutput -exp_cov auto -cov_cutoff auto# -min_contig_lgth 100     #run velvet - output contigs
+    echo ==== Velvetg is finished ====
+    
+    bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs      #index contigs
 fi  #skipped making contigs if SKIP>0
 
 if [ "$SKIP" -lt 2 ]; then
-
-#align reads to contigs
-NPROC=0
-for FILE in "${FILELIST[@]}"; do
-    NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
-    echo ==== Aligning ${NAME} ====
-    #N=1 allows a mismatch #x The basename of the index for the reference genome
-    if [ "${FORMAT}" == "fastq" ]; then
-        ( bowtie2 -p 1 -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su - | samtools sort - ${NAME} ) &
-    else
-        ( bowtie2 -p 1 -N 1 -f --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) |  samtools view -Su - | samtools sort - ${NAME} ) &
-    fi
-    NPROC=$(($NPROC+1))
-    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
-        wait
-        NPROC=0
-    fi
-done
-wait
-echo ==== Done Aligning ====
-
+    #align reads to contigs
+    for FILE in "${FILELIST[@]}"; do
+        NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
+        echo ==== Aligning ${NAME} ====
+        #N=1 allows a mismatch #x The basename of the index for the reference genome
+        if [ "${FORMAT}" == "fastq" ]; then
+            ( bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME} ) 
+        else
+            ( bowtie2 -p "${PROCESSORS}" -N 1 -f --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) |  samtools view -Su -F 4 - | samtools sort - ${NAME} ) 
+        fi
+    done
+    echo ==== Done Aligning ====
 fi #also skipped aligning reads if SKIP>1
 
 if [ "$SKIP" -lt 3 ]; then
-#make bam files from zipped sam
-NPROC=0
-for FILE in "${FILELIST[@]}"; do
-    NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
-    ( samtools index ${NAME}.bam ) &
-    NPROC=$(($NPROC+1))
-    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
-        wait
+    #index bam
+    if [ "${POUT}" = 'A' ]; then
+            parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}"
+    else
         NPROC=0
-    fi
-done
-wait
-echo ==== Done Making Bam Files ====
-
-#get pileups for data
-NPROC=0
-for FILE in "${FILELIST[@]}"; do
-    NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
-    ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam -A > ${NAME}.pileups ) &
-    NPROC=$(($NPROC+1))
-    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+        for FILE in "${FILELIST[@]}"; do
+            NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
+            ( samtools index ${NAME}.bam ) &
+            NPROC=$(($NPROC+1))
+            if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
+                NPROC=0
+            fi
+        done
         wait
-        NPROC=0
     fi
-done
-wait
-
-#map contigs to reference
-if [ -n "${REFFILE}" ]; then
-    NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
-    bowtie2-build ${REFFILE} ${NAME}        #bowtie2-build [options]* <reference_in> <bt2_base>
-    ( bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${MAINFOLDER}/velvetoutput/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${MAINFOLDER}/velvetoutput/align_contigs.sam )    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
-fi
-echo ==== Done Piling Up and Mapping Contigs ====
+    echo ==== Done Making Bam Files ====
+    
+    #get pileups for data
+    if [ "${POUT}" = 'A' ]; then
+        parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups" ::: "${FILELIST[@]}"
+    else
+        NPROC=0
+        for FILE in "${FILELIST[@]}"; do
+            NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' )
+            ( samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa ${NAME}.bam -A > ${NAME}.pileups ) &
+            NPROC=$(($NPROC+1))
+            if [ "$NPROC" -ge "${PROCESSORS}" ]; then
+                wait
+                NPROC=0
+            fi
+        done
+        wait
+    fi
+    
+    #map contigs to reference
+    if [ -n "${REFFILE}" ]; then
+        NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
+        bowtie2-build ${REFFILE} ${NAME}        #bowtie2-build [options]* <reference_in> <bt2_base>
+        ( bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${MAINFOLDER}/velvetoutput/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${MAINFOLDER}/velvetoutput/align_contigs.sam )    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
+    fi
+    echo ==== Done Piling Up and Mapping Contigs ====
 fi  #also skipped bam, pileups, reference mapping if SKIP>2
 
 if [ "$SKIP" -lt 4 ]; then
-#put base for each site in a dictionary (allows no variation when calling sites)
-NPROC=0
-for FOLDER in "${FOLDERLIST[@]}"; do
-    ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} ) &
-    NPROC=$(($NPROC+1))
-    if [ "$NPROC" -ge "${PROCESSORS}" ]; then
-        wait
+    #put base for each site in a dictionary (allows no variation when calling sites)
+    if [ "${POUT}" = 'A' ]; then
+        parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD}" ::: "${FOLDERLIST[@]}"
+    else
         NPROC=0
+        for FOLDER in "${FOLDERLIST[@]}"; do
+            ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} ) &
+            NPROC=$(($NPROC+1))
+            if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
+                NPROC=0
+            fi
+        done
+        wait
     fi
-done
-wait
-echo ==== Done Identifying Fixed Sites Without Error ====
+    echo ==== Done Identifying Fixed Sites Without Error ====
 fi  #end of skip
 
 if [ -n "${REFFILE}" ]; then

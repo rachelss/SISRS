@@ -8,6 +8,7 @@ sample = [];
 i=0
 
 for fq in glob.glob(sys.argv[2]+"/*shuffled*fastq"):
+    print 'Subsampling '+fq
     with open(fq, 'r') as f:
         for line in f:
             if not line: break      #have less than desired coverage
