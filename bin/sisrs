@@ -103,7 +103,7 @@ if [ "$SKIP" -lt 1 ]; then
     #shuffle paired end reads together first
     #use parallel if available
     if [ "${POUT}" = 'A' ]; then
-        parallel --jobs "${PROCESSORS}" "perl ${DIR}/sisrs_release/libexec/sisrs/shuffleSequences_fastq.pl {} $(echo {} | sed 's/R1/R2/') $(echo {} | sed 's/R1/shuffled/')" ::: "${FILELIST[@]}"
+        parallel --jobs "${PROCESSORS}" "perl ${DIR}/libexec/sisrs/shuffleSequences_fastq.pl" '{} $(echo {} | sed 's/R1/R2/') $(echo {} | sed 's/R1/shuffled/')' ::: "${FILELIST[@]}"
     else
     NPROC=0
     for FILE in "${FILELIST[@]}"; do
@@ -136,7 +136,7 @@ if [ "$SKIP" -lt 1 ]; then
         wait
         fi
         
-        for FILE in "${FILELIST[@]}"; do mv $(echo ${FILE}|sed 's/R1/shuffled/') $(echo ${FILE/astq}|sed 's/R1/shuffled/')q; done    #rename non-subsampled shuffled files to fq
+        for FILE in "${FILELIST[@]}"; do mv $(echo ${FILE}|sed 's/R1/shuffled/') $(echo ${FILE/astq}|sed 's/R1/shuffled/')q; done    #rename non-subsampled shuffled files to fq    ./F/F_shuffled.fastq to ./F/F_shuffled.fq
     fi
 
     if [ -n "${REFFILE}" ]; then
@@ -187,7 +187,7 @@ if [ "$SKIP" -lt 3 ]; then
     
     #get pileups for data
     if [ "${POUT}" = 'A' ]; then
-        parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups" ::: "${FILELIST[@]}"
+        parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}"
     else
         NPROC=0
         for FILE in "${FILELIST[@]}"; do
