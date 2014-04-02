@@ -217,7 +217,7 @@ fi  #also skipped bam, pileups, reference mapping if SKIP>2
 if [ "$SKIP" -lt 4 ]; then
     #put base for each site in a dictionary (allows no variation when calling sites)
     if [ "${POUT}" = 'A' ]; then
-        parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD}" ::: "${FOLDERLIST[@]}"
+        parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLIST[@]}"
     else
         NPROC=0
         for FOLDER in "${FOLDERLIST[@]}"; do

@@ -2,6 +2,7 @@
 import os
 import sys
 import cPickle
+from collections import Counter
 
 #get combined pileup info
 def getallbases(path):
