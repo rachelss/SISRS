@@ -36,6 +36,7 @@ Default settings can be changed using the following flags:
     -m : use to specify the number of species allowed to have missing data at a site
     -a : use to specify the folder containing the folders of reads
     -n : use to specify the number of reads required to call a base at a site
+    -t : use to specify the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals
     -s : use to specify the steps to skip: 1 skips finding contigs, 2 also skips aligning reads to contigs; 3 skips to just identifying whether sites are variable among taxa
 
     Example command: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/"
@@ -47,9 +48,10 @@ MINREAD=3
 PROCESSORS=1
 FORMAT=fastq
 MAINFOLDER=.
+THRESHOLD=1
 SKIP=0
 
-while getopts g:r:k:p:f:m:a:n:s:h option
+while getopts g:r:k:p:f:m:a:n:s:t:h option
 do
 case "${option}"
     in
@@ -61,6 +63,7 @@ case "${option}"
         m) MISSING=${OPTARG};;
         a) MAINFOLDER=${OPTARG};;
         n) MINREAD=${OPTARG};;
+        t) THRESHOLD=${OPTARG};;
         s) SKIP=${OPTARG};;
         h) help; exit;;
         \? ) echo "Unknown option" >&2; exit 1;;
@@ -218,7 +221,7 @@ if [ "$SKIP" -lt 4 ]; then
     else
         NPROC=0
         for FOLDER in "${FOLDERLIST[@]}"; do
-            ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} ) &
+            ( ${DIR}/libexec/sisrs/get_pruned_dict.py ${FOLDER} ${MINREAD} ${THRESHOLD} ) &
             NPROC=$(($NPROC+1))
             if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
                 NPROC=0
