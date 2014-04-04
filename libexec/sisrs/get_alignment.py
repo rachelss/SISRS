@@ -4,6 +4,9 @@ import re
 import cPickle
 from collections import Counter
 import sys
+from Bio.Seq import Seq
+from Bio.SeqRecord import SeqRecord
+from Bio import SeqIO
 
 #########################
 class Scaffold:
@@ -19,21 +22,41 @@ class Loc:
     def __init__(self,scaff_loc,flag):
         self.scaff_loc = scaff_loc
         self.flag = flag
+        
+class Alignment:
+    def __init__(self,locations=[],species_data=dict(),ref=[],ref_loc=[],flag=[]):
+        self.locations = locations
+        self.species_data = species_data
+        self.ref = ref
+        self.ref_loc = ref_loc
+        self.flag = flag
+        
+    def numsnps(self):
+        print str(len(self.locations))+' variable sites'
+        singletons,bi=0,0
+        for i in range(len(self.locations)):
+            bases = [self.species_data[sp][i] for sp in self.species_data if self.species_data[sp][i] in ['A','C','G','T']]
+            c = Counter(bases).most_common(4)
+            if c[1][1]==1:
+                singletons+=1
+            if len(c) == 2:
+                bi+=1
+            self.flag.append(len(c))
+                
+        print str(bi)+' biallelic sites'
+        print str(singletons)+' singletons'
+        
+        return bi
 
 def makerefdict(reffasta):
-    refdict=dict()
-    filein=open(reffasta, 'r') #read fasta file
-    for line in filein: #go through each line
-        if line.startswith('>'): #get chr name
-            splitline=line.split()
-            refdict[splitline[0].replace('>', '')]=[]
-        else:
-            refdict[splitline[0].replace('>', '')].append(line.rstrip()) #get seq
+    filein=open(reffasta, "rU") #read fasta file
+    refdict = SeqIO.to_dict(SeqIO.parse(filein, "fasta"))
     filein.close()
-    for k in refdict.iterkeys():
-        refdict[k]="".join(refdict[k])
-        refdict[k]=list(refdict[k])
-    return refdict #name:sequence as list
+
+    for k in refdict:
+        refdict[k]=list(str(refdict[k].seq))
+        
+    return refdict #name:sequence_as_list
 
 def get_pileup_files(f):
     pathlist=[]
@@ -55,7 +78,7 @@ def read_pkls(pathlist):
         pkl_file = open(species+'/pruned_dict.pkl', 'rb')
         sp_bases = cPickle.load(pkl_file)
         pkl_file.close()
-        for key in sp_bases.keys():
+        for key in sp_bases:
             alllocs.append(key)
         allbases[species]=sp_bases
     
@@ -64,32 +87,26 @@ def read_pkls(pathlist):
         
     return allbases,alllocs
 
-def TestSNP(loc):
-    flag=0
-    snp=[]
-    for species in pathlist: #get list of bases for this location for all species
-        if loc in allbases[species]:
-            snp.append(allbases[species][loc])
-    snp=list(("".join(snp)).replace('N','')) #make list into string, replace N's, put back into list
-    basecounts=Counter(snp).most_common()
-    if len(snp)<(num_species-num_missing): #missing info for more than X indivs
-        flag=2
-    elif(len(basecounts))<2: #no variation or empty - flag
-        flag=2
-    elif(len(basecounts))>2: #not biallelic - flag for full dict
-        flag=1
-        
-    return flag
-
-def make_aligndic(pathlist):
-    aligndic=dict()
-    aligndic['locations']=[] #list of locations - keep in same order as list of snps
-    aligndic['flags'] = []
+def get_phy_sites(pathlist,allbases,alllocs,num_missing):
+    alignment = Alignment()
     for species in pathlist:
-        aligndic[species]=[]
-    aligndic['reference']=[]
-        
-    return aligndic
+        alignment.species_data[species]=[]
+    for loc in alllocs: #go through each location
+        snp = [allbases[species][loc] for species in pathlist if loc in allbases[species]]
+        c = Counter(snp)
+        if (len(pathlist)-len(snp))+c['N'] > num_missing:     #too many missing, go to next loc
+            continue
+        elif len(c) == 1:     #no variation
+            continue
+        else:
+            alignment.locations.append(loc)
+            for species in pathlist: #add base to the list for that species (or add 'N')
+                if loc in allbases[species]:
+                    alignment.species_data[species].append(allbases[species][loc])
+                else:
+                    alignment.species_data[species].append('N')
+
+    return alignment
 
 def sep_cigar(cigar):
     d=list()
@@ -130,116 +147,118 @@ def adjust_mapping(readmap,cigar,flag):
             
     return newreadmap
 
-def write_alignment(fi,nchar):
-    ALIGNMENT=open(fi,'w')
-    ALIGNMENT.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(nchar)+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n[')
-    for loc in aligndic['locations']: #write list of locations in order - translate into chr,site info
-        node,site=loc.split('/')
-        pos=int(site)
-        if nodedict[node] is not 'X': #contig maps to reference
-            chr=nodedict[node].chr
-            contig_map=nodedict[node].start
-    #        print chr
-            flag = nodedict[node].flag
-            cigar = nodedict[node].cigar
-            if flag == '1':
-                pos=nodedict[node].length-pos+1
-            pos = adjust_mapping(pos,cigar,0)
-            pos=contig_map+pos-1   #1 based position
-    #           print pos
-            loc2=chr+'_'+str(pos) #chr_pos
-            if (pos-1) < len(ref[chr]):
-                refbase=ref[chr][(pos-1)] #chr in dictionary, site within seq-as-list   0 based position
+def add_ref_info(alignment,ref,nodedict):
+    if ref == 0:
+        alignment.ref_loc = ['X'] * len(alignment.locations)        #no reference, just use X for all ref locations
+    else:
+        for loc in alignment.locations:
+            node,site=loc.split('/')
+            pos=int(site)
+            if nodedict[node] is not 'X': #contig maps to reference
+                chr=nodedict[node].chr
+                contig_map=nodedict[node].start
+                flag = nodedict[node].flag
+                cigar = nodedict[node].cigar
                 if flag == '1':
-                    if refbase in basecomplement:
-                        refbase = basecomplement[refbase]
-                    else:
-                        refbase = 'N'
-                aligndic['reference'].append(refbase.upper())
+                    pos=nodedict[node].length-pos+1
+                pos = adjust_mapping(pos,cigar,0)
+                pos=contig_map+pos-1   #1 based position
+                alignment.ref_loc.append(chr+'_'+str(pos)) #add chr_pos
+                if (pos-1) < len(ref[chr]):
+                    refbase=ref[chr][(pos-1)] #chr in dictionary, site within seq-as-list   0 based position
+                    if flag == '1':
+                        if refbase in basecomplement:
+                            refbase = basecomplement[refbase]
+                        else:
+                            refbase = 'N'
+                    alignment.reference.append(refbase.upper()) #add ref base
             else:
-                loc2='X'
-                aligndic['reference'].append('N')
-        else:
-            loc2='X'
-            aligndic['reference'].append('N') #if we don't know where the contig is mapped, we use N for the ref base
-        ALIGNMENT.write(loc2+' ')
-    ALIGNMENT.write(']\n')
-    ALIGNMENT.write('[ '+ " ".join(aligndic['locations'])+' ]'+"\n")
+                alignment.ref_loc.append('X')
+                alignment.reference.append('N')
+
+    return alignment
+
+def write_alignment(fi,alignment,numbi):
+    if len(alignment.ref) == 0:
+        ntax = str(len(alignment.species_data))
+    else:
+        ntax = str(len(alignment.species_data)+1)
+    
+    ALIGNMENT=open(fi,'w')
+    ALIGNMENTBI=open(fi.replace('.nex','_bi.nex'),'w')
+    ALIGNMENT.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(alignment.locations))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
+    ALIGNMENTBI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(numbi)+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
+    
+    ALIGNMENT.write('[ '+ " ".join(alignment.ref_loc)+' ]'+"\n")
+    ALIGNMENT.write('[ '+ " ".join(alignment.locations)+' ]'+"\n")
     for species in pathlist: #write sequences for each species
-        ALIGNMENT.write(species.replace('./','')+"\t"+("".join(aligndic[species]))+"\n")
-    if sys.argv[2] is not 'X':
-        ALIGNMENT.write('reference'+"\t"+("".join(aligndic['reference']))+"\n")
+        ALIGNMENT.write(species.replace('./','')+"\t"+("".join(alignment.species_data[species]))+"\n")
+        
+    bi_ref_loc,bi_loc,bi_ref=[],[],[]
+    bi_sp_data = dict()
+    for species in pathlist:
+        bi_sp_data[species] = []
+    for i in range(len(alignment.locations)):
+        if alignment.flag[i] == 2:
+            bi_ref_loc.append(alignment.ref_loc[i])
+            bi_loc.append(alignment.locations[i])
+            for species in pathlist:
+                bi_sp_data[species].append(alignment.species_data[species][i])
+            if len(alignment.ref) > 0:
+                bi_ref.append(alignment.ref[i])
+                
+    ALIGNMENTBI.write('[ '+ " ".join(bi_ref_loc)+' ]'+"\n")
+    ALIGNMENTBI.write('[ '+ " ".join(bi_loc)+' ]'+"\n")
+    for species in pathlist: #write sequences for each species
+        ALIGNMENTBI.write(species.replace('./','')+"\t"+("".join(bi_sp_data[species]))+"\n")
+        
+    if len(alignment.ref) > 0:
+        ALIGNMENT.write('reference'+"\t"+("".join(alignment.ref))+"\n")
+        ALIGNMENTBI.write('reference'+"\t"+("".join(bi_ref))+"\n")
     ALIGNMENT.write(';\nend;')
+    ALIGNMENTBI.write(';\nend;')
     ALIGNMENT.close()
+    ALIGNMENTBI.close()
     
     return 1
+
 #########################
 num_missing = int(sys.argv[1])
 basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c'}
 
-#make dict for reference chromosomes
-if sys.argv[2] is not 'X':
-    ref=makerefdict(sys.argv[2])
-else:
-    ref=0
-
 pathlist = get_pileup_files(sys.argv[3])
 num_species = len(pathlist)
 allbases,alllocs = read_pkls(pathlist)      #dict of species:(loc:base), sorted list of unique position names
-aligndic = make_aligndic(pathlist)
-aligndic2 = make_aligndic(pathlist)
 
-numsnps,numbi=0,0
-for loc in alllocs: #go through each location
-    flag = TestSNP(loc)
-    if flag<2: #if there is variation
-        numsnps+=1
-        aligndic['locations'].append(loc) #add position name to list
-        aligndic['flags'].append(flag) #add position name to list
-        for species in pathlist: #add base to the list for that species (or add 'N')
-            if loc in allbases[species]:
-                aligndic[species].append(allbases[species][loc])
-            else:
-                aligndic[species].append('N')
-        if flag==0:
-            numbi+=1
-print str(numsnps)+' snps'
-print str(numbi)+' biallelic snps'
+alignment=get_phy_sites(pathlist,allbases,alllocs,num_missing)       #return Alignment object of informative sites
+numbi = alignment.numsnps()     #prints numbers of snps, biallelic snps, and singletons
 
 #identify the chromosome and starting position for each contig
-nodedict=dict()
-nodes=list(set(aligndic['locations'])) #list of contigs
-for node in nodes:
-    node,site=node.split('/')
-    nodedict[node]='X' #make each contig name a key with an empty value
-
+nodedict = dict((loc.split('/')[0],'X') for loc in set(alignment.locations))    #make each contig name a key with an empty value (if it has a snp)
 if sys.argv[2] is not 'X':
+    ref=makerefdict(sys.argv[2])        #make dict for reference chromosomes
     samfile=open(sys.argv[3]+'/velvetoutput/align_contigs.sam','r') #sam file contains alignment of contigs to reference ref genome - has chr and pos
     for line in samfile:
-        if line.startswith('@'):            #skip header
-            continue
-        else:
-            splitline=line.split()            
-            flag = bin(int(splitline[1]))
-            flagl = flag.split('b')
-            if len(flagl[1])>=3:
-                if flagl[1][-3] == '1':
-                    continue                #if scaffold is unmapped, continue
-            if len(flagl[1])>=5:
-                flag = flagl[1][-5]     #check for reverse mapping
-            else:
-                flag = '0'
-                
-            node=splitline[0] #contig name
-            if node in nodedict:
-                chr=splitline[2]
+        if not line.startswith('@'):    #skip header
+            splitline=line.split()
+            if splitline[0] in nodedict:        #only interested if contig has a snp
+                flag = bin(int(splitline[1]))
+                flagl = flag.split('b')
+                if len(flagl[1])>=3:
+                    if flagl[1][-3] == '1':
+                        continue                #if contig is unmapped, continue
+                if len(flagl[1])>=5:
+                    flag = flagl[1][-5]     #check for reverse mapping
+                else:
+                    flag = '0'    
+
+                chro=splitline[2]
                 start=int(splitline[3])
                 cigar=(splitline[5])
                 end = start + (adjust_mapping(len(splitline[9]),cigar,0)) - 1
-                nodedict[node]=Scaffold(chr,start,end,len(splitline[9]),flag,cigar)
-    ntax=str(len(pathlist)+1)
+                nodedict[splitline[0]]=Scaffold(chro,start,end,len(splitline[9]),flag,cigar)
 else:
-    ntax=str(len(pathlist))
+    ref=0
 
-write_alignment(sys.argv[3]+'/alignment.nex',len(aligndic['locations']))
-write_alignment(sys.argv[3]+'/alignment_bi.nex',sum(aligndic['flags']))
+alignment = add_ref_info(alignment,ref,nodedict)
+alignment = write_alignment(sys.argv[3]+'/alignment.nex',alignment,numbi)
