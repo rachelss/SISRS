@@ -96,7 +96,8 @@ def get_phy_sites(pathlist,allbases,alllocs,num_missing):
         c = Counter(snp)
         if (len(pathlist)-len(snp))+c['N'] > num_missing:     #too many missing, go to next loc
             continue
-        elif len(c) == 1:     #no variation
+        del c['N']
+        if len(c) == 1:     #no variation
             continue
         else:
             alignment.locations.append(loc)
