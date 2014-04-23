@@ -24,12 +24,13 @@ class Loc:
         self.flag = flag
         
 class Alignment:
-    def __init__(self,locations=[],species_data=dict(),ref=[],ref_loc=[],flag=[]):
+    def __init__(self,locations=[],species_data=dict(),ref=[],ref_loc=[],flag=[],single=[]):
         self.locations = locations
         self.species_data = species_data
         self.ref = ref
         self.ref_loc = ref_loc
         self.flag = flag
+        self.single = single
         
     def numsnps(self):
         print str(len(self.locations))+' variable sites'
@@ -39,6 +40,9 @@ class Alignment:
             c = Counter(bases).most_common(4)
             if c[1][1]==1:
                 singletons+=1
+                self.single.append(1)
+            else:
+                self.single.append(0)
             if len(c) == 2:
                 bi+=1
             self.flag.append(len(c))
@@ -172,10 +176,10 @@ def add_ref_info(alignment,ref,nodedict):
                             refbase = basecomplement[refbase]
                         else:
                             refbase = 'N'
-                    alignment.reference.append(refbase.upper()) #add ref base
+                    alignment.ref.append(refbase.upper()) #add ref base
             else:
                 alignment.ref_loc.append('X')
-                alignment.reference.append('N')
+                alignment.ref.append('N')
 
     return alignment
 
@@ -187,18 +191,21 @@ def write_alignment(fi,alignment,numbi):
     
     ALIGNMENT=open(fi,'w')
     ALIGNMENTBI=open(fi.replace('.nex','_bi.nex'),'w')
+    ALIGNMENTPI=open(fi.replace('.nex','_pi.nex'),'w')
     ALIGNMENT.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(alignment.locations))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
     ALIGNMENTBI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(numbi)+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
-    
+        
     ALIGNMENT.write('[ '+ " ".join(alignment.ref_loc)+' ]'+"\n")
     ALIGNMENT.write('[ '+ " ".join(alignment.locations)+' ]'+"\n")
     for species in pathlist: #write sequences for each species
         ALIGNMENT.write(species.replace('./','')+"\t"+("".join(alignment.species_data[species]))+"\n")
         
     bi_ref_loc,bi_loc,bi_ref=[],[],[]
-    bi_sp_data = dict()
+    pi_ref_loc,pi_loc,pi_ref=[],[],[]
+    bi_sp_data,pi_sp_data = dict(),dict()
     for species in pathlist:
         bi_sp_data[species] = []
+        pi_sp_data[species] = []
     for i in range(len(alignment.locations)):
         if alignment.flag[i] == 2:
             bi_ref_loc.append(alignment.ref_loc[i])
@@ -207,19 +214,35 @@ def write_alignment(fi,alignment,numbi):
                 bi_sp_data[species].append(alignment.species_data[species][i])
             if len(alignment.ref) > 0:
                 bi_ref.append(alignment.ref[i])
+        if alignment.single[i] == 0:
+            pi_ref_loc.append(alignment.ref_loc[i])
+            pi_loc.append(alignment.locations[i])
+            for species in pathlist:
+                pi_sp_data[species].append(alignment.species_data[species][i])
+            if len(alignment.ref) > 0:
+                pi_ref.append(alignment.ref[i])
                 
     ALIGNMENTBI.write('[ '+ " ".join(bi_ref_loc)+' ]'+"\n")
     ALIGNMENTBI.write('[ '+ " ".join(bi_loc)+' ]'+"\n")
     for species in pathlist: #write sequences for each species
         ALIGNMENTBI.write(species.replace('./','')+"\t"+("".join(bi_sp_data[species]))+"\n")
+    
+    ALIGNMENTPI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(pi_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')    
+    ALIGNMENTPI.write('[ '+ " ".join(pi_ref_loc)+' ]'+"\n")
+    ALIGNMENTPI.write('[ '+ " ".join(pi_loc)+' ]'+"\n")
+    for species in pathlist: #write sequences for each species
+        ALIGNMENTPI.write(species.replace('./','')+"\t"+("".join(pi_sp_data[species]))+"\n")
         
     if len(alignment.ref) > 0:
         ALIGNMENT.write('reference'+"\t"+("".join(alignment.ref))+"\n")
         ALIGNMENTBI.write('reference'+"\t"+("".join(bi_ref))+"\n")
+        ALIGNMENTPI.write('reference'+"\t"+("".join(pi_ref))+"\n")
     ALIGNMENT.write(';\nend;')
     ALIGNMENTBI.write(';\nend;')
+    ALIGNMENTPI.write(';\nend;')
     ALIGNMENT.close()
     ALIGNMENTBI.close()
+    ALIGNMENTPI.close()
     
     return 1
 
