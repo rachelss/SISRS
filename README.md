@@ -5,6 +5,8 @@ SISRS: SNP Identification from Short Read Sequences.
 
 Copyright: Rachel Schwartz
 
+More information: http://arxiv.org/abs/1305.3665
+
 License
 =======
 
