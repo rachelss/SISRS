@@ -41,7 +41,7 @@ Default settings can be changed using the following flags:
 
     Example command: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/"
     }
-
+date > time_and_command_log.txt
 #use defaults or input values
 KMER=21
 MINREAD=3
@@ -71,6 +71,8 @@ case "${option}"
         \? ) echo "Unknown option" >&2; exit 1;;
         esac
 done
+
+echo $KMER $MINREAD $THRESHOLD $SKIP $PROCESSORS >> time_and_command_log.txt
 
 if [ -z $1 ]; then
     echo "You are using the default values. If this is incorrect, rerun SISRS using the correct flags. For more information run sisrs -h"
@@ -103,10 +105,34 @@ FOLDERLIST=( $(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLIST[@]} - 2)); fi    #allowed to have all missing except 2 unless otherwise specified
 
 #use skip flag to skip various parts of the script
+date >> time_and_command_log.txt
 if [ "$SKIP" -lt 1 ]; then
-    #make reference contigs - velveth
-    #shuffle paired end reads together first
     #use parallel if available
+
+    if [ -n "${GENOMESIZE}" ]; then
+        NUMER=$((10*${GENOMESIZE}))
+        DENOM=$((100*2*${#FOLDERLIST[@]}))      #assumes 100bp reads - add option in future
+        LEFTREADS=$((${NUMER}/${DENOM}))
+        
+        #subsample data and shuffle
+        if [ "${POUT}" = 'A' ]; then
+            parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLIST[@]}"
+        else
+        NPROC=0
+        for FOLDER in "${FOLDERLIST[@]}"; do
+            ( python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} ${FOLDER} ) &
+            NPROC=$(($NPROC+1))
+            if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
+                NPROC=0
+            fi
+        done
+        wait
+        fi
+        
+#        for FILE in "${FILELIST[@]}"; do mv $(echo ${FILE}|sed 's/R1/shuffled/') $(echo ${FILE/astq}|sed 's/R1/shuffled/')q; done    #rename non-subsampled shuffled files to fq    ./F/F_shuffled.fastq to ./F/F_shuffled.fq
+    fi
+    
+    #shuffle paired end reads together if not subsampling 
     if [ "${POUT}" = 'A' ]; then
         parallel --jobs "${PROCESSORS}" "perl ${DIR}/libexec/sisrs/shuffleSequences_fastq.pl" '{} $(echo {} | sed 's/R1/R2/') $(echo {} | sed 's/R1/shuffled/')' ::: "${FILELIST[@]}"
     else
@@ -120,30 +146,9 @@ if [ "$SKIP" -lt 1 ]; then
     done
     wait
     fi
-
-    if [ -n "${GENOMESIZE}" ]; then
-        NUMER=$((10*${GENOMESIZE}))
-        DENOM=$((100*2*${#FOLDERLIST[@]}))      #assumes 100bp reads - add option in future
-        LEFTREADS=$((${NUMER}/${DENOM}))
-        
-        #subsample data
-        if [ "${POUT}" = 'A' ]; then
-            parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet.py ${LEFTREADS} {}" ::: "${FOLDERLIST[@]}"
-        else
-        NPROC=0
-        for FOLDER in "${FOLDERLIST[@]}"; do
-            ( python ${DIR}/libexec/sisrs/sub_sample_for_velvet.py ${LEFTREADS} ${FOLDER} ) &
-            NPROC=$(($NPROC+1))
-            if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
-                NPROC=0
-            fi
-        done
-        wait
-        fi
-        
-        for FILE in "${FILELIST[@]}"; do mv $(echo ${FILE}|sed 's/R1/shuffled/') $(echo ${FILE/astq}|sed 's/R1/shuffled/')q; done    #rename non-subsampled shuffled files to fq    ./F/F_shuffled.fastq to ./F/F_shuffled.fq
-    fi
-
+    
+    date >> time_and_command_log.txt
+    #make reference contigs - velveth
     if [ -n "${REFFILE}" ]; then
         velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -${FORMAT} -shortPaired ${MAINFOLDER}/*/*shuffled*${FORMAT}
     else
@@ -151,14 +156,17 @@ if [ "$SKIP" -lt 1 ]; then
     fi
     echo ==== Velveth is finished ====
     
+    date >> time_and_command_log.txt
     velvetg ${MAINFOLDER}/velvetoutput -exp_cov auto -cov_cutoff auto# -min_contig_lgth 100     #run velvet - output contigs
     echo ==== Velvetg is finished ====
     
+    date >> time_and_command_log.txt
     bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs      #index contigs
 fi  #skipped making contigs if SKIP>0
 
 if [ "$SKIP" -lt 2 ]; then
     #align reads to contigs
+    date >> time_and_command_log.txt
     for FILE in "${FILELIST[@]}"; do
         NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning ${NAME} ====
@@ -202,6 +210,7 @@ fi #also skipped aligning reads if SKIP>1
 
 if [ "$SKIP" -lt 3 ]; then
     #index bam
+    date >> time_and_command_log.txt
     if [ "${POUT}" = 'A' ]; then
             parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}"
     else
@@ -219,6 +228,7 @@ if [ "$SKIP" -lt 3 ]; then
     echo ==== Done Indexing Bam Files ====
     
     #get pileups for data
+    date >> time_and_command_log.txt
     if [ "${POUT}" = 'A' ]; then
         parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}"
     else
@@ -237,6 +247,7 @@ if [ "$SKIP" -lt 3 ]; then
     echo ==== Done Piling Up ====
        
     #map contigs to reference
+    date >> time_and_command_log.txt
     if [ -n "${REFFILE}" ]; then
         NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
         bowtie2-build ${REFFILE} ${NAME}        #bowtie2-build [options]* <reference_in> <bt2_base>
@@ -247,6 +258,7 @@ fi  #also skipped bam, pileups, reference mapping if SKIP>2
 
 if [ "$SKIP" -lt 4 ]; then
     #put base for each site in a dictionary (allows no variation when calling sites)
+    date >> time_and_command_log.txt
     if [ "${POUT}" = 'A' ]; then
         parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLIST[@]}"
     else
@@ -263,6 +275,7 @@ if [ "$SKIP" -lt 4 ]; then
     echo ==== Done Identifying Fixed Sites Without Error ====
 fi  #end of skip
 
+date >> time_and_command_log.txt
 if [ -n "${REFFILE}" ]; then
     ( ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER} )
 else
