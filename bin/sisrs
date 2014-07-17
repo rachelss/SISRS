@@ -28,7 +28,7 @@ By default, SISRS assumes that
 
 Default settings can be changed using the following flags:
 
-    -g : use to specify the approximate genome size - this is optional but will reduce the size of the composite assembly by using a subset of reads to approximate 5x coverage
+    -g : use to specify the approximate genome size - this is optional but will reduce the size of the composite assembly by using a subset of reads to approximate 10x coverage
     -r : use to specify the location of the reference genome (must be a fasta file)
     -k : use to specify k-mer size
     -p : use to specify the number of processors available
@@ -128,23 +128,22 @@ if [ "$SKIP" -lt 1 ]; then
         done
         wait
         fi
-        
-#        for FILE in "${FILELIST[@]}"; do mv $(echo ${FILE}|sed 's/R1/shuffled/') $(echo ${FILE/astq}|sed 's/R1/shuffled/')q; done    #rename non-subsampled shuffled files to fq    ./F/F_shuffled.fastq to ./F/F_shuffled.fq
-    fi
-    
-    #shuffle paired end reads together if not subsampling 
-    if [ "${POUT}" = 'A' ]; then
-        parallel --jobs "${PROCESSORS}" "perl ${DIR}/libexec/sisrs/shuffleSequences_fastq.pl" '{} $(echo {} | sed 's/R1/R2/') $(echo {} | sed 's/R1/shuffled/')' ::: "${FILELIST[@]}"
-    else
-    NPROC=0
-    for FILE in "${FILELIST[@]}"; do
-        ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') ) &
-        NPROC=$(($NPROC+1))
-        if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
-            NPROC=0
+
+    else    
+        #shuffle paired end reads together if not subsampling 
+        if [ "${POUT}" = 'A' ]; then
+            parallel --jobs "${PROCESSORS}" "perl ${DIR}/libexec/sisrs/shuffleSequences_fastq.pl" '{} $(echo {} | sed 's/R1/R2/') $(echo {} | sed 's/R1/shuffled/')' ::: "${FILELIST[@]}"
+        else
+        NPROC=0
+        for FILE in "${FILELIST[@]}"; do
+            ( perl ${DIR}/libexec/sisrs/shuffleSequences_${FORMAT}.pl ${FILE} $(echo ${FILE}|sed 's/R1/R2/') $(echo ${FILE}|sed 's/R1/shuffled/') ) &
+            NPROC=$(($NPROC+1))
+            if [ "$NPROC" -ge "${PROCESSORS}" ]; then wait
+                NPROC=0
+            fi
+        done
+        wait
         fi
-    done
-    wait
     fi
     
     date >> time_and_command_log.txt

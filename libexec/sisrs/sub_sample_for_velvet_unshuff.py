@@ -23,7 +23,7 @@ for fq in glob.glob(sys.argv[2]+"/*R1*fastq"):
         i+=1
     f1.close()
     f2.close()
-print(len(sample)+' pairs of reads sampled')
+print(str(len(sample))+' pairs of reads sampled')
 
 f = open(sys.argv[2]+'/subsampled_shuffled.fastq','w')
 for read_info in sample:
