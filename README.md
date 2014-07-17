@@ -22,6 +22,7 @@ Requirements
 * Velvet (including the perl script for merging paired reads) - http://www.ebi.ac.uk/~zerbino/velvet/
 * Bowtie2 - http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 * Python 2.7
+* Samtools
 
 Input
 =====
