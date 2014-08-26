@@ -22,7 +22,8 @@ Requirements
 * Velvet (including the perl script for merging paired reads) - http://www.ebi.ac.uk/~zerbino/velvet/
 * Bowtie2 - http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
 * Python 2.7 and Biopython
-* Samtools
+* Samtools (http://www.htslib.org/)
+* GNU Parallel (http://www.gnu.org/software/parallel/)
 
 Input
 =====
@@ -50,16 +51,15 @@ Default settings can be changed using the following flags:
 * -r : use to specify the location of the reference genome (must be a fasta file)
 * -k : use to specify k-mer size
 * -p : use to specify the number of processors available
-* -f : use to specify reads in fasta format
 * -m : use to specify the number of species allowed to have missing data at a site
 * -a : use to specify the folder containing the folders of reads
 * -n : use to specify the number of reads required to call a base at a site
 * -t : use to specify the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals
 * -s : use to skip all steps except the one identifying whether sites are variable among taxa
 
-Example command: bash sisrs.sh -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
+Example command: bash sisrs.sh -g 50000000-r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
 
 Output
 ======
 
-NEXUS file with SNPs in a single alignment. Usable in most major phylogenetics software.
+Nexus file with variable sites in a single alignment. Usable in most major phylogenetics software as a concatenated alignment.
