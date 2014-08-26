@@ -29,8 +29,8 @@ Input
 =====
 
 Next-gen sequence data such as Illumina HiSeq reads.
-Data (fastq files) should be sorted into folders by taxon (e.g. species or genus).
-Data must be paired reads specified by R1 and R2 in the (otherwise identical) filenames.
+Data should be sorted into folders by taxon (e.g. species or genus).
+Data must be paired reads in fastq format specified by R1 and R2 in the (otherwise identical) filenames.
 
 Running SISRS
 =============
