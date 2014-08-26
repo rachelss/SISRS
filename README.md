@@ -57,9 +57,14 @@ Default settings can be changed using the following flags:
 * -t : use to specify the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals
 * -s : use to skip all steps except the one identifying whether sites are variable among taxa
 
-Example command: bash sisrs.sh -g 50000000-r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
+Example command: sisrs -g 50000000 -r ./reference.fasta -p 40 -m 4 -a ./fastq_data/
 
 Output
 ======
 
 Nexus file with variable sites in a single alignment. Usable in most major phylogenetics software as a concatenated alignment.
+
+Test Data
+======
+
+The folder test_data contains simulated data for 10 species on the tree found in simtree.tre . The command to test sisrs is sisrs -g 1745690 . Using 40 processors this run took me 9 minutes. Analysis of the alignment output by sisrs using raxml produced the correct tree.
