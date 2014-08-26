@@ -124,33 +124,6 @@ if [ "$SKIP" -lt 2 ]; then
         bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
     done
     echo ==== Done Aligning ====
-    
-    if [ -n "${REPEAT}" = 1 ]; then
-        #remake contigs for each taxon - do not allow indels
-        parallel -j "${PROCESSORS}" "samtools merge {}/merged.bam {}/*.bam" ::: "${FOLDERLIST[@]}"       #merge bam files
-        for FOLDER in "${FOLDERLIST[@]}"; do
-            if [ ! -f ${FOLDER}/merged.bam ]; then                   #samtools won't merge one file - need to copy
-                A=${FOLDER}/*bam
-                ln $(echo "$A") ${FOLDER}/merged.bam
-            fi
-        done
-        parallel -j "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '{}/merged.bam -A > {}/merged.pileups' ::: "${FOLDERLIST[@]}"
-        parallel -j "${PROCESSORS}" "python ${DIR}/libexec/sisrs/make_species_contigs.py ${MAINFOLDER}/velvetoutput/contigs.fa {}/merged.pileups" ::: "${FOLDERLIST[@]}"
-        
-        #index all new contigs
-        parallel -j "${PROCESSORS}" "bowtie2-build {}/contigs.fa {}/contigs"  ::: "${FOLDERLIST[@]}"
-        
-        #realign to taxon-specific data
-        for FILE in "${FILELIST[@]}"; do
-            NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
-            echo ==== Aligning ${NAME} ====
-            bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
-        done
-        parallel -j "${PROCESSORS}" "rm {}/merged.pileups" ::: "${FOLDERLIST[@]}"
-        parallel -j "${PROCESSORS}" "rm {}/merged.bam" ::: "${FOLDERLIST[@]}"
-    
-        echo ==== Done Repeated Aligning ====
-    fi    
 fi #also skipped aligning reads if SKIP>1
     
 if [ "$SKIP" -lt 3 ]; then
