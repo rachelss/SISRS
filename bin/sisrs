@@ -37,9 +37,9 @@ Default settings can be changed using the following flags:
     -a : use to specify the folder containing the folders of reads
     -n : use to specify the number of reads required to call a base at a site
     -t : use to specify the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals
-    -s : use to specify the steps to skip: 1 skips finding contigs, 2 also skips aligning reads to contigs; 3 skips to just identifying whether sites are variable among taxa
+    -s : use to specify the steps to skip: 1 skips making the composite genome; 2 also skips aligning reads to the composite reference; 3 also skips getting data for each site and mapping the composite genome to a known reference if available; 4 skips to identifying whether sites are variable among taxa given data for each site for each taxon
 
-    Example command: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/"
+    Example command: ./sisrs -g 50000000 -r ./reference.fasta -p 40 -f fastq -m 4 -a test_data"
     }
 
 #use defaults or input values
@@ -77,16 +77,20 @@ fi
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
-command -v velveth >/dev/null 2>&1 || { echo >&2 "Velvet must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
-command -v bowtie2 >/dev/null 2>&1 || { echo >&2 "Bowtie2 must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
-command -v parallel >/dev/null 2>&1 || { echo >&2 "GNU parallel must be installed to run SISRS. The installation folder must be in your $PATH. Aborting."; exit 1; }
+
+which velveth &>/dev/null
+[ $? -eq 0 ] || { echo "Velvet must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+which bowtie2 &>/dev/null
+[ $? -eq 0 ] || { echo "Bowtie2 must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+which parallel &>/dev/null
+[ $? -eq 0 ] || { echo "GNU parallel must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 
 FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
 declare -a ALLFOLDERLIST=()
 for F in "${FILELIST[@]}"; do ALLFOLDERLIST+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
 FOLDERLIST=( $(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with paired fastq files as array
 
-if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLIST[@]} - 2)); fi    #allowed to have all missing except 2 unless otherwise specified
+if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLIST[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
 
 #use skip flag to skip various parts of the script
 if [ "$SKIP" -lt 1 ]; then
