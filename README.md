@@ -55,7 +55,7 @@ Default settings can be changed using the following flags:
 * -a : use to specify the folder containing the folders of reads
 * -n : use to specify the number of reads required to call a base at a site
 * -t : use to specify the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals
-* -s : use to skip all steps except the one identifying whether sites are variable among taxa
+* -s : -s : use to specify the steps to skip: 1 skips making the composite genome; 2 also skips aligning reads to the composite reference; 3 also skips getting data for each site and mapping the composite genome to a known reference if available; 4 skips to identifying whether sites are variable among taxa given data for each site for each taxon
 
 Example command: sisrs -g 50000000 -r ./reference.fasta -p 40 -m 4 -a ./fastq_data/
 
