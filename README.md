@@ -67,4 +67,4 @@ Nexus file with variable sites in a single alignment. Usable in most major phylo
 Test Data
 ======
 
-The folder test_data contains simulated data for 10 species on the tree found in simtree.tre . The command to test sisrs is sisrs -g 1745690 . Using 40 processors this run took me 9 minutes. Analysis of the alignment output by sisrs using raxml produced the correct tree.
+The folder test_data contains simulated data for 10 species on the tree found in simtree.tre . The command to test sisrs is sisrs -g 1745690 . Using 40 processors this run took 9 minutes. Analysis of the alignment output by sisrs using raxml produced the correct tree.
