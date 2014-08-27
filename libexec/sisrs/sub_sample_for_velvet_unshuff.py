@@ -31,7 +31,7 @@ for fq in paired1:
 if not paired1:
     N=N*2
     for fq in allfq:
-        if (fq not in paired1 and fq not in paired2):
+        if (fq not in paired1 and fq not in paired2 and 'sub' not in fq):
             print 'Subsampling '+fq
             f1=open(fq, 'r')
             for line in f1:
