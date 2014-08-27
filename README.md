@@ -29,8 +29,9 @@ Input
 =====
 
 Next-gen sequence data such as Illumina HiSeq reads.
-Data should be sorted into folders by taxon (e.g. species or genus).
-Data must be paired reads in fastq format specified by R1 and R2 in the (otherwise identical) filenames.
+Data must be sorted into folders by taxon (e.g. species or genus).
+Paired reads in fastq format must be specified by R1 and R2 in the (otherwise identical) filenames.
+Paired and unpaired reads must have a fastq file extension.
 
 Running SISRS
 =============
@@ -41,13 +42,12 @@ By default, SISRS assumes that
 * A reference genome is not available.
 * The K-mer size to be used by Velvet in contig assembly is 21.
 * Only one processor is available.
-* Files are in fastq format.
 * A site is only required to have data for two species to be included in the final alignment.
 * Folders containing reads are in the present working directory.
 * A minimum of three reads are required to call the base at a site for a taxon.
 
 Default settings can be changed using the following flags:
-* -g : use to specify the approximate genome size - this is optional but will reduce the size of the composite assembly by using a subset of reads to approximate 10x coverage
+* -g : use to specify the approximate genome size - this is optional but highly recommended because it will reduce the size of the composite assembly by using a subset of reads to approximate 10x coverage
 * -r : use to specify the location of the reference genome (must be a fasta file)
 * -k : use to specify k-mer size
 * -p : use to specify the number of processors available
@@ -62,7 +62,7 @@ Example command: sisrs -g 50000000 -r ./reference.fasta -p 40 -m 4 -a ./fastq_da
 Output
 ======
 
-Nexus file with variable sites in a single alignment. Usable in most major phylogenetics software as a concatenated alignment.
+Nexus file with variable sites in a single alignment. Usable in most major phylogenetics software as a concatenated alignment with a setting for variable-sites-only.
 
 Test Data
 ======
