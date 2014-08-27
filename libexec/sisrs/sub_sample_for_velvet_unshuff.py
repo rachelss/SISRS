@@ -27,7 +27,6 @@ for fq in paired1:
         i+=1
     f1.close()
     f2.close()
-print(str(len(sample))+' pairs of reads sampled')
 
 if not paired1:
     N=N*2
@@ -50,8 +49,10 @@ if not paired1:
     for read_info in sample:
         f.write("".join(read_info))
     f.close()
+    print(str(len(sample))+' reads sampled')
     
 else:
+    print(str(len(sample))+' pairs of reads sampled')
     f = open(sys.argv[2]+'/subsampled_shuffled.fastq','w')
     for read_info in sample:
         f.write("".join(read_info))
