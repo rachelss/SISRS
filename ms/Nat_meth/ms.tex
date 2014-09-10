@@ -1,0 +1,413 @@
+\documentclass[11pt, oneside]{article}   	% use "amsart" instead of "article" for AMSLaTeX format
+\usepackage{geometry}                		% See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   		% ... or a4paper or a5paper or ... 
+\usepackage{graphicx}				% Use pdf, png, jpg, or eps§ with pdflatex; use eps in DVI mode
+							% TeX will automatically convert eps --> pdf in pdflatex		
+\usepackage{amssymb}
+\usepackage{url}
+\urlstyle{same}
+\usepackage{color}
+\usepackage{natbib}
+\usepackage{setspace}
+\usepackage{lineno}
+
+\doublespacing
+
+\begin{document}
+\noindent
+\textbf{A Composite Genome Approach to Identify Phylogenetically Informative Data from Next-Generation Sequencing}
+
+
+Rachel S. Schwartz,$^{\ast,1}$ Kelly Harkins,$^{2}$ Anne C. Stone,$^{2}$ and Reed A. Cartwright,$^{1,3}$
+
+$^{1}$The Biodesign Institute
+
+$^{2}$School of Human Evolution and Social Change
+
+$^{3}$School of Life Sciences
+
+Arizona State University, Tempe, AZ, USA
+
+E-mail: Rachel.Schwartz@asu.edu
+
+\linenumbers
+\abstract{
+We have developed a novel application to rapidly obtain homologous genomic data directly from next-generation sequencing reads without the use of a reference genome.
+This software, called SISRS, avoids the time consuming steps of \textit{de novo} assembly, genome-genome alignment, and annotation to identify phylogenetic markers.
+Using simulations, we demonstrate that SISRS is able to identify large numbers of variable sites with 97\% precision from data containing phylogenetic signal. 
+For genomic data from apes, SISRS identified thousands of variable sites, resulting in an accurate phylogeny. 
+Finally, we applied SISRS to determine the phylogeny of placental mammals, which has long been controversial. 
+SISRS is available at https://github.com/rachelss/SISRS.
+}
+
+%\keyword{phylogenetics, ape, genome, software}
+
+\section{{Introduction}\label{sec:Intro}}
+
+Until recently, phylogenetic studies relied on tens of loci (at most) from the genome to determine evolutionary relationships \citep[e.g.][]{Giribet2001,Harpke2013}. 
+However, these datasets often had insufficient information to provide strong support for all the relationships of interest \citep[e.g.][]{Stanley2011}. 
+Recent improvements in sequencing technology have enabled phylogenetic studies to use larger datasets in an attempt to resolve previously undetermined or controversial evolutionary relationships, but the area is still in its infancy \citep{Burleigh2011,Cohen2012,Crawford2012,Delsuc2005,Faircloth2012,McCormack2012,Mccormack2013b,Yoder2013}. 
+
+There are currently several approaches to producing large datasets for phylogenetics. 
+First, whole genomes can be sequenced and assembled; genomes are then compared to identify homologous regions for phylogenetics \citep[e.g.][]{Yoder2013}.
+The drawback of this approach is the time required to construct quality assemblies and identify homologous regions, either by annotating the genome or using genome comparison tools.
+Furthermore, because distantly related taxa may not be easily comparable, phylogenetic analyses using whole-genome comparisons have  focused on closely related species for which alignments are possible \citep[e.g.][]{Yoder2013,Fan2013}.
+
+In a second approach, shotgun sequence data may be aligned to a reference genome.
+This method assumes a reference genome, which is not always available.
+As with whole genome comparisons, the \textit{de novo} assembly of a high-quality genome to be used as a reference requires high-coverage data and significant time.
+However, even given a reference genome, homologous loci may not be recoverable for species distantly related to the reference \citep{Bertels2014}.
+
+Other approaches involve sequencing a subset of the genome.
+One such approach screens existing datasets for variation in the taxa of interest \citep[e.g.][]{ONeill2013, Senn2013, Steele2008}.
+In another, regions that are conserved across taxa are identified from whole-genome alignments; both the conserved elements and regions adjacent to them may contain phylogenetic information \citep[e.g.][] {Crawford2012,Faircloth2012,McCormack2012,Lemmon2012}. 
+In a third, a consistent subsample of the genome may be sequenced \citep[e.g.\ using RADseq;][]{Eaton2013}.
+However, the drawback of these approaches is that new phylogenetic markers must be developed for each research study; significant time is often required for marker development and these data have limited potential for reuse. 
+Additionally, a consistent, phylogenetically subsample of the genome may be difficult to obtain at deep taxonomic levels.
+
+Here we describe a novel computational tool, SISRS (pronounced ``scissors''), to identify informative data for phylogenetic studies directly from shotgun sequencing of whole genomes. 
+SISRS, which stands for Site Identification from Short Read Sequences requires neither a reference genome nor \textit{a priori} knowledge of potentially informative loci. 
+Our software circumvents the difficulties in identifying homologous sites from whole-genome alignments when rearrangement events have occurred because the conserved regions are not required to share identifiable synteny across taxa. 
+SISRS also takes advantage of the raw data to avoid erroneous genotype calling due to sequencing error and copy number variable regions (CNVs). 
+
+We demonstrate that SISRS provides high quality phylogenetic datasets across a range of simulated and empirical data. 
+First, the data output by SISRS for simulated shotgun reads was congruent with the starting phylogeny at all depths in the tree. 
+Second, using previously sequenced shotgun data for seven primate taxa, we were able to estimate the known phylogeny rapidly and accurately. 
+Third, we used available data to estimate the phylogeny of mammals, which has remained controversial.
+Using SISRS, phylogenies can be produced from next-generation sequencing reads in a matter of days.
+For example, identification of phylogenetic markers from raw mammalian transcriptome reads took 15 hours.
+
+\section{Methods\label{sec:Methods}}
+
+\subsection{Overview}
+
+SISRS identifies phylogenetically informative regions via a novel protocol. 
+(1) SISRS assembles a ``composite genome'' from shotgun sequencing reads for all taxa.
+(2) The composite genome is used as a reference to align the sequencing data for each sample. 
+(3) The nucleotide for each sample for each position in the genome is identified via a strict consensus (i.e.\ sites that are variable are called as unknown). 
+(4) SISRS removes regions that have too much missing information.
+In this way, SISRS identifies sites across entire genomes that are phylogenetically informative and reduces errors due to biological and experimental error.
+This protocol is outlined succinctly in Figure \ref{fig:pipeline}. 
+
+\subsection{Composite reference genome}
+
+SISRS currently uses a de Bruijn-graph de novo assembler, Velvet \citep{Zerbino2008}, to construct a composite reference genome.
+Analysis of alternative algorithms is ongoing.
+The composite reference is assembled from a collection of raw sequencing data, e.g. FASTQ files, taken from multiple, potentially divergent species.
+After assembling these diverse data, the resulting contigs contain sequences that are conserved across some or all taxa
+
+A high quality composite reference genome can be assembled using only a subset of sequencing data because conserved regions can be identified using only a handful of reads from a few species. 
+SISRS uses reservoir sampling \citep{Vitter1985} to construct a random subsample of the reads for each species, which reduces the complexity of assembling the composite reference genome.
+We aim for 10x coverage of conserved regions across species.
+When subsampling, SISRS assumes 200bp per read-pair and samples a number of reads equivalent to one-twentieth of a user-specified genome size to satisfy this goal.
+The genome size may be adjusted to compensate for different read lengths.
+
+\subsection{Site calling for each position in the reference}
+To determine conserved regions and variation among species within these regions, the full sequencing data is mapped back to the composite reference genome using Bowtie 2 \citep{Langmead2012}.
+SISRS uses a strict consensus to call the genotype of each species for each site in the composite reference.
+This is a conservative approach that eliminates any sites that contain paralogous data, thus significantly reducing non-phylogenetic signal \citep{Philippe2011}. 
+After genotype calling, SISRS produces a dataset containing sites that (1) have information for most or all taxa (as specified by the user) and (2) are variable among taxa (also controllable). 
+Sites with too much missing data provide limited information, while sites that are invariable do not provide information on evolutionary history.
+
+%To optimize genotype-calling in homologous regions, SISRS offers the option to create a sample-specific composite genome.
+%Following the alignment of data to the composite genome, for each sample the majority allele for each site is inserted into the composite genome.
+%Data from each sample is then aligned to the new sample-specific composite genome and genotypes at each site are called again.
+%This approach increases alignment rates for each sample and improves genotype calling while maintaining the identify of homologous regions and removing error. \\
+
+\subsection{Simulations to test methodology}
+
+To determine how well our approach identified phylogenetically informative sites, we simulated 168 datasets of next-generation sequencing reads with different levels of sequencing coverage on multiple phylogenies.
+We used four phylogenies to simulate genomes: one two-taxon tree and three eight-taxon trees.
+The eight-taxon trees were pectinate with (1) equal internode branch lengths, (2) increasing internode branch lengths from root to tip, and (3) decreasing internode branch lengths from root to tip (Suppl. Figure \ref{fig:trees}).
+We produced a total of 24 trees with increasing levels of divergence among species by multiplying each branch length by values from 0.01 to 0.06.
+We simulated genomes of one million nucleotides on each of these trees using the Jukes-Cantor model with Dawg 2.0 \citep{Cartwright2005,Jukes1969}. 
+Illumina-like NGS data were simulated using the software ART (version BananaPancakes-04-02-2013) with an error model that was derived from an empirical dataset produced using an Illumina HiSeq 2000 \citep{Huang2012}.  
+Each simulation had either 1, 2, 4, 8, 10, 20, and 50x coverage; reads were 99 bp and paired-end (the maximum allowed by the software given empirically derived parameters).
+%Tree  Num_spp  brlen   coverage   Real_snps    Est_snps_T Est_snps_M  Real=Est   Insuff_dataO Recovered   Not_cov  Insuff_dataM    Filtered    EFalsePos   RFalsePos   NewFalsePos   TotalSNPs  Singletons   Concordant  Biallelic Depth_concordance
+For each data set we recorded (1) the total number of variable sites simulated, (2) the total number of variable sites output by SISRS, (3) the number of these sites that could be mapped, and (4) the number of mapped variable sites that were true variants.
+
+We expected some variable sites not to be recovered by SISRS and
+counted the number of these false negatives due to (1) insufficient data in the simulations (defined as fewer than three reads for that site), (2) lack of coverage by the composite genome (for sites with sufficient data), (3) additional insufficient data due to lack of mapped reads, and (4) additional sites that were filtered out due to variation.
+Additionally we counted the number of potential and actual false positive variable sites.
+Potential false positives were due to sites that would be called as variable (due to error) based on the simulated reads.
+Actual false positives were (1) the subset of these sites that were identified as variable by SISRS, or (2) additional sites due to erroneous read mapping.
+To determine the value of the data output by SISRS we counted the number (and percent) of sites that were concordant with the true tree as a function of branch scale, coverage, depth, and tree topology.
+
+\subsection{Empirical Data Test}
+
+We further tested our approach using data from apes, including human (\textit{Homo sapiens}), chimpanzee (\textit{Pan troglodytes}), bonobo (\textit{P. paniscus}), gorilla (\textit{Gorilla gorilla} and \textit{G. beringei}), and orangutan (\textit{Pongo pygmaeus} and \textit{P. abelii}). 
+The crab-eating macaque (\textit{Macaca fascicularis}) and rhesus macaque (\textit{M. mulatta}) were used to root the tree. 
+These primates were chosen to test the efficiency and effectiveness of this method on empirical data due to their well-established phylogeny \citep{Perelman2011}. 
+
+Raw Illumina paired-end sequence data was obtained from the European Nucleotide Archive (Suppl. Table \ref{table:ENAdata}). 
+To reduce the size of the dataset being analyzed, we aligned the data to the human genome (build 37) using Bowtie 2 as in SISRS. 
+We extracted only the data that aligned to human chromosome 21. 
+These reads were then placed in FASTQ files as new paired-end datasets, as would be generated directly from a sequencing run. 
+Potentially informative sites were obtained using SISRS as for simulations. 
+The genome size specified for the composite genome subsampling procedure was 48 million, approximately the size of human chromosome 21.
+%For comparison, we conducted an identical analysis using human chromosome 21, rather than the composite genome, as the reference.
+
+Due to the size of the dataset, we treated the data output by SISRS as a single concatenated locus \citep{Yoder2013} and 
+analyzed the data in a maximum likelihood (ML) framework with 1000 bootstraps implemented in RAxML-HPC2 8.0.3. \citep{Stamatakis2006}. 
+The GTRGAMMA model was used; the omission of invariable sites was accommodated with the ASC parameter to correct for the exclusion of invariable sites as recommended in the manual \citep{Lewis2001}.
+%The likelihood calculated using this model does not include values for the diagonal of the Q matrix \cite{Lewis2001}. 
+The phylogeny is shown rooted on macaques.
+
+\subsection{Estimating the Mammal Phylogeny}
+
+We demonstrate the value of the SISRS approach using 27 placental mammal taxa.
+Transcriptome and genome data were obtained as above (Suppl. Table \ref{table:ENAdata}).
+For most taxa we combined data from more than one individual to increase genome coverage.
+Potentially informative sites were obtained using SISRS as above; however, the composite genome was derived exclusively from transcriptome data to reduce assembly time and memory requirements.
+The genome size specified for the composite genome subsampling procedure was 100 million.
+%To ensure SISRS was not producing so much data that alternative phylogenies were rejected due to statistics not biology (Kumar et al. 2011), we determined the most likely phylogenies based on X% of the data. We used the KH test ( ) to compare these phylogenies using the remaining data. We repeated this analysis. 
+
+\section{Results\label{sec:Results}}
+
+\subsection{Recovery of phylogenetically informative sites}
+
+For all simulation trees, the number of potentially informative sites identified using SISRS increased with increased coverage (Figure \ref{fig:simresults}). 
+%In all cases $>$96\% of the sites identified as variable were true variants and concordant with the true tree. 
+As the distance between taxa (i.e.\ branch length) increased, the number of output sites decreased (Figure \ref{fig:simresults}). 
+Of these sites, the greatest number allowed the accurate identification of the shallowest nodes, with a decreasing number allowing the identification of deeper nodes (Figure \ref{fig:simresults_depths}). 
+Insufficient coverage in the simulations, lack of coverage by the composite genome, and insufficient coverage following mapping of the reads to the composite genome reference contributed to a failure to recover all variable sites (Figure \ref{fig:sims_falsenegs}). 
+Potential false positives due to read simulation error were removed by SISRS; however, some new false positives were introduced, likely due to erroneous mapping of reads to the composite genome.
+These false positives represented less that 2.5\% of identified variable sites for the two-taxon trees, and 0.2\% for the eight-taxon trees.
+
+\subsection{Ape tree is recovered}
+
+The analysis was conducted using 14 cores on a FreeBSD 10.0 server; the total time to produce this dataset from the raw reads was 36 hours.
+The maximum amount of memory required during the composite genome assembly was 1.5Gb.
+%1 sample per species
+We identified 148,639 variable sites that contained observations at least five samples. 
+The ML estimate of the phylogeny with 1000 bootstraps was fully concordant with the known phylogeny of apes with all nodes supported at 100\%.% (Figure \ref{fig:ape_phyl}). 
+%Of the variable sites, XXXXX were biallelic, and of those, XXXX (XX\%) were concordant with the tree.
+%The maximum number of sites supporting an alternate relationship was XXX (XX\%); these sites supported human and gorilla as sister taxa, which is consistent with the similarity of the human and gorilla genomes \citep{Scally2012a} (Suppl. Table \ref{table:ape_nonconcord}).
+%For comparison, we identified 324,167 variable sites using human chromosome 21 as a reference.
+%This analysis required 54 Gb of memory, likely due to the amount of data aligned to regions of reference that were not conserved.
+%By aligning the composite genome to the human reference genome, we determined that XXXX sites (XX\% of the SISRS data) were found in both datasets.
+%The phylogeny estimated from these data was identical. \\
+
+\subsection{Mammal Phylogeny}
+
+The analysis was conducted using 40 cores; the total time to produce the composite genome was less than an hour;
+the remaining alignment, base calling, and site identification steps required an additional 
+%this dataset from the raw reads including only transcriptome data was %15 hours (aligning genome data required an additional 72 hours).
+87 hours.
+10Gb of memory was required during the composite genome assembly.
+The maximum amount of memory required to process the data mapped to the composite genome was 45 Gb however, because data processing was conducted across multiple cores to increase the speed of the analysis, the total amount of memory used at one time by SISRS was over 300 Gb.
+This analysis could be conducted using fewer resources over more time.
+The mammal phylogeny was fully bifurcating at all nodes except for one polytomy of Perissodactyla, Chiroptera, Artiodactyla, and Carnivora/pangolin (Figure \ref{fig:mammal_phyl}).
+All nodes had $>=$90\% bootstrap support except for the node joining treeshrew to primates. 
+
+\section{Discussion\label{sec:Discussion}}
+
+The approach introduced here has the potential to transform phylogenetic research.
+SISRS eliminates the need for expensive marker development in many studies by using whole genome shotgun sequence data directly.
+As technology improves, whole-genome sequencing will soon be affordable even for large-scale projects. 
+By using shotgun sequence data, error in next-generation sequence data and co-alignment of CNVs does not affect subsequent analyses.
+
+%Alternatively, SISRS can be used to identify variable sites that can be used as markers across large numbers of taxa.
+SISRS also promotes the reuse of data.
+Shotgun genomic sequences available in public databases can be used directly for phylogenetic analyses, as we have done in this study.
+Sequencing performed with the goal of identifying phylogenetic data using SISRS can be made available for subsequent use in other studies, including phylogenetics at any taxonomic level, or any other study utilizing genomic data.
+Reusing available next-generation sequencing reads can substantially reduce costs.
+%Studies using SISRS are straightforward, quick, and inexpensive. 
+
+\subsection{Data produced by SISRS}
+
+For simulations, SISRS was able to recover large numbers of variable sites, unless branch lengths were unreasonably long or coverage was low.
+Based on these results, coverage should average 5--10x for optimal marker identification; however, low coverage sequencing will also identify useful data.
+Most genomes are much larger than the one million bases in our simulations; far more sites will be identified for larger genomes, making the use of low coverage data feasible.
+Although site identification was challenging for trees with long branches (i.e.\ large evolutionary distances per number of substitutions per site between taxa), this result is less problematic for empirical data.
+In real genomes, unlike our simulations, sites evolve at different rates; thus, there will always be some sites for which the branch length (in substitutions per site) between taxa is very small.
+These sites will be identified by SISRS.
+
+As expected, deeper nodes were more difficult to recover, likely because the synapomorphies between the two clades may be overwritten by new substitutions.
+However, the sites that were identified are informative about these relationships.
+Overall, the concordance of the data with the simulation trees demonstrates that the SISRS approach produces extensive phylogenetically informative data for deep and shallow evolutionary time scales. 
+
+\subsection{Empirical results}
+
+Using available data we were able to recover the phylogeny of apes quickly and accurately. 
+Similarly, using available data we recovered a mammal phylogeny consistent with the current hypothesis of these relationships \citep{Morgan2013}.
+Placement of the treeshrew has been controversial, which is consistent with our finding of $<$100\% support for this node. However, our results are consistent with a recent genome analysis of treeshrew placing this taxon as sister to primates \citep{Fan2013}.
+
+\subsection{Advantages of a composite genome}
+
+Generating a composite genome has multiple advantages over aligning data to a reference genome to identify potential phylogenetically informative sites. 
+First, an assembled reference genome similar to the taxa of interest is not always available. 
+Second, assembling a reference genome requires high coverage data from at least one species and is time consuming; assembling the whole genome is necessary because it is impossible to determine \textit{a priori} regions of the genome that may be phylogenetically informative.
+In contrast, SISRS does not require high levels of coverage or a time consuming assembly.
+Furthermore, when taxa are highly diverged, data may align poorly to a single reference genome. 
+In contrast, a composite genome contains data from all taxa. 
+Because each species is subsampled for the assembly, unique regions will be limited in the final assembly, while maintaining an optimal assembly for conserved regions. 
+Within each conserved region, the composite genome contains sites with the most common base, making it more likely that data from all taxa will align to this region.
+%Inserting sample-specific data into the composite genome further improves alignment to homologous regions, resulting in the maximum data for each species for potentially informative sites. \\
+
+\subsection{Time required}
+
+The time to run SISRS is highly variable, depending on the number of processors available, the number of samples sequenced, and the amount of data sequenced per sample.
+Given large numbers of processors, SISRS makes phylogenetic analysis from shotgun data possible within a few days.
+Even given the limitations of a desktop computer, it is possible to produce many phylogenies within a couple of weeks.
+Unlike other phylogenetic methods, SISRS entirely avoids the weeks required for marker development or sample processing; preparation for sequencing and the sequencing time itself are required for all phylogenomic approaches.
+Alternatively, as with the analyses conducted here, all time required for sequencing and preparation was avoided entirely by using data made available from other research projects. 
+
+\subsection{Data analysis}
+
+The approaches we have used to analyze our data are not designed for large datasets of variable sites, although our results suggest that with the exception of short deep internodes the recovery of the phylogeny is quite good.
+Ideal methods would accommodate differences among gene trees to correctly estimate the species tree and model the substitution process to accurately infer substitutions. 
+However, current methods to analyze genome-wide variable sites are limited \citep[e.g.][]{Bryant2012}.
+It is important to note that these methods are in development; as we begin to use whole-genome data it is obvious that subsets of data must be used and the optimal data are likely not linked regions, but individual sites \citep[e.g.][]{Yoder2013}.
+Furthermore, the availability of tools designed for limited datasets should not prevent us from developing methods to identify more comprehensive datasets. 
+
+\subsection{Future Directions}
+
+The software implementation of SISRS is under active development. 
+Future versions will accommodate larger genomes and output more variable sites more rapidly as a result of improved assembly of the composite genome and improved genotype calling.
+We will also evaluate the application of SISRS output to deep-time phylogenetics and estimation of branch lengths / divergence times among taxa.
+
+\section{Acknowledgments}
+
+This work was supported by ASU startup funds to R.\ Cartwright, a National Science Foundation Doctoral Dissertation Improvement Grant [grant number BCS-1232582 to K.\ Harkins and A.\ Stone], a National Institutes of Health Grant [grant number R01-GM101352-01A1 to R.\ Zufall, R.\ Azevedo, and R.\ Cartwright], and a National Science Foundation Advances in Bioinformatics Grant [grant number DBI-1356548 to R.\ Cartwright]. 
+Some data were provided by the Wellcome Trust Sanger Institute prior to publication; they can be obtained from the European Nucleotide Archive.
+Members of the Cartwright lab provided feedback on this project and manuscript.  
+
+\bibliography{SISRS_ms}
+\bibliographystyle{natbib}%%%%natbib.sty
+
+%Figure: SISRS pipeline
+\newpage
+\newpage
+\onecolumn
+\section{Figures}
+
+\begin{figure}[!ht]
+\includegraphics[trim=0cm 10cm 0cm 0cm, clip=true, width=\textwidth]{pipeline.pdf}
+\caption{SISRS framework to identify phylogenetically informative sites.}
+\label{fig:pipeline}
+\end{figure}
+
+%Figure: Simulation results
+\begin{figure}[!ht]
+\includegraphics[width=\textwidth]{sim_results.pdf}
+\caption{SISRS produced substantial amounts of informative data for phylogenies of different shapes and evolutionary distances. 
+The number of true variable sites identified from simulated data is shown for each of four trees (symbols) (shown in Figure \ref{fig:trees}) for increasing numbers of substitutions between species (panels), and increasing levels of coverage (x axis). Symbols are %pch = c(1,2,15,17,8) for equal, long deep, balanced, short deep, two
+$\blacktriangle$ for two taxon trees; $\circ$ for equal branch length trees; $\blacksquare$ for trees with short deep branches; $\triangle$ for trees with long deep branches.}
+These sites were identified from 1 million base pair genomes; thus, larger genomes are expected to produce more sites, particularly as long as a fraction of those genomes are reasonably conserved.
+\label{fig:simresults}
+\end{figure}
+
+%Figure: Simulation results by depth:
+\begin{figure}[!ht]
+\includegraphics[width=\textwidth]{sim_results_depths_equal.pdf}
+\caption{SISRS identified fewer informative sites for deeper nodes in the tree; however, some sites identified each split in all cases except for extremely diverged species with low-coverage data). 
+Results are separated by branch length (panels), coverage (x axis), and tree depth (symbols). 
+%For the balanced tree, the number of sites supporting two-taxon groups (e.g. A+B) are denoted as $\circ$; $\blacksquare$ denotes four-taxon groups. 
+The number of sites supporting the node A+B are denoted as $\circ$; $\triangle$ denotes sites supporting A+B+C;$\blacksquare$ denotes A+B+C+D; $\blacktriangle$ denotes A+B+C+D+E; $\ast$ denotes A+B+C+D+E+F; $\bullet$ denotes A+B+C+D+E+F+G.
+Only results for the equal-branch-length tree are shown; results for the three eight-taxon trees were similar (Suppl. Fig. \ref{fig:sim_results_all_depths}).
+Fewer sites were recovered for the tree with short deep branches, compared to the equal-branch-length tree, while more sites were recovered for the tree with long branches.}
+%pch = c(1,2,15,17,8,19)
+\label{fig:simresults_depths}
+\end{figure}
+
+%Figure: Simulations - insufficient coverage
+%\begin{figure}[t]
+%\includegraphics[width=\textwidth]{2taxa_lost_sites.eps}
+%\end{figure}
+
+%%Figure: Simulations - insufficient coverage 8 equal
+\begin{figure}[!ht]
+\includegraphics[width=1\textwidth]{lost_sites.pdf}
+\caption{SISRS failed to identify some variable sites in simulated data due to low coverage at those sites or lack of coverage by the composite genome.
+Top: Results for the two-taxon tree.
+Bottom: Results for the eight-taxon tree with equal-length branches.
+The results for the other eight-taxon trees are nearly identical.}
+\label{fig:sims_falsenegs}
+\end{figure}
+
+\begin{figure}[!ht]
+\includegraphics[width=1\textwidth]{RAxML_MajorityRuleConsensusTree_m6_MR.pdf}
+\caption{Phylogeny for placental mammals estimated using data from SISRS with RAxML 8.0.}
+\label{fig:mammal_phyl}
+\end{figure}
+
+%Figure: Ape phylogeny
+%\begin{figure}[!ht]
+%\includegraphics[width=.5\textwidth]{ape_tree.pdf}
+%\caption{Ape phylogeny estimated from data identified by SISRS. 365,405 variable sites were identified with no missing data allowed. The phylogeny was estimated using RAxML with a GTRGAMMA model.}
+%\label{fig:ape_phyl}
+%\end{figure}
+
+%Figure: Ape divergence dating
+%\begin{figure}[!ht]
+%%\includegraphics[width=.5\textwidth]{ape_reltime.eps}
+%\caption{Divergence dates (in millions of years ago) estimated for apes using the phylogeny in Figure \ref{fig:ape_phyl}.
+%A mean calibration date (29.6 mya) was enforced for the split between Cercopithecidae (i.e. macaques) and Hominidae.}
+%\label{fig:reltime}
+%\end{figure}
+%
+%%Figure: Ape divergence dates compared to timetree estimates
+%\begin{figure}[!ht]
+%%\includegraphics[width=.5\textwidth]{ape_timetree.eps}
+%\caption{Comparison of divergence dates found on timetree.org (boxplots) to dates in Figure \ref{fig:reltime} (stars).}
+%\label{fig:timetree}
+%\end{figure}
+
+\clearpage
+%\renewcommand\thefigure{\thesection.\arabic{figure}}    
+\section{Supplementary Figures}
+\setcounter{figure}{0} 
+
+%Figure: Simulation trees
+\begin{figure}[!ht]
+\includegraphics[trim=0cm 10cm 0cm 0cm, clip=true, width=\textwidth]{all4_trees.pdf}
+\caption{Simulation trees used to test the SISRS pipeline. Genomes were simulated on each tree using DAWG 2.0. Branch lengths were scaled by multiplying by 0.01-0.06.}
+\label{fig:trees}
+\end{figure}
+
+%Figure: Sim results all depths
+\begin{figure}[!ht]
+\includegraphics[width=1\textwidth]{sim_results_depths.pdf}
+\caption{SISRS identified fewer informative sites for deeper nodes in the tree; however, in most cases the number of sites was sufficient to resolve the tree. 
+Results are separated by branch length (panels), coverage (x axis), and tree depth (symbols). 
+The number of sites supporting the node A+B are denoted as $\circ$; $\triangle$ denotes sites supporting A+B+C;$\blacksquare$ denotes A+B+C+D; $\blacktriangle$ denotes A+B+C+D+E; $\ast$ denotes A+B+C+D+E+F; $\bullet$ denotes A+B+C+D+E+F+G.
+Top: results for the equal-branch-length tree. Middle: results for the tree with short deep branches. Bottom: results for the tree with long deep branches.}
+\label{fig:sim_results_all_depths}
+\end{figure}
+
+%Figure: Ape phylogeny from h21 aligned data
+%\begin{figure}[!ht]
+%\includegraphics[width=.5\textwidth]{ape_tree_h21.pdf}
+%\caption{Ape phylogeny estimated from data identified by SISRS using human chromosome 21 as the reference genome. 651,938 sites were identified with no missing data allowed. 
+%The phylogeny was estimated using RAxML with a GTRGAMMA model.}
+%\label{fig:h21tree}
+%\end{figure}
+
+\clearpage
+\section{Supplementary Tables}
+%Table: Ape data
+\begin{table}[ht]
+  \caption{Accession numbers for data downloaded from the European Nucleotide Archive. Human data are from the 1000 genomes project \citep{1000GenomesProjectConsortium2010}. Taxa for which transcriptome data was used are italicized.}
+  \centering
+  \begin{tabular}{c}
+%    \begin{center}                                                                         
+     \includegraphics[width=1\textwidth]{ENA_data_used.pdf}
+  %  \end{center}     
+  \end{tabular}
+  \label{table:ENAdata}
+\end{table}
+
+%%Table: Sites supporting other ape trees
+%\begin{table}[ht]
+%  \caption{The number of sites supporting each incorrect relationship among primates.}
+%  \centering
+%  \begin{tabular}{c}
+%%    \begin{center}                                                                         
+%     \includegraphics[width=1\textwidth]{ape_non_concord_sites.pdf}
+%  % \end{center}     
+% \end{tabular}
+%  \label{table:ape_nonconcord}
+%\end{table}
+
+\end{document}
