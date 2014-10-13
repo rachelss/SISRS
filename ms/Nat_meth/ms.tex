@@ -36,7 +36,7 @@ We have developed a novel application to rapidly obtain homologous genomic data 
 This software, called SISRS, avoids the time consuming steps of \textit{de novo} assembly, genome-genome alignment, and annotation to identify phylogenetic markers.
 Using simulations, we demonstrate that SISRS is able to identify large numbers of variable sites with 97\% precision from data containing phylogenetic signal. 
 For genomic data from apes, SISRS identified thousands of variable sites, resulting in an accurate phylogeny. 
-Finally, we applied SISRS to determine the phylogeny of placental mammals, which has long been controversial. 
+Finally, we applied SISRS to determine the phylogeny of placental mammals, the root of which has long been controversial. 
 SISRS is available at https://github.com/rachelss/SISRS.
 }
 
@@ -73,7 +73,7 @@ SISRS also takes advantage of the raw data to avoid erroneous genotype calling d
 We demonstrate that SISRS provides high quality phylogenetic datasets across a range of simulated and empirical data. 
 First, the data output by SISRS for simulated shotgun reads was congruent with the starting phylogeny at all depths in the tree. 
 Second, using previously sequenced shotgun data for seven primate taxa, we were able to estimate the known phylogeny rapidly and accurately. 
-Third, we used available data to estimate the phylogeny of mammals, which has remained controversial.
+Third, we used available data to estimate the phylogeny of mammals, the root of which has remained controversial.
 Using SISRS, phylogenies can be produced from next-generation sequencing reads in a matter of days.
 For example, identification of phylogenetic markers from raw mammalian transcriptome reads took 15 hours.
 
@@ -85,7 +85,7 @@ SISRS identifies phylogenetically informative regions via a novel protocol.
 (1) SISRS assembles a ``composite genome'' from shotgun sequencing reads for all taxa.
 (2) The composite genome is used as a reference to align the sequencing data for each sample. 
 (3) The nucleotide for each sample for each position in the genome is identified via a strict consensus (i.e.\ sites that are variable are called as unknown). 
-(4) SISRS removes regions that have too much missing information.
+(4) SISRS removes regions that have too much missing information (as specified by the user).
 In this way, SISRS identifies sites across entire genomes that are phylogenetically informative and reduces errors due to biological and experimental error.
 This protocol is outlined succinctly in Figure \ref{fig:pipeline}. 
 
@@ -98,9 +98,10 @@ After assembling these diverse data, the resulting contigs contain sequences tha
 
 A high quality composite reference genome can be assembled using only a subset of sequencing data because conserved regions can be identified using only a handful of reads from a few species. 
 SISRS uses reservoir sampling \citep{Vitter1985} to construct a random subsample of the reads for each species, which reduces the complexity of assembling the composite reference genome.
-We aim for 10x coverage of conserved regions across species.
-When subsampling, SISRS assumes 200bp per read-pair and samples a number of reads equivalent to one-twentieth of a user-specified genome size to satisfy this goal.
-The genome size may be adjusted to compensate for different read lengths.
+Given a user-specified genome size, the reads should include approximately 
+10x coverage of conserved regions across species.
+%When subsampling, SISRS assumes 200bp per read-pair and samples a number of reads equivalent to one-twentieth of a user-specified genome size to satisfy this goal.
+%The genome size may be adjusted to compensate for different read lengths.
 
 \subsection{Site calling for each position in the reference}
 To determine conserved regions and variation among species within these regions, the full sequencing data is mapped back to the composite reference genome using Bowtie 2 \citep{Langmead2012}.
@@ -108,6 +109,8 @@ SISRS uses a strict consensus to call the genotype of each species for each site
 This is a conservative approach that eliminates any sites that contain paralogous data, thus significantly reducing non-phylogenetic signal \citep{Philippe2011}. 
 After genotype calling, SISRS produces a dataset containing sites that (1) have information for most or all taxa (as specified by the user) and (2) are variable among taxa (also controllable). 
 Sites with too much missing data provide limited information, while sites that are invariable do not provide information on evolutionary history.
+These sites are not included in output data.
+%%%%%%%%%%%%WHAT'S THE REPEATABILITY, similarity of composite genomes given subsampling
 
 %To optimize genotype-calling in homologous regions, SISRS offers the option to create a sample-specific composite genome.
 %Following the alignment of data to the composite genome, for each sample the majority allele for each site is inserted into the composite genome.
@@ -151,7 +154,7 @@ Due to the size of the dataset, we treated the data output by SISRS as a single 
 analyzed the data in a maximum likelihood (ML) framework with 1000 bootstraps implemented in RAxML-HPC2 8.0.3. \citep{Stamatakis2006}. 
 The GTRGAMMA model was used; the omission of invariable sites was accommodated with the ASC parameter to correct for the exclusion of invariable sites as recommended in the manual \citep{Lewis2001}.
 %The likelihood calculated using this model does not include values for the diagonal of the Q matrix \cite{Lewis2001}. 
-The phylogeny is shown rooted on macaques.
+%The phylogeny is shown rooted on macaques.
 
 \subsection{Estimating the Mammal Phylogeny}
 
@@ -160,6 +163,7 @@ Transcriptome and genome data were obtained as above (Suppl. Table \ref{table:EN
 For most taxa we combined data from more than one individual to increase genome coverage.
 Potentially informative sites were obtained using SISRS as above; however, the composite genome was derived exclusively from transcriptome data to reduce assembly time and memory requirements.
 The genome size specified for the composite genome subsampling procedure was 100 million.
+************Data were analyzed using RAxML%%%%%%%%%%%%%%%%
 %To ensure SISRS was not producing so much data that alternative phylogenies were rejected due to statistics not biology (Kumar et al. 2011), we determined the most likely phylogenies based on X% of the data. We used the KH test ( ) to compare these phylogenies using the remaining data. We repeated this analysis. 
 
 \section{Results\label{sec:Results}}
@@ -171,7 +175,7 @@ For all simulation trees, the number of potentially informative sites identified
 As the distance between taxa (i.e.\ branch length) increased, the number of output sites decreased (Figure \ref{fig:simresults}). 
 Of these sites, the greatest number allowed the accurate identification of the shallowest nodes, with a decreasing number allowing the identification of deeper nodes (Figure \ref{fig:simresults_depths}). 
 Insufficient coverage in the simulations, lack of coverage by the composite genome, and insufficient coverage following mapping of the reads to the composite genome reference contributed to a failure to recover all variable sites (Figure \ref{fig:sims_falsenegs}). 
-Potential false positives due to read simulation error were removed by SISRS; however, some new false positives were introduced, likely due to erroneous mapping of reads to the composite genome.
+Potential false positives due to read simulation error were removed by SISRS as part of calling by strict consensus; however, some new false positives were introduced, likely due to erroneous mapping of reads to the composite genome.
 These false positives represented less that 2.5\% of identified variable sites for the two-taxon trees, and 0.2\% for the eight-taxon trees.
 
 \subsection{Ape tree is recovered}
