@@ -97,7 +97,7 @@ fi
 FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
 FILELISTU=()
 for F in "${FILELISTA[@]}"; do
-    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=${F}
+    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=(${F})
     fi
 done
 if [[ ${#FILELISTU[@]} -gt 0 ]]; then
