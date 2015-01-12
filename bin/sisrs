@@ -126,7 +126,7 @@ if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum o
 
 function buildContigs()
 {
-    echo CALLING FUNCTION
+    echo "Subsampling data"
     if [ -n "${GENOMESIZE}" ]; then
         NUMER=$((10*${GENOMESIZE}))
         DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
@@ -144,26 +144,27 @@ function buildContigs()
     if [ -n "${REFFILE}" ]; then
         if [[ ${#FILELISTU[@]} -gt 0 ]]; then
 	    if [[ ${#FILELIST[@]} -gt 0 ]]; then
-		echo "level 2: velvet REF 1"
+		echo "Running Velvet with PE and SE reads, and reference"
                 velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq -short ${MAINFOLDER}/*/subsampled*fastq
 	    else
-		echo "level 2: velvet REF 2"
+		echo "Running Velvet with SE reads and reference"
                 velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -short ${MAINFOLDER}/*/subsampled*fastq
 	    fi
         else
+            echo "Running Velvet with PE reads and reference"
 	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq
         fi
     else
         if [[ ${#FILELISTU[@]} -gt 0 ]]; then
 	    if [[ ${#FILELIST[@]} -gt 0 ]]; then
-		echo "level 2: VELVET 1"
+		echo "Running Velvet with PE and SE reads"
                 velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq -short ${MAINFOLDER}/*/subsampled*fastq
 	    else
-		echo "level 2: VELVET 2"
+		echo "Running Velvet with SE reads"
                 velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -short ${MAINFOLDER}/*/subsampled*fastq
 	    fi
         else
-	    echo "level 2: VELVET 3"
+	    echo "Running Velvet with PE reads"
 	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq
         fi
     fi
@@ -201,6 +202,7 @@ function mapContigs()
     echo ==== Done Indexing Bam Files ====
     
     #get pileups for data
+    samtools faidx ${MAINFOLDER}/velvetoutput/contigs.fa
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     echo ==== Done Piling Up ====
        
@@ -270,7 +272,7 @@ function gfr_buildConservedContigs()
         rm -f "${FOLDER}"/*bam
         for FILE in "${FOLDER}"/*R1*.fastq; do
 	    # output sorted bam file w/o unaligned reads - lots per folder
-            echo "HELLO"
+            echo "Aligning reads to conserved contigs"
 	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${FILE/.fastq/}  
         done
     done   
