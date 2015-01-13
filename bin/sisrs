@@ -269,7 +269,7 @@ function gfr_aligntoConservedContigs()
     
     for FOLDER in "${FOLDERLISTU[@]}"; do
         for FILE in "${FOLDER}"/*.fastq; do
-            if [[ $FILE != subsampled.fastq ]]; then
+            if [[ $FILE != "${FOLDER}"/subsampled.fastq ]]; then
                 bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "${MAINFOLDER}"/"$FOLDER"_loci/$(basename ${FILE/.fastq})  
             fi
         done        
@@ -287,8 +287,10 @@ function gfr_mergebam()
         elif [[ $(ls -l "$FOLDER"_loci/*bam | wc -l) -gt 1 ]]; then
             TOMERGE+=("$FOLDER"_loci)
         fi
-    done 
-    parallel -j "${PROCESSORS}" parallel samtools merge "{}_loci/merged.bam {}_loci/*.bam" ::: "${TOMERGE[@]}"
+    done
+    if [[ "${#TOMERGE[@]}" -gt 0 ]]; then
+        parallel -j "${PROCESSORS}" parallel samtools merge "{}_loci/merged.bam {}_loci/*.bam" ::: "${TOMERGE[@]}"
+    fi
 }
 
 function gfr_getlocusalignments()
