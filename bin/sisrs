@@ -296,19 +296,19 @@ function gfr_mergebam()
 function gfr_getlocusalignments()
 {
     for FOLDER in "${FOLDERLISTA[@]}"; do
-	for F in ${FOLDER}/*.sam; do 
+	for F in ${FOLDER}_loci/*.sam; do 
 	    rm -f $F; 
 	done
     done
 
-    parallel --jobs "${PROCESSORS}" "samtools view {}/merged.bam > {}/merged.sam" ::: "${FOLDERLISTA[@]}"     #convert to sam file
-    parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/gfr/separate_sam_by_contig.py {}/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
+    parallel --jobs "${PROCESSORS}" "samtools view {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #convert to sam file
+    parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/gfr/separate_sam_by_contig.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
     for FOLDER in "${FOLDERLISTA[@]}"; do 
-	rm -f "${FOLDER}"/merged.sam; 
+	rm -f "${FOLDER}"_loci/merged.sam; 
     done
 
     for FOLDER in "${FOLDERLISTA[@]}"; do
-	for F in ${FOLDER}/*.sam; do  
+	for F in ${FOLDER}_loci/*.sam; do  
             python ${DIR}/libexec/gfr/make_alignment_from_sam.py ${F} ${ALLELES};
         done
     done
@@ -326,22 +326,22 @@ function runGFR()
     gfr_mergebam
     gfr_getlocusalignments
 
-    mv "${MAINFOLDER}"/ref_genes.fa "${MAINFOLDER}"/ref_genes.fasta
-    for j in *fa; do 
+    mkdir loci
+    
+    for j in loci/*fa; do 
         rm -f $j; 
     done    
-    parallel --jobs "${PROCESSORS}" 'for j in {}/*fa; do cat $j >> {}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
+    parallel --jobs "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
-    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species
+    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species  !!!!!!!!!!!
     for F in "${FOLDERLIST[@]}"; do
         # delete species fasta files 
-        mv ${F}.fa ${F}.fasta; 
+        mv loci/${F}.fa loci/${F}.fasta; 
     done 
-    for F in *fa; do 
+    for F in loci/*fa; do 
         # align files of each gene
         mafft $F > ${F/.fa/_align.fa}; 
     done  
-    mv "${MAINFOLDER}"/ref_genes.fasta "${MAINFOLDER}"/ref_genes.fa
 
 }
 
