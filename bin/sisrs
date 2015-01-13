@@ -35,6 +35,7 @@ Default settings can be changed using the following flags:
     -k : use to specify k-mer size
     -p : use to specify the number of processors available
     -f : use to specify reads in fasta format
+    -l : use to specify the number of alleles for sisrs loci
     -m : use to specify the number of species allowed to have missing data at a site
     -a : use to specify the folder containing the folders of reads
     -n : use to specify the number of reads required to call a base at a site
@@ -253,97 +254,92 @@ function copyRefContigs()
     python ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/velvetoutput/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
 }
 
-function gfr_buildRefGenes()
-{
-    # Probably don't need this anymore?!?
-    if [ "$WITHIN" -lt 1 ]; then
-        for F in *fasta; do mafft $F > ${F/.fasta/_aligned.fasta}; done
-        python ${DIR}/get_mr_consensus.py
-    else
-        cat *fasta > ref_genes.fa
-    fi
-
-}
-
-function gfr_buildConservedContigs()
+function gfr_aligntoConservedContigs()
 {
     bowtie2-build "${MAINFOLDER}"/ref_genes.fa "${MAINFOLDER}"/ref_genes    #build index for conserved contigs
-    for FOLDER in "${FOLDERLIST[@]}"; do
-        rm -f "${FOLDER}"/*bam
-        for FILE in "${FOLDER}"/*R1*.fastq; do
-	    # output sorted bam file w/o unaligned reads - lots per folder
-            echo "Aligning reads to conserved contigs"
-	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${FILE/.fastq/}  
-        done
-    done   
-
-}
-
-function runGFR()
-{
-    gfr_buildConservedContigs
-
-    for FOLDER in "${FOLDERLIST[@]}"; do 
-	# Create file merged.bam that contains all the bam files in the folder
-	rm -f "${FOLDER}"/merged.bam; # remove existing merged.bam file
-	if [[ $(ls -l "${FOLDER}"/*bam | wc -l) -gt 1 ]]; then
-	    # use samtools merge for multiple bam files
-	    samtools merge "${FOLDER}"/merged.bam "${FOLDER}"/*.bam
-	else
-	    # if only one bam file exists make a link to merged.bam
-	    A=${FOLDER}/*bam
-	    ln $(echo "$A") ${FOLDER}/merged.bam
-	fi
-    done
-#    parallel --jobs "${PROCESSORS}" "samtools merge {}/merged.bam {}/*.bam" ::: "${FOLDERLIST[@]}"       #merge bam files
-#    for FOLDER in "${FOLDERLIST[@]}"; do 
-#	if [ ! -f ${FOLDER}/merged.bam ]; then                   
-#            #samtools won't merge one file - need to copy
-#	    A=${FOLDER}/*bam
-#	    ln $(echo "$A") ${FOLDER}/merged.bam
-#	fi
-#    done
-
+    for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "$FOLDER"_loci/*bam; done
     
     for FOLDER in "${FOLDERLIST[@]}"; do
+        for FILE in "${FOLDER}"/*R1*.fastq; do
+	    # output sorted bam file w/o unaligned reads - lots per folder
+            echo Aligning ${FILE} to conserved contigs
+	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "${MAINFOLDER}"/"$FOLDER"_loci/$(basename ${FILE/.fastq})  
+        done
+    done
+    
+    for FOLDER in "${FOLDERLISTU[@]}"; do
+        for FILE in "${FOLDER}"/*.fastq; do
+            if [[ $FILE != subsampled.fastq ]]; then
+                bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "${MAINFOLDER}"/"$FOLDER"_loci/$(basename ${FILE/.fastq})  
+            fi
+        done        
+    done
+}
+
+function gfr_mergebam()
+{
+    for FOLDER in "${FOLDERLISTA[@]}"; do
+        declare -a TOMERGE=()
+        rm -f "$FOLDER"_loci/merged.bam        # remove existing merged.bam file    
+        if [[ $(ls -l "$FOLDER"_loci/*bam | wc -l) -eq 1 ]]; then      #if only one file just link
+            F="$FOLDER"_loci/*bam
+            ln $(echo "$F") "$FOLDER"_loci/merged.bam
+        elif [[ $(ls -l "$FOLDER"_loci/*bam | wc -l) -gt 1 ]]; then
+            TOMERGE+=("$FOLDER"_loci)
+        fi
+    done 
+    parallel -j "${PROCESSORS}" parallel samtools merge "{}_loci/merged.bam {}_loci/*.bam" ::: "${TOMERGE[@]}"
+}
+
+function gfr_getlocusalignments()
+{
+    for FOLDER in "${FOLDERLISTA[@]}"; do
 	for F in ${FOLDER}/*.sam; do 
 	    rm -f $F; 
 	done
     done
 
-    parallel --jobs "${PROCESSORS}" "samtools view {}/merged.bam > {}/merged.sam" ::: "${FOLDERLIST[@]}"     #convert to sam file
-    parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/gfr/separate_sam_by_contig.py {}/merged.sam" ::: "${FOLDERLIST[@]}"   #separate by gene -> lots of sam files per folder
-    for FOLDER in "${FOLDERLIST[@]}"; do 
+    parallel --jobs "${PROCESSORS}" "samtools view {}/merged.bam > {}/merged.sam" ::: "${FOLDERLISTA[@]}"     #convert to sam file
+    parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/gfr/separate_sam_by_contig.py {}/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
+    for FOLDER in "${FOLDERLISTA[@]}"; do 
 	rm -f "${FOLDER}"/merged.sam; 
     done
 
-    if [ "$WITHIN" -lt 1 ]; then
-	for F in */*sam; do 
-	    python ${DIR}/libexec/gfr/make_alignment_from_sam.py ${F} ${ALLELES}; 
-	done
+    for FOLDER in "${FOLDERLISTA[@]}"; do
+	for F in ${FOLDER}/*.sam; do  
+            python ${DIR}/libexec/gfr/make_alignment_from_sam.py ${F} ${ALLELES};
+        done
+    done
+}
+
+function runGFR()
+{
+    for FOLDER in "${FOLDERLISTA[@]}"; do
+        if [ ! -d "$FOLDER"_loci ]; then
+            mkdir "$FOLDER"_loci
+        fi
+    done
     
-	mv "${MAINFOLDER}"/ref_genes.fa "${MAINFOLDER}"/ref_genes.fasta
-	for j in *fa; do 
-	    rm -f $j; 
-	done    
-	parallel --jobs "${PROCESSORS}" 'for j in {}/*fa; do cat $j >> {}.fa; done'  ::: "${FOLDERLIST[@]}" #concatenate fa files -> all species fa files in main folder
-            
-	python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species
-	for F in "${FOLDERLIST[@]}"; do
-            # delete species fasta files 
-	    mv ${F}.fa ${F}.fasta; 
-	done 
-	for F in *fa; do 
-	    # align files of each gene
-	    mafft $F > ${F/.fa/_align.fa}; 
-	done  
-	mv "${MAINFOLDER}"/ref_genes.fasta "${MAINFOLDER}"/ref_genes.fa
-    else
-	# TODO: Should this code be removed? 
-	for F in *.sam; do 
-	    python ${DIR}/libexec/gfr/make_alignment_from_sam.py ${F} ${ALLELES}; 
-	done
-    fi
+    gfr_aligntoConservedContigs
+    gfr_mergebam
+    gfr_getlocusalignments
+
+    mv "${MAINFOLDER}"/ref_genes.fa "${MAINFOLDER}"/ref_genes.fasta
+    for j in *fa; do 
+        rm -f $j; 
+    done    
+    parallel --jobs "${PROCESSORS}" 'for j in {}/*fa; do cat $j >> {}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
+        
+    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species
+    for F in "${FOLDERLIST[@]}"; do
+        # delete species fasta files 
+        mv ${F}.fa ${F}.fasta; 
+    done 
+    for F in *fa; do 
+        # align files of each gene
+        mafft $F > ${F/.fa/_align.fa}; 
+    done  
+    mv "${MAINFOLDER}"/ref_genes.fasta "${MAINFOLDER}"/ref_genes.fa
 
 }
 
