@@ -2,6 +2,7 @@
 import sys
 
 folder=sys.argv[1].split('/')[0]
+print folder
 samfile=open(sys.argv[1],'r')   #open file
 nodedict=dict()
 for line in samfile:      #go through file
