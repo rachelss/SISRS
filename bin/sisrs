@@ -308,9 +308,7 @@ function gfr_getlocusalignments()
     done
 
     for FOLDER in "${FOLDERLISTA[@]}"; do
-	for F in ${FOLDER}_loci/*.sam; do  
-            python ${DIR}/libexec/gfr/make_alignment_from_sam.py ${F} ${ALLELES};
-        done
+        find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
     done
 }
 
@@ -333,16 +331,12 @@ function runGFR()
     done    
     parallel --jobs "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
-    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species  !!!!!!!!!!!
+    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species 
     for F in "${FOLDERLIST[@]}"; do
         # delete species fasta files 
         mv loci/${F}.fa loci/${F}.fasta; 
-    done 
-    for F in loci/*fa; do 
-        # align files of each gene
-        mafft $F > ${F/.fa/_align.fa}; 
-    done  
-
+    done
+    find loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
 }
 
 if [[ ${LOCI} -eq 0 ]]; then
