@@ -27,7 +27,7 @@ def read_resort(species,seqdict,numalleles):
     return seqdict
 
 ##########################################################
-fafiles = glob.glob("*.fa")
+fafiles = glob.glob("loci/*.fa")
 print fafiles
 seqdict=dict()
 for f in fafiles:
