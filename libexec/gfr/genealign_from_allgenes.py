@@ -34,4 +34,4 @@ for f in fafiles:
     seqdict = read_resort(f,seqdict,int(sys.argv[1]))        #gene:(SeqRecord(species,sequence))
 
 for gene, records in seqdict.iteritems():
-    SeqIO.write(records, loci/gene+'.fa', "fasta")
+    SeqIO.write(records, 'loci/'+gene+'.fa', "fasta")
