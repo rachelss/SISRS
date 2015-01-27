@@ -307,9 +307,11 @@ function gfr_getlocusalignments()
 	rm -f "${FOLDER}"_loci/merged.sam; 
     done
 
-    for FOLDER in "${FOLDERLISTA[@]}"; do
-        find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
-    done
+    #for FOLDER in "${FOLDERLISTA[@]}"; do
+    #    find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
+    #done
+    
+    parallel -j "${PROCESSORS}" 'for j in {}_loci/*sam; do' "python ${DIR}/libexec/gfr/make_alignment_from_sam.py" '$j' "$ALLELES; done" ::: "${FOLDERLISTA[@]}"
 }
 
 function runGFR()
@@ -324,12 +326,14 @@ function runGFR()
     gfr_mergebam
     gfr_getlocusalignments
 
-    mkdir loci
-    
-    for j in loci/*fa; do 
-        rm -f $j; 
-    done    
-    parallel --jobs "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
+    if [ ! -d loci ]; then
+        mkdir loci
+    else
+        for j in loci/*fa; do 
+            rm -f $j; 
+        done
+    fi
+    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
     python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species 
     for F in "${FOLDERLIST[@]}"; do
@@ -344,7 +348,7 @@ if [[ ${LOCI} -eq 0 ]]; then
     echo "**** SISRS ****"
     runSISRS
 else
-    # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRs to produce file. If
+    # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. If
     # ref_genes.fa doesn't exist then build it from alignment.nex
     echo "**** SISRS loci ****"
     if [ ! -f ${MAINFOLDER}/ref_genes.fa ] && [ ! -f "${MAINFOLDER}/alignment.nex" ]; then
