@@ -307,11 +307,11 @@ function gfr_getlocusalignments()
 	rm -f "${FOLDER}"_loci/merged.sam; 
     done
 
-    #for FOLDER in "${FOLDERLISTA[@]}"; do
-    #    find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
-    #done
+    for FOLDER in "${FOLDERLISTA[@]}"; do
+        find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
+    done
     
-    parallel -j "${PROCESSORS}" 'for j in {}_loci/*sam; do' "python ${DIR}/libexec/gfr/make_alignment_from_sam.py" '$j' "$ALLELES; done" ::: "${FOLDERLISTA[@]}"
+#    parallel -j "${PROCESSORS}" 'for j in {}_loci/*sam; do' "python ${DIR}/libexec/gfr/make_alignment_from_sam.py" '$j' "$ALLELES; done" ::: "${FOLDERLISTA[@]}"
 }
 
 function runGFR()
