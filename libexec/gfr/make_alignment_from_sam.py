@@ -155,8 +155,8 @@ def get_consensus(data):
 contig_read_mappings=sys.argv[1]
 numalleles=int(sys.argv[2])
 print contig_read_mappings,
-folder_name=contig_read_mappings.split('/')[0]
-file_name=contig_read_mappings.split('/')[1]
+folder_name=contig_read_mappings.split('/')[:-1]
+file_name=contig_read_mappings.split('/')[-1]
 node_name=file_name.split('.')[0]
 
 totalseq,totalqual=[],[]
