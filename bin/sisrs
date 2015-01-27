@@ -333,7 +333,7 @@ function runGFR()
             rm -f $j; 
         done
     fi
-    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
+    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
     python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species 
     for F in "${FOLDERLIST[@]}"; do
