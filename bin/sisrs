@@ -268,18 +268,16 @@ function gfr_aligntoConservedContigs()
     done
     
     for FOLDER in "${FOLDERLISTU[@]}"; do
-        for FILE in "${FOLDER}"/*.fastq; do
-            if [[ $FILE != "${FOLDER}"/subsampled.fastq ]]; then
-                bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "${MAINFOLDER}"/"$FOLDER"_loci/$(basename ${FILE/.fastq})  
-            fi
+        for FILE in "${FOLDER}"/*reads*fastq; do
+            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "${MAINFOLDER}"/"$FOLDER"_loci/$(basename ${FILE/.fastq})  
         done        
     done
 }
 
 function gfr_mergebam()
 {
+    declare -a TOMERGE=()
     for FOLDER in "${FOLDERLISTA[@]}"; do
-        declare -a TOMERGE=()
         rm -f "$FOLDER"_loci/merged.bam        # remove existing merged.bam file    
         if [[ $(ls -l "$FOLDER"_loci/*bam | wc -l) -eq 1 ]]; then      #if only one file just link
             F="$FOLDER"_loci/*bam
@@ -289,7 +287,7 @@ function gfr_mergebam()
         fi
     done
     if [[ "${#TOMERGE[@]}" -gt 0 ]]; then
-        parallel -j "${PROCESSORS}" parallel samtools merge "{}_loci/merged.bam {}_loci/*.bam" ::: "${TOMERGE[@]}"
+        parallel -j "${PROCESSORS}" samtools merge '{}/merged.bam {}/*.bam' ::: "${TOMERGE[@]}"
     fi
 }
 
