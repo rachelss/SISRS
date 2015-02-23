@@ -17,9 +17,9 @@ def getallbases(path,minread,thresh):
                 if(len(bases)< minread):                                                #not enough info
                     allbases[str(bamfile.getrname(pileupcolumn.tid))+str(pileupcolumn.pos)]='N'      #node_pos:'N'
                 elif Counter(bases).most_common(1)[0][1] / float(len(bases)) >= thresh: #enough of one
-                    return bamfile.getrname(pileupcolumn.tid),pileupcolumn.pos,Counter(bases).most_common(1)[0][0] #node_pos:base
+                    allbases[str(bamfile.getrname(pileupcolumn.tid))+'_'+str(pileupcolumn.pos)]=Counter(bases).most_common(1)[0][0] #node_pos:base
                 else:       #het or lots of error
-                    return bamfile.getrname(pileupcolumn.tid),pileupcolumn.pos,'N'      #node_pos:'N'
+                    allbases[str(bamfile.getrname(pileupcolumn.tid))+str(pileupcolumn.pos)]='N'      #node_pos:'N'
         
             bamfile.close()
     
