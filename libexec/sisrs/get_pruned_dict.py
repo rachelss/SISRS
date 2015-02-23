@@ -30,7 +30,7 @@ def getallbases(path,minread,thresh):
     return allbases
 
 ###############################################
-allbases=getallbases(sys.argv[1],sys.argv[2],sys.argv[3])      #dictionary of combined pileups - locus/pos:bases(as list)
+allbases=getallbases(sys.argv[1],int(sys.argv[2]),float(sys.argv[3]))      #dictionary of combined pileups - locus/pos:bases(as list)
 output = open(sys.argv[1]+'/pruned_dict.pkl', 'wb')
 cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
 output.close()
