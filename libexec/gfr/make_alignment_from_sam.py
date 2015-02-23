@@ -154,7 +154,7 @@ def get_consensus(data):
 ######################
 contig_read_mappings=sys.argv[1]
 numalleles=int(sys.argv[2])
-print contig_read_mappings,
+#print contig_read_mappings,
 folder_name='/'.join(contig_read_mappings.split('/')[:-1])
 file_name=contig_read_mappings.split('/')[-1]
 node_name=file_name.split('.')[0]
@@ -206,7 +206,7 @@ for i,j in enumerate(totalseq):
     totalqual[i] = j + ('-' * plus)
 
 if numalleles == 1:
-    print 'one allele'
+#    print 'one allele'
     allele1,site_counts = [],[]
     for i in range(len(totalseq[0])):
         base1,num = get_consensus([seq[i] for s,seq in enumerate(totalseq) if seq[i] is not '-' and ord(totalqual[s][i]) >39])  #7+32
