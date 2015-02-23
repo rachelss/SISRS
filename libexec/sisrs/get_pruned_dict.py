@@ -14,14 +14,21 @@ def getallbases(path,minread,thresh):
             for pileupcolumn in bamfile.pileup():           #only doing one at a time
                 basesall=[pileupread.alignment.query_sequence[pileupread.query_position] for pileupread in pileupcolumn.pileups]       #get bases per site
                 bases=[b for b in basesall if b in ['a','c','g','t','A','C','G','T']]
-                if(len(bases)< minread):                                                #not enough info
-                    allbases[str(bamfile.getrname(pileupcolumn.tid))+str(pileupcolumn.pos)]='N'      #node_pos:'N'
-                elif Counter(bases).most_common(1)[0][1] / float(len(bases)) >= thresh: #enough of one
-                    allbases[str(bamfile.getrname(pileupcolumn.tid))+'_'+str(pileupcolumn.pos)]=Counter(bases).most_common(1)[0][0] #node_pos:base
-                else:       #het or lots of error
-                    allbases[str(bamfile.getrname(pileupcolumn.tid))+str(pileupcolumn.pos)]='N'      #node_pos:'N'        
+                nodepos=str(bamfile.getrname(pileupcolumn.tid))+'_'+str(pileupcolumn.pos)
+                if nodepos in allbases:
+                    allbases[nodepos].extend(bases)
+                else:
+                    allbases[nodepos]=bases
             bamfile.close()
-    
+            
+    for k,v in allbases.iteritems():
+        if(len(v)< minread):                                                #not enough info
+            allbases[k]='N'      #node_pos:'N'
+        elif Counter(v).most_common(1)[0][1] / float(len(v)) >= thresh: #enough of one
+            allbases[k]=Counter(v).most_common(1)[0][0] #node_pos:base
+        else:       #het or lots of error
+            allbases[k]='N'      #node_pos:'N'        
+            
     return allbases
 
 ###############################################
