@@ -201,11 +201,6 @@ function mapContigs()
     #index bam
     parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     echo ==== Done Indexing Bam Files ====
-    
-    #get pileups for data
-    samtools faidx ${MAINFOLDER}/velvetoutput/contigs.fa
-    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
-    echo ==== Done Piling Up ====
        
     #map contigs to reference
     if [ -n "${REFFILE}" ]; then
