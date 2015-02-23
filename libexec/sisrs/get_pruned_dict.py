@@ -14,7 +14,7 @@ def getallbases(path,minread,thresh):
             for pileupcolumn in bamfile.pileup():           #only doing one at a time
                 basesall=[pileupread.alignment.query_sequence[pileupread.query_position] for pileupread in pileupcolumn.pileups]       #get bases per site
                 bases=[b for b in basesall if b in ['a','c','g','t','A','C','G','T']]
-                print bases,str(Counter(bases).most_common(1)[0][1] / float(len(bases)))
+                print len(bases),str(Counter(bases).most_common(1)[0][1] / float(len(bases)))
                 if(len(bases)< minread):                                                #not enough info
                     allbases[str(bamfile.getrname(pileupcolumn.tid))+str(pileupcolumn.pos)]='N'      #node_pos:'N'
                     print '1: N'
