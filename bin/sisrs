@@ -7,44 +7,68 @@
 #run with non-defaults: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
 #reads must be paired, where the filename contains either R1 or R2
 
+VERSION=1.0
+
+#   sisrs [loci] ... -a [DIR] : will also extract the relevant alignments
+
 help() {
-    echo "
+    cat <<ENDLINE
     
-    SISRS: SNP Identification from Short Read Sequences
-    Version 1.0
-    Copyright: Rachel Schwartz
-    Rachel.Schwartz@asu.edu
-    https://github.com/rachelss/SISRS
+ SISRS: Site Identification from Short Read Sequences
+ Version $VERSION
+ Copyright (c) 2013-2015 Rachel Schwartz <Rachel.Schwartz@asu.edu>
+ https://github.com/rachelss/SISRS
+
+Usage:
+
+ sisrs [command] options
 
 By default, SISRS assumes that
 
-    A reference genome is not available.
-    The K-mer size to be used by Velvet in contig assembly is 21.
-    Only one processor is available.
-    Files are in fastq format.
-    A site is only required to have data for two species to be included in the final alignment.
-    Folders containing reads are in the present working directory.
-    A minimum of three reads are required to call the base at a site for a taxon.
+ * A reference genome is not available.
+ * The K-mer size to be used by Velvet in contig assembly is 21.
+ * Only one processor is available.
+ * Files are in fastq format.
+ * A site is only required to have data for two species to be included
+   in the final alignment.
+ * Folders containing reads are in the present working directory.
+ * A minimum of three reads are required to call the base at a site
+   for a taxon.
 
-Default settings can be changed using the following flags:
+Flags:
     
-    sisrs [loci] ... -a [DIR] : will also extract the relevant alignments
+ -g : the approximate genome size - this is optional but will reduce
+      the size of the composite assembly by using a subset of reads to
+      approximate 10x coverage
+ -r : the path to the reference genome in fasta format
+ -k : k-mer size (for assembly)
+ -p : use this number of processors
+ -f : specify that reads are in fasta format
+ -l : the number of alleles for sisrs loci
+ -m : the number of species that are allowed to have missing data at
+      a site
+ -a : the folder containing the folders of reads
+ -n : the number of reads required to call a base at a site
+ -t : the threshold for calling a site; e.g. 0.99 means that >99% of
+      bases for that taxon must be one allele; only recommended for
+      low ploidy with <3 individuals
+ -s : the steps to skip: 1 skips making the composite genome;
+      2 also skips aligning reads to the composite reference;
+      3 also skips getting data for each site and mapping the
+      composite genome to a known reference if available;
+      4 skips to identifying whether sites are variable among taxa
+      given data for each site for each taxon
 
-    -g : use to specify the approximate genome size - this will reduce the size of the composite assembly by using a subset of reads to approximate 10x coverage
-    -r : use to specify the location of the reference genome (must be a fasta file)
-    -k : use to specify k-mer size
-    -p : use to specify the number of processors available
-    -l : use to specify the number of alleles for sisrs loci
-    -m : use to specify the number of species allowed to have missing data at a site (skipping this and filtering later is recommended)
-    -f : use to specify the folder containing the folders of reads
-    -n : use to specify the number of reads required to call a base at a site
-    -t : use to specify the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals
-    -a : use to specify the composite genome assembler 
-    -s : use to specify the steps to skip: 1 skips making the composite genome; 2 also skips aligning reads to the composite reference; 3 also skips getting data for each site and mapping the composite genome to a known reference if available; 4 skips to identifying whether sites are variable among taxa given data for each site for each taxon
+ Example command:
+ sisrs -g 50000000 -r ./reference.fasta -p 40 -f fastq -m 4 \\
+ -a test_data
+ 
+ Example command:
+ sisrs loci -g 50000000 -r ./reference.fasta -p 40 -f fastq -m 4 \\
+ -a test_data
 
-    Example command: ./sisrs -g 50000000 -r ./reference.fasta -p 40 -f fastq -m 4 -a test_data
-    Example command: ./sisrs loci -g 50000000 -r ./reference.fasta -p 40 -f fastq -m 4 -a test_data"
-    }
+ENDLINE
+}
 
 #use defaults or input values
 KMER=21
