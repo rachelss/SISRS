@@ -9,8 +9,6 @@
 
 VERSION=1.0
 
-#   sisrs [loci] ... -a [DIR] : will also extract the relevant alignments
-
 help() {
     cat <<ENDLINE
     
@@ -35,40 +33,46 @@ By default, SISRS assumes that
  * A minimum of three reads are required to call the base at a site
    for a taxon.
 
+Commands:
+ sites : produce an alignment of sites from raw reads
+ alignContigs : run sisrs skipping the composite genome assembly
+ mapContigs : run sisrs, also skipping alignment of reads to composite genome
+ identifyFixedSites : run sisrs, also skipping mapping of contigs to a reference
+ outputAlignment : get sisrs alignment from sites id'd for individual species
+ loci : produce a set of aligned loci based on the most variable regions of
+        the composite genome
+ 
 Flags:
     
- -g : the approximate genome size - this is optional but will reduce
+ -g : MANDATORY - the approximate genome size - this will reduce
       the size of the composite assembly by using a subset of reads to
       approximate 10x coverage
+ -p : use this number of processors
  -r : the path to the reference genome in fasta format
  -k : k-mer size (for assembly)
- -p : use this number of processors
- -f : specify that reads are in fasta format
- -l : the number of alleles for sisrs loci
- -m : the number of species that are allowed to have missing data at
-      a site
- -a : the folder containing the folders of reads
+ -f : the folder containing the folders of reads
  -n : the number of reads required to call a base at a site
  -t : the threshold for calling a site; e.g. 0.99 means that >99% of
       bases for that taxon must be one allele; only recommended for
       low ploidy with <3 individuals
- -s : the steps to skip: 1 skips making the composite genome;
-      2 also skips aligning reads to the composite reference;
-      3 also skips getting data for each site and mapping the
-      composite genome to a known reference if available;
-      4 skips to identifying whether sites are variable among taxa
-      given data for each site for each taxon
+ -m : the number of species that are allowed to have missing data at
+      a site
+ -l : the number of alleles for sisrs loci
 
  Example command:
- sisrs -g 50000000 -r ./reference.fasta -p 40 -f fastq -m 4 \\
- -a test_data
+ sisrs sites -g 50000000 -p 40 -m 4 -a test_data
  
  Example command:
- sisrs loci -g 50000000 -r ./reference.fasta -p 40 -f fastq -m 4 \\
- -a test_data
+ sisrs loci -g 50000000 -p 40 -m 4 -a test_data
 
 ENDLINE
 }
+
+if [ "$#" -eq 0 ]; then
+# print help message
+    echo "run sisrs -h"
+    exit 0
+fi
 
 #use defaults or input values
 KMER=21
@@ -76,24 +80,18 @@ MINREAD=3
 PROCESSORS=1
 MAINFOLDER=.
 THRESHOLD=1
-SKIP=0
-REPEAT=0
-LOCI=0
-WITHIN=0
 ALLELES=1
 DEBUG=0
 ASSEMBLER=Velvet
 
-if [[ $1 = "loci" ]]; then
-    LOCI=1
-    OPTIND=2 # tells getopts to start parsing at the second argument
-fi
+cmds=(buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
 
-while getopts q:g:r:k:p:m:a:f:l:n:s:t:hd option
+OPTIND=2 # tells getopts to start parsing at the second argument
+
+while getopts g:r:k:p:m:a:f:l:n:t:hd option
 do
     case "${option}"
 	in
-	q) REPEAT=${OPTARG};;
 	g) GENOMESIZE=${OPTARG};;
 	r) REFFILE=${OPTARG};;
 	k) KMER=${OPTARG};;
@@ -104,15 +102,15 @@ do
 	l) ALLELES=${OPTARG};;
 	n) MINREAD=${OPTARG};;
 	t) THRESHOLD=${OPTARG};;
-	s) SKIP=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
 	\? ) echo "Unknown option" >&2; exit 1;;
     esac
 done
 
-if [ -z $1 ]; then
-    echo "You are using the default values. If this is incorrect, rerun SISRS using the correct flags. For more information run sisrs -h"
+if [ -z $GENOMESIZE ]; then
+    echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
+    exit 0
 fi
 
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
@@ -128,46 +126,42 @@ which bowtie2 &>/dev/null
 which parallel &>/dev/null
 [ $? -eq 0 ] || { echo "GNU parallel must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 
-#get paired fastq
-FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
-if [[ ${#FILELIST[@]} -gt 0 ]]; then
-    declare -a ALLFOLDERLIST=()
-    for F in "${FILELIST[@]}"; do ALLFOLDERLIST+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
-    FOLDERLIST=( $(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with paired fastq files as array
-fi
-
-#get unpaired fastq
-FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
-FILELISTU=()
-for F in "${FILELISTA[@]}"; do
-    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=(${F})
+function get_fastqa(){
+    #get paired fastq
+    FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
+    if [[ ${#FILELIST[@]} -gt 0 ]]; then
+        declare -a ALLFOLDERLIST=()
+        for F in "${FILELIST[@]}"; do ALLFOLDERLIST+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
+        FOLDERLIST=( $(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with paired fastq files as array
     fi
-done
-if [[ ${#FILELISTU[@]} -gt 0 ]]; then
-    declare -a ALLFOLDERLISTU=()
-    for F in "${FILELISTU[@]}"; do ALLFOLDERLISTU+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
-    FOLDERLISTU=( $(echo "${ALLFOLDERLISTU[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with unpaired fastq files as array
-fi
-FOLDERLISTA=( $(echo "${FOLDERLISTU[@]} ${FOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )
+    
+    #get unpaired fastq
+    FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
+    FILELISTU=()
+    for F in "${FILELISTA[@]}"; do
+        if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=(${F})
+        fi
+    done
+    if [[ ${#FILELISTU[@]} -gt 0 ]]; then
+        declare -a ALLFOLDERLISTU=()
+        for F in "${FILELISTU[@]}"; do ALLFOLDERLISTU+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
+        FOLDERLISTU=( $(echo "${ALLFOLDERLISTU[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with unpaired fastq files as array
+    fi
+    FOLDERLISTA=( $(echo "${FOLDERLISTU[@]} ${FOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )
 
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
+}
 
-
-function buildContigs()
-{
+function buildContigs(){
     echo "Subsampling data"
-    if [ -n "${GENOMESIZE}" ]; then
-        NUMER=$((10*${GENOMESIZE}))
-        DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
-        LEFTREADS=$((${NUMER}/${DENOM}))
-        parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
-    else        #shuffle paired end reads together if not subsampling    
-        # /usr/bin/time -o stats1 -v 
-	parallel --jobs "${PROCESSORS}" "perl ${DIR}/libexec/sisrs/shuffleSequences_fastq.pl" '{} $(echo {} | sed 's/R1/R2/') $(echo {} | sed 's/R1/shuffled/')' ::: "${FILELIST[@]}"
-        for F in "${FILELISTU[@]}"; do 
-	    ln $F $(dirname "${F}")/subsampled_$(basename "${F}"); 
-	done
-    fi
+    NUMER=$((10*${GENOMESIZE}))
+    DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
+    LEFTREADS=$((${NUMER}/${DENOM}))
+    parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
+    
+    for F in "${FILELISTU[@]}"; do 
+	ln $F $(dirname "${F}")/subsampled_$(basename "${F}"); 
+    done
     
     #make reference contigs - velveth
     if [ -n "${REFFILE}" ]; then
@@ -204,8 +198,7 @@ function buildContigs()
 }
 
 
-function alignContigs()
-{
+function alignContigs(){
     bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs      #index contigs
     
     #align reads to contigs
@@ -224,8 +217,7 @@ function alignContigs()
     echo ==== Done Aligning ====
 }
     
-function mapContigs()
-{
+function mapContigs(){
     #index bam
     parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     echo ==== Done Indexing Bam Files ====
@@ -239,46 +231,44 @@ function mapContigs()
     fi
 }
 
-function identifyFixedSites()
-{
+function identifyFixedSites(){
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     echo ==== Done Identifying Fixed Sites Without Error ====
 }
 
-function runSISRS()
-{
-    if [ "$SKIP" -lt 1 ]; then
-	buildContigs
-    fi
-
-    if [ "$SKIP" -lt 2 ]; then
-	alignContigs
-    fi
-
-    if [ "$SKIP" -lt 3 ]; then
-	mapContigs
-    fi
-
-    if [ "$SKIP" -lt 4 ]; then
-	identifyFixedSites
-    fi
-
+function outputAlignment(){
     if [ -n "${REFFILE}" ]; then
-	( ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER} )
+        ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER}
     else
-	( ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} X ${MAINFOLDER} )
+        ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} X ${MAINFOLDER}
     fi
 }
 
-function copyRefContigs()
-{
+function runSISRS(){
+    if [[ "${cmds[*]}" =~ $1 ]]; then               # get pos in list of commands
+        for (( i = 0; i < ${#cmds[@]}; i++ )); do
+            if [ "${cmds[$i]}" = "${1}" ]; then
+                break
+            fi
+        done
+    else
+        i=0
+    fi
+    
+    for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
+        ${cmds[$i]}
+    done
+}
+
+####################LOCI#######################
+
+function copyRefContigs(){
     grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${MAINFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${MAINFOLDER}/loci.txt"
     python ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/velvetoutput/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
 }
 
-function gfr_aligntoConservedContigs()
-{
+function gfr_aligntoConservedContigs(){
     bowtie2-build "${MAINFOLDER}"/ref_genes.fa "${MAINFOLDER}"/ref_genes    #build index for conserved contigs
     for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "$FOLDER"_loci/*bam; done
     
@@ -297,8 +287,7 @@ function gfr_aligntoConservedContigs()
     done
 }
 
-function gfr_mergebam()
-{
+function gfr_mergebam(){
     declare -a TOMERGE=()
     for FOLDER in "${FOLDERLISTA[@]}"; do
         rm -f "$FOLDER"_loci/merged.bam        # remove existing merged.bam file    
@@ -314,8 +303,7 @@ function gfr_mergebam()
     fi
 }
 
-function gfr_getlocusalignments()
-{
+function gfr_getAlleles(){
     for FOLDER in "${FOLDERLISTA[@]}"; do
 	for F in ${FOLDER}_loci/*.sam; do 
 	    rm -f $F; 
@@ -335,25 +323,7 @@ function gfr_getlocusalignments()
 #    parallel -j "${PROCESSORS}" 'for j in {}_loci/*sam; do' "python ${DIR}/libexec/gfr/make_alignment_from_sam.py" '$j' "$ALLELES; done" ::: "${FOLDERLISTA[@]}"
 }
 
-function runGFR()
-{
-    for FOLDER in "${FOLDERLISTA[@]}"; do
-        if [ ! -d "$FOLDER"_loci ]; then
-            mkdir "$FOLDER"_loci
-        fi
-    done
-    
-    gfr_aligntoConservedContigs
-    gfr_mergebam
-    gfr_getlocusalignments
-
-    if [ ! -d loci ]; then
-        mkdir loci
-    else
-        for j in loci/*fa; do 
-            rm -f $j; 
-        done
-    fi
+function gfr_getAlignments(){
     parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
     python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species 
@@ -364,32 +334,57 @@ function runGFR()
     find loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
 }
 
-if [[ ${LOCI} -eq 0 ]]; then
+function runGFR(){
+    for FOLDER in "${FOLDERLISTA[@]}"; do
+        if [ ! -d "$FOLDER"_loci ]; then
+            mkdir "$FOLDER"_loci
+        fi
+    done
+    
+    gfr_aligntoConservedContigs
+    gfr_mergebam
+    gfr_getAlleles
+    
+    if [ ! -d loci ]; then
+        mkdir loci
+    else
+        for j in loci/*fa; do 
+            rm -f $j; 
+        done
+    fi
+    
+    gfr_getAlignments
+}
+
+####################RUN####################
+get_fastqa
+
+if [[ $1 = "sites" ]] || [[ "${cmds[*]}" =~ $1 ]]; then
     # Run SISRS only
     echo "**** SISRS ****"
     runSISRS
-else
+elif [[ $1 = "loci" ]]; then
     # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. If
     # ref_genes.fa doesn't exist then build it from alignment.nex
     echo "**** SISRS loci ****"
     if [ ! -f ${MAINFOLDER}/ref_genes.fa ] && [ ! -f "${MAINFOLDER}/alignment.nex" ]; then
-	# need to rerun SISRs from scratch to get ref_genes.fa
+	# need to rerun SISRS from scratch to get ref_genes.fa
 	echo "** Missing alignment and reference, running SISRS"
 	runSISRS
 	copyRefContigs
     else 
 	if [ ! -f ${MAINFOLDER}/ref_genes.fa ]; then
 	    echo "** Missing reference, copying from previous SISRS session"
-	    # Get ref_genes.fa from previously ran sisrs session
-	    copyRefContigs
+	    copyRefContigs  # Get ref_genes.fa from previous sisrs run
 	fi
     fi
 
     # get individual loci
     runGFR
+else
+    echo "You must specify sisrs sites or loci"
+    exit 0
 fi
-    
-
 
 if [[ DEBUG -eq 1 ]]; then
     echo "DIRS          = ${DIRS}"
