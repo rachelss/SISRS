@@ -19,7 +19,7 @@ help() {
 
 Usage:
 
- sisrs [command] options
+ sisrs command options
 
 By default, SISRS assumes that
 
@@ -120,7 +120,7 @@ which bowtie2 &>/dev/null
 which parallel &>/dev/null
 [ $? -eq 0 ] || { echo "GNU parallel must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 
-function get_fastqa(){
+get_fastqa(){
     #get paired fastq
     FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
     if [[ ${#FILELIST[@]} -gt 0 ]]; then
@@ -146,7 +146,7 @@ function get_fastqa(){
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
 }
 
-function buildContigs(){
+buildContigs(){
     if [ -z $GENOMESIZE ]; then
         echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
         exit 0
@@ -197,7 +197,7 @@ function buildContigs(){
 }
 
 
-function alignContigs(){
+alignContigs(){
     bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs      #index contigs
     
     #align reads to contigs
@@ -216,7 +216,7 @@ function alignContigs(){
     echo ==== Done Aligning ====
 }
     
-function mapContigs(){
+mapContigs(){
     #index bam
     parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     echo ==== Done Indexing Bam Files ====
@@ -230,13 +230,13 @@ function mapContigs(){
     fi
 }
 
-function identifyFixedSites(){
+identifyFixedSites(){
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     echo ==== Done Identifying Fixed Sites Without Error ====
 }
 
-function outputAlignment(){
+outputAlignment(){
     if [ -n "${REFFILE}" ]; then
         ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER}
     else
@@ -244,7 +244,7 @@ function outputAlignment(){
     fi
 }
 
-function runSISRS(){
+runSISRS(){
     if [[ "${cmds[*]}" =~ "${CMD}" ]]; then               # get pos in list of commands
         for (( i = 0; i < ${#cmds[@]}; i++ )); do
             if [[ "${cmds[$i]}" == "${1}" ]]; then
@@ -262,12 +262,12 @@ function runSISRS(){
 
 ####################LOCI#######################
 
-function copyRefContigs(){
+copyRefContigs(){
     grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${MAINFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${MAINFOLDER}/loci.txt"
     python ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/velvetoutput/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
 }
 
-function gfr_aligntoConservedContigs(){
+gfr_aligntoConservedContigs(){
     bowtie2-build "${MAINFOLDER}"/ref_genes.fa "${MAINFOLDER}"/ref_genes    #build index for conserved contigs
     for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "$FOLDER"_loci/*bam; done
     
@@ -286,7 +286,7 @@ function gfr_aligntoConservedContigs(){
     done
 }
 
-function gfr_mergebam(){
+gfr_mergebam(){
     declare -a TOMERGE=()
     for FOLDER in "${FOLDERLISTA[@]}"; do
         rm -f "$FOLDER"_loci/merged.bam        # remove existing merged.bam file    
@@ -302,7 +302,7 @@ function gfr_mergebam(){
     fi
 }
 
-function gfr_getAlleles(){
+gfr_getAlleles(){
     for FOLDER in "${FOLDERLISTA[@]}"; do
 	for F in ${FOLDER}_loci/*.sam; do 
 	    rm -f $F; 
@@ -322,7 +322,7 @@ function gfr_getAlleles(){
 #    parallel -j "${PROCESSORS}" 'for j in {}_loci/*sam; do' "python ${DIR}/libexec/gfr/make_alignment_from_sam.py" '$j' "$ALLELES; done" ::: "${FOLDERLISTA[@]}"
 }
 
-function gfr_getAlignments(){
+gfr_getAlignments(){
     parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
     python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species 
@@ -333,7 +333,7 @@ function gfr_getAlignments(){
     find loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
 }
 
-function runGFR(){
+runGFR(){
     for FOLDER in "${FOLDERLISTA[@]}"; do
         if [ ! -d "$FOLDER"_loci ]; then
             mkdir "$FOLDER"_loci
