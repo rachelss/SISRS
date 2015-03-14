@@ -77,9 +77,10 @@ THRESHOLD=1
 ALLELES=1
 DEBUG=0
 ASSEMBLER=Velvet
+CMD=$1
 
 cmds=(buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
-if [[ $1 != "sites" ]] && [[ $1 != "loci" ]] && [[ ! "${cmds[*]}" =~ $1 ]]; then
+if [[ $CMD != "sites" ]] && [[ $CMD != "loci" ]] && [[ ! "${cmds[*]}" =~ $CMD ]]; then
     help
     exit 0
 fi 
@@ -244,9 +245,9 @@ function outputAlignment(){
 }
 
 function runSISRS(){
-    echo $1
-    if [[ "${cmds[*]}" =~ $1 ]]; then               # get pos in list of commands
-        echo $1
+    echo $CMD
+    if [[ "${cmds[*]}" =~ $CMD ]]; then               # get pos in list of commands
+        echo $CMD
         for (( i = 0; i < ${#cmds[@]}; i++ )); do
             if [[ "${cmds[$i]}" == "${1}" ]]; then
                 break
@@ -360,11 +361,11 @@ function runGFR(){
 ####################RUN####################
 get_fastqa
 
-if [[ $1 = "sites" ]] || [[ "${cmds[*]}" =~ $1 ]]; then
+if [[ $CMD = "sites" ]] || [[ "${cmds[*]}" =~ $CMD ]]; then
     # Run SISRS only
     echo "**** SISRS ****"
     runSISRS
-elif [[ $1 = "loci" ]]; then
+elif [[ $CMD = "loci" ]]; then
     # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. If
     # ref_genes.fa doesn't exist then build it from alignment.nex
     echo "**** SISRS loci ****"
