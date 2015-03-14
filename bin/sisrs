@@ -68,12 +68,6 @@ Flags:
 ENDLINE
 }
 
-if [ "$#" -lt 2 ]; then
-# print help message
-    echo "run sisrs -h"
-    exit 0
-fi
-
 #use defaults or input values
 KMER=21
 MINREAD=3
@@ -85,7 +79,11 @@ DEBUG=0
 ASSEMBLER=Velvet
 
 cmds=(buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
-
+if [[ $1 != "sites" ]] && [[ $1 != "loci" ]] && [[ ! "${cmds[*]}" =~ $1 ]]; then
+    echo "run sisrs -h"
+    exit 0
+fi 
+    
 OPTIND=2 # tells getopts to start parsing at the second argument
 
 while getopts g:r:k:p:m:a:f:l:n:t:hd option
