@@ -44,9 +44,9 @@ Commands:
  
 Flags:
     
- -g : MANDATORY - the approximate genome size - this will reduce
-      the size of the composite assembly by using a subset of reads to
-      approximate 10x coverage
+ -g : MANDATORY if running sisrs from the beginning - the approximate genome size
+      - this will reduce the size of the composite assembly by using a subset
+      of reads to approximate 10x coverage
  -p : use this number of processors
  -r : the path to the reference genome in fasta format
  -k : k-mer size (for assembly)
@@ -106,11 +106,6 @@ do
     esac
 done
 
-if [ -z $GENOMESIZE ]; then
-    echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
-    exit 0
-fi
-
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
@@ -151,6 +146,11 @@ if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum o
 }
 
 function buildContigs(){
+    if [ -z $GENOMESIZE ]; then
+        echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
+        exit 0
+    fi
+    
     echo "Subsampling data"
     NUMER=$((10*${GENOMESIZE}))
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
@@ -253,6 +253,7 @@ function runSISRS(){
     else
         i=0
     fi
+    echo $i
     
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
