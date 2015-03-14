@@ -244,6 +244,7 @@ function outputAlignment(){
 }
 
 function runSISRS(){
+    echo $1
     if [[ "${cmds[*]}" =~ $1 ]]; then               # get pos in list of commands
         echo $1
         for (( i = 0; i < ${#cmds[@]}; i++ )); do
