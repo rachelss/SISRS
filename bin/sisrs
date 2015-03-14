@@ -255,7 +255,7 @@ function runSISRS(){
         i=0
     fi
     echo $i
-    
+    echo ${cmds[$i]}
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         echo ${cmds[$i]}
     done
