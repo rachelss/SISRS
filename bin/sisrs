@@ -245,7 +245,7 @@ function outputAlignment(){
 }
 
 function runSISRS(){
-    if [[ "${cmds[*]}" =~ $CMD ]]; then               # get pos in list of commands
+    if [[ "${cmds[*]}" =~ "${CMD}" ]]; then               # get pos in list of commands
         for (( i = 0; i < ${#cmds[@]}; i++ )); do
             if [[ "${cmds[$i]}" == "${1}" ]]; then
                 break
