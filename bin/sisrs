@@ -80,7 +80,7 @@ ASSEMBLER=Velvet
 
 cmds=(buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
 if [[ $1 != "sites" ]] && [[ $1 != "loci" ]] && [[ ! "${cmds[*]}" =~ $1 ]]; then
-    echo "run sisrs -h"
+    help
     exit 0
 fi 
     
