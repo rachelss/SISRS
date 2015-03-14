@@ -68,7 +68,7 @@ Flags:
 ENDLINE
 }
 
-if [ "$#" -eq 0 ]; then
+if [ "$#" -lt 2 ]; then
 # print help message
     echo "run sisrs -h"
     exit 0
