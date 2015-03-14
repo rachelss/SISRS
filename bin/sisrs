@@ -80,7 +80,7 @@ ASSEMBLER=Velvet
 CMD=$1
 
 cmds=(buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
-if [[ $CMD != "sites" ]] && [[ $CMD != "loci" ]] && [[ ! "${cmds[*]}" =~ $CMD ]]; then
+if [[ "${CMD}" != "sites" ]] && [[ "${CMD}" != "loci" ]] && [[ ! "${cmds[*]}" =~ $CMD ]]; then
     help
     exit 0
 fi 
