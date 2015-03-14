@@ -247,7 +247,7 @@ function runSISRS(){
     if [[ "${cmds[*]}" =~ $1 ]]; then               # get pos in list of commands
         echo $1
         for (( i = 0; i < ${#cmds[@]}; i++ )); do
-            if [ "${cmds[$i]}" == "${1}" ]; then
+            if [[ "${cmds[$i]}" == "${1}" ]]; then
                 break
             fi
         done
