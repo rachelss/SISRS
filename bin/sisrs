@@ -306,9 +306,7 @@ gfr_getAlleles(){
 
     parallel -j "${PROCESSORS}" "samtools view {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #convert to sam file
     parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/separate_sam_by_contig.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
-    for FOLDER in "${FOLDERLISTA[@]}"; do 
-	rm -f "${FOLDER}"_loci/merged.sam; 
-    done
+    for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "${FOLDER}"_loci/merged.sam; done
 
     for FOLDER in "${FOLDERLISTA[@]}"; do
         find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
@@ -318,13 +316,13 @@ gfr_getAlleles(){
 }
 
 gfr_getAlignments(){
-    find loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "rm {}"    #delete old loci
-    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
+    
+    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> "${MAINFOLDER}"/loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
     python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species 
-    for F in "${FOLDERLISTA[@]}"; do mv loci/${F}.fa loci/${F}.fasta; done   # delete species fasta files 
+    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/${F}.fa "${MAINFOLDER}"/loci/${F}.fasta; done   # delete species fasta files 
         
-    find loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
+    find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
 }
 
 runGFR(){
@@ -338,12 +336,10 @@ runGFR(){
     gfr_mergebam
     gfr_getAlleles
     
-    if [ ! -d loci ]; then
-        mkdir loci
+    if [ ! -d "${MAINFOLDER}"/loci ]; then
+        mkdir "${MAINFOLDER}"/loci
     else
-        for j in loci/*fa; do 
-            rm -f $j; 
-        done
+        find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old loci
     fi
     
     gfr_getAlignments
