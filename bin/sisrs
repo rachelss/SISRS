@@ -253,6 +253,7 @@ runSISRS(){
         i=0
     fi
     i=$((i-1))
+    echo "${cmds[$i]}"
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
     done
@@ -357,7 +358,7 @@ runGFR(){
 if [[ $CMD = "sites" ]] || [[ "${cmds[*]}" =~ $CMD ]]; then
     # Run SISRS only
     echo "**** SISRS ****"
-#    runSISRS
+    runSISRS
 elif [[ $CMD = "loci" ]]; then
     # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. If
     # ref_genes.fa doesn't exist then build it from alignment.nex
