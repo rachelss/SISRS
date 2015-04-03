@@ -120,31 +120,29 @@ which bowtie2 &>/dev/null
 which parallel &>/dev/null
 [ $? -eq 0 ] || { echo "GNU parallel must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 
-get_fastqa(){
-    #get paired fastq
-    FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
-    if [[ ${#FILELIST[@]} -gt 0 ]]; then
-        declare -a ALLFOLDERLIST=()
-        for F in "${FILELIST[@]}"; do ALLFOLDERLIST+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
-        FOLDERLIST=( $(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with paired fastq files as array
+#get paired fastq
+FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
+if [[ ${#FILELIST[@]} -gt 0 ]]; then
+    declare -a ALLFOLDERLIST=()
+    for F in "${FILELIST[@]}"; do ALLFOLDERLIST+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
+    FOLDERLIST=( $(echo "${ALLFOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with paired fastq files as array
+fi
+
+#get unpaired fastq
+FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
+FILELISTU=()
+for F in "${FILELISTA[@]}"; do
+    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=(${F})
     fi
-    
-    #get unpaired fastq
-    FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
-    FILELISTU=()
-    for F in "${FILELISTA[@]}"; do
-        if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=(${F})
-        fi
-    done
-    if [[ ${#FILELISTU[@]} -gt 0 ]]; then
-        declare -a ALLFOLDERLISTU=()
-        for F in "${FILELISTU[@]}"; do ALLFOLDERLISTU+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
-        FOLDERLISTU=( $(echo "${ALLFOLDERLISTU[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with unpaired fastq files as array
-    fi
-    FOLDERLISTA=( $(echo "${FOLDERLISTU[@]} ${FOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )
+done
+if [[ ${#FILELISTU[@]} -gt 0 ]]; then
+    declare -a ALLFOLDERLISTU=()
+    for F in "${FILELISTU[@]}"; do ALLFOLDERLISTU+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
+    FOLDERLISTU=( $(echo "${ALLFOLDERLISTU[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )  #sorted unique list of folders with unpaired fastq files as array
+fi
+FOLDERLISTA=( $(echo "${FOLDERLISTU[@]} ${FOLDERLIST[@]}" | tr ' ' '\n' | sort -u | tr '\n' ' ') )
 
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
-}
 
 buildContigs(){
     if [ -z $GENOMESIZE ]; then
@@ -356,8 +354,6 @@ runGFR(){
 }
 
 ####################RUN####################
-get_fastqa
-
 if [[ $CMD = "sites" ]] || [[ "${cmds[*]}" =~ $CMD ]]; then
     # Run SISRS only
     echo "**** SISRS ****"
