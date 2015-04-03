@@ -272,7 +272,7 @@ gfr_aligntoConservedContigs(){
         for FILE in "${FOLDER}"/*R1*.fastq; do
 	    # output sorted bam file w/o unaligned reads - lots per folder
             echo Aligning ${FILE} to conserved contigs
-	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "${MAINFOLDER}"/"$FOLDER"_loci/$(basename ${FILE/.fastq})  
+	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
         done
     done
     
