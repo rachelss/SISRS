@@ -245,15 +245,13 @@ outputAlignment(){
 runSISRS(){
     if [[ "${cmds[*]}" =~ "${CMD}" ]]; then               # get pos in list of commands
         for (( i = 0; i < ${#cmds[@]}; i++ )); do
-            if [[ "${cmds[$i]}" == "${1}" ]]; then
+            if [[ "${cmds[$i]}" == "${CMD}" ]]; then
                 break
             fi
         done
     else
         i=0
     fi
-    i=$((i-1))
-    echo "${cmds[$i]}"
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
     done
