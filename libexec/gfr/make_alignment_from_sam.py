@@ -10,7 +10,6 @@ from collections import Counter
 import operator
 import math
 from decimal import *
-import pysam
 
 #######################
 def factorial(n):        #function to do factorials
@@ -160,15 +159,9 @@ folder_name='/'.join(contig_read_mappings.split('/')[:-1])
 file_name=contig_read_mappings.split('/')[-1]
 node_name=file_name.split('.')[0]
 
-bamfile = pysam.AlignmentFile(f, "rb")    #open file
-for col in bamfile.pileup():     #go through each site
-    bases = [read.alignment.query_sequence[read.query_position] for read in col.pileups]
-    if len(bases) > 3:
-        print get_consensus(bases)
-    else:
-        print 'N'
-
-
+totalseq,totalqual=[],[]
+#get alignment
+samfile=open(contig_read_mappings,'r')    #open file
 for line in samfile:      #go through file
     if line.startswith('@'):
         continue
