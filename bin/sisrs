@@ -317,10 +317,11 @@ gfr_getAlleles(){
 
 gfr_getAlignments(){
     
-    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> "${MAINFOLDER}"/loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
+    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> {//}/loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
-    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES}  #make files for each gene containing seq for each species 
-    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/${F}.fa "${MAINFOLDER}"/loci/${F}.fasta; done   # delete species fasta files 
+    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
+    
+    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # delete species fasta files 
         
     find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
 }
