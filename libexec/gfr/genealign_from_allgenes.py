@@ -27,11 +27,11 @@ def read_resort(species,seqdict,numalleles):
     return seqdict
 
 ##########################################################
-fafiles = glob.glob("loci/*.fa")
+fafiles = glob.glob(sys.argv[2]+"loci/*.fa")
 print fafiles
 seqdict=dict()
 for f in fafiles:
     seqdict = read_resort(f,seqdict,int(sys.argv[1]))        #gene:(SeqRecord(species,sequence))
 
 for gene, records in seqdict.iteritems():
-    SeqIO.write(records, 'loci/'+gene+'.fa', "fasta")
+    SeqIO.write(records, sys.argv[2]+'/loci/'+gene+'.fa', "fasta")
