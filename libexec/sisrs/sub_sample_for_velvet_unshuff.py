@@ -2,6 +2,7 @@
 import sys
 import random
 import glob
+import os
 
 #parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"
 
