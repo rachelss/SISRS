@@ -1,9 +1,10 @@
 SISRS
 =====
 
-SISRS: SNP Identification from Short Read Sequences.
-
-Copyright: Rachel Schwartz
+SISRS: Site Identification from Short Read Sequences
+Version 1.5
+Copyright (c) 2013-2015 Rachel Schwartz <Rachel.Schwartz@asu.edu>
+https://github.com/rachelss/SISRS
 
 More information: http://arxiv.org/abs/1305.3665
 
@@ -36,28 +37,53 @@ Paired and unpaired reads must have a fastq file extension.
 Running SISRS
 =============
 
-SISRS can be run as 'sisrs' from the command line if it is installed in a location listed in your path. Otherwise run SISRS as <directory>/sisrs. 
+Usage:
+
+ sisrs command options
 
 By default, SISRS assumes that
-* A reference genome is not available.
-* The K-mer size to be used by Velvet in contig assembly is 21.
-* Only one processor is available.
-* A site is only required to have data for two species to be included in the final alignment.
-* Folders containing reads are in the present working directory.
-* A minimum of three reads are required to call the base at a site for a taxon.
 
-Default settings can be changed using the following flags:
-* -g : use to specify the approximate genome size - this is optional but highly recommended because it will reduce the size of the composite assembly by using a subset of reads to approximate 10x coverage
-* -r : use to specify the location of the reference genome (must be a fasta file)
-* -k : use to specify k-mer size
-* -p : use to specify the number of processors available
-* -m : use to specify the number of species allowed to have missing data at a site
-* -a : use to specify the folder containing the folders of reads
-* -n : use to specify the number of reads required to call a base at a site
-* -t : use to specify the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals
-* -s : -s : use to specify the steps to skip: 1 skips making the composite genome; 2 also skips aligning reads to the composite reference; 3 also skips getting data for each site and mapping the composite genome to a known reference if available; 4 skips to identifying whether sites are variable among taxa given data for each site for each taxon
+ * A reference genome is not available.
+ * The K-mer size to be used by Velvet in contig assembly is 21.
+ * Only one processor is available.
+ * Files are in fastq format.
+ * A site is only required to have data for two species to be included
+   in the final alignment.
+ * Folders containing reads are in the present working directory.
+ * A minimum of three reads are required to call the base at a site
+   for a taxon.
 
-Example command: sisrs -g 50000000 -r ./reference.fasta -p 40 -m 4 -a ./fastq_data/
+Commands:
+ sites : produce an alignment of sites from raw reads
+ alignContigs : run sisrs skipping the composite genome assembly
+ mapContigs : run sisrs, also skipping alignment of reads to composite genome
+ identifyFixedSites : run sisrs, also skipping mapping of contigs to a reference
+ outputAlignment : get sisrs alignment from sites id'd for individual species
+ loci : produce a set of aligned loci based on the most variable regions of
+        the composite genome
+ 
+Flags:
+    
+ -g : MANDATORY if running sisrs from the beginning - the approximate genome size
+      - this will reduce the size of the composite assembly by using a subset
+      of reads to approximate 10x coverage
+ -p : use this number of processors
+ -r : the path to the reference genome in fasta format
+ -k : k-mer size (for assembly)
+ -f : the folder containing the folders of reads
+ -n : the number of reads required to call a base at a site
+ -t : the threshold for calling a site; e.g. 0.99 means that >99% of
+      bases for that taxon must be one allele; only recommended for
+      low ploidy with <3 individuals
+ -m : the number of species that are allowed to have missing data at
+      a site
+ -l : the number of alleles for sisrs loci
+
+ Example command:
+ sisrs sites -g 50000000 -p 40 -m 4 -f test_data
+ 
+ Example command:
+ sisrs loci -g 50000000 -p 40 -m 4 -f test_data
 
 Output
 ======
