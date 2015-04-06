@@ -156,36 +156,32 @@ buildContigs(){
     LEFTREADS=$((${NUMER}/${DENOM}))
     parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
     
-    for F in "${FILELISTU[@]}"; do 
-	ln $F $(dirname "${F}")/subsampled_$(basename "${F}"); 
-    done
-    
     #make reference contigs - velveth
     if [ -n "${REFFILE}" ]; then
         if [[ ${#FILELISTU[@]} -gt 0 ]]; then
 	    if [[ ${#FILELIST[@]} -gt 0 ]]; then
 		echo "Running Velvet with PE and SE reads, and reference"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq -short ${MAINFOLDER}/*/subsampled*fastq
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
 	    else
 		echo "Running Velvet with SE reads and reference"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -short ${MAINFOLDER}/*/subsampled*fastq
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
 	    fi
         else
             echo "Running Velvet with PE reads and reference"
-	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq
+	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
         fi
     else
         if [[ ${#FILELISTU[@]} -gt 0 ]]; then
 	    if [[ ${#FILELIST[@]} -gt 0 ]]; then
 		echo "Running Velvet with PE and SE reads"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq -short ${MAINFOLDER}/*/subsampled*fastq
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
 	    else
 		echo "Running Velvet with SE reads"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -short ${MAINFOLDER}/*/subsampled*fastq
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
 	    fi
         else
 	    echo "Running Velvet with PE reads"
-	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/*/*shuffled*fastq
+	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
         fi
     fi
     echo ==== Velveth is finished ====
