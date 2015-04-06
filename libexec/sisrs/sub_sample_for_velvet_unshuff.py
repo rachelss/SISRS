@@ -10,6 +10,7 @@ samplep,sampleu = [],[]
 i=0
 
 taxon=sys.argv[2]
+mainfolder=os.path.dirname(os.path.abspath(taxon))
 taxon_files = glob.glob(taxon+'/*.fastq')
 
 paired1 = [f for f in taxon_files if '_R1' in f]
