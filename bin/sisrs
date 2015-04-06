@@ -13,7 +13,7 @@ help() {
     cat <<ENDLINE
     
  SISRS: Site Identification from Short Read Sequences
- Version $VERSION
+ Version 1.5
  Copyright (c) 2013-2015 Rachel Schwartz <Rachel.Schwartz@asu.edu>
  https://github.com/rachelss/SISRS
 
@@ -60,10 +60,10 @@ Flags:
  -l : the number of alleles for sisrs loci
 
  Example command:
- sisrs sites -g 50000000 -p 40 -m 4 -a test_data
+ sisrs sites -g 50000000 -p 40 -m 4 -f test_data
  
  Example command:
- sisrs loci -g 50000000 -p 40 -m 4 -a test_data
+ sisrs loci -g 50000000 -p 40 -m 4 -f test_data
 
 ENDLINE
 }
@@ -154,6 +154,7 @@ buildContigs(){
     NUMER=$((10*${GENOMESIZE}))
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
     LEFTREADS=$((${NUMER}/${DENOM}))
+    mkdir subsamples
     parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
     
     #make reference contigs - velveth
