@@ -19,7 +19,7 @@ unpaired = [f for f in taxon_files if '_R1' not in f]
 
 for fq in paired1:
     f1=open(fq, 'r')
-    f2=open(fq.replace('R1','R2'), 'r')
+    f2=open(fq.replace('_R1','_R2'), 'r')
     
     for line in f1:
         if not line: break      #have less than desired coverage
