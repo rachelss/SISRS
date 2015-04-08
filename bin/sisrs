@@ -201,10 +201,10 @@ buildContigs(){
     fi
     
     if [[ $ASSEMBLER == "minia" ]]; then
-        mkdir ${MAINFOLDER}/minia_output
+        mkdir ${MAINFOLDER}/miniaoutput
         ls ${MAINFOLDER}/subsamples/*fastq | parallel -j ${PROCESSORS} basename > ${MAINFOLDER}/subsamples/minia_read_file.txt
-        minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/minia_output/
-        mv ${MAINFOLDER}/minia_output/.contigs.fa ${MAINFOLDER}/minia_output/contigs.fa
+        minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/miniaoutput/
+        mv ${MAINFOLDER}/miniaoutput/.contigs.fa ${MAINFOLDER}/miniaoutput/contigs.fa
     fi
 }
 
