@@ -114,7 +114,15 @@ MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / i
 if [[ $ASSEMBLER -eq Velvet ]]; then
     which velveth &>/dev/null
     [ $? -eq 0 ] || { echo "Velvet must be installed to run SISRS. The installation folder must be in your path.    Aborting."; exit 1; }
+    CONTIGS=velvetoutput
 fi
+
+if [[ $ASSEMBLER -eq minia ]]; then
+    which minia &>/dev/null
+    [ $? -eq 0 ] || { echo "Minia must be installed to run SISRS. The installation folder must be in your path.    Aborting."; exit 1; }
+    CONTIGS=miniaoutput
+fi
+
 which bowtie2 &>/dev/null
 [ $? -eq 0 ] || { echo "Bowtie2 must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 which parallel &>/dev/null
@@ -155,58 +163,64 @@ buildContigs(){
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
     LEFTREADS=$((${NUMER}/${DENOM}))
     mkdir subsamples
-    parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
     
-    #make reference contigs - velveth
-    if [ -n "${REFFILE}" ]; then
-        if [[ ${#FILELISTU[@]} -gt 0 ]]; then
-	    if [[ ${#FILELIST[@]} -gt 0 ]]; then
-		echo "Running Velvet with PE and SE reads, and reference"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
-	    else
-		echo "Running Velvet with SE reads and reference"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
-	    fi
+    if [[ $ASSEMBLER -eq Velvet ]]; then
+        #make reference contigs - velveth
+        if [ -n "${REFFILE}" ]; then
+            if [[ ${#FILELISTU[@]} -gt 0 ]]; then
+                if [[ ${#FILELIST[@]} -gt 0 ]]; then
+                    echo "Running Velvet with PE and SE reads, and reference"
+                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
+                else
+                    echo "Running Velvet with SE reads and reference"
+                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
+                fi
+            else
+                echo "Running Velvet with PE reads and reference"
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
+            fi
         else
-            echo "Running Velvet with PE reads and reference"
-	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fasta -reference ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
+            if [[ ${#FILELISTU[@]} -gt 0 ]]; then
+                if [[ ${#FILELIST[@]} -gt 0 ]]; then
+                    echo "Running Velvet with PE and SE reads"
+                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
+                else
+                    echo "Running Velvet with SE reads"
+                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
+                fi
+            else
+                echo "Running Velvet with PE reads"
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
+            fi
         fi
-    else
-        if [[ ${#FILELISTU[@]} -gt 0 ]]; then
-	    if [[ ${#FILELIST[@]} -gt 0 ]]; then
-		echo "Running Velvet with PE and SE reads"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
-	    else
-		echo "Running Velvet with SE reads"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
-	    fi
-        else
-	    echo "Running Velvet with PE reads"
-	    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
-        fi
+        echo ==== Velveth is finished ====
+        
+        velvetg ${MAINFOLDER}/velvetoutput -exp_cov auto -cov_cutoff auto# -min_contig_lgth 100     #run velvet - output contigs
+        echo ==== Velvetg is finished ===
     fi
-    echo ==== Velveth is finished ====
     
-    velvetg ${MAINFOLDER}/velvetoutput -exp_cov auto -cov_cutoff auto# -min_contig_lgth 100     #run velvet - output contigs
-    echo ==== Velvetg is finished ===
+    if [[ $ASSEMBLER -eq minia ]]; then
+        find ${MAINFOLDER}/subsamples/ -name *.fastq > ${MAINFOLDER}/subsamples/minia_read_file.txt
+        minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores $PROCESSORS -out ${MAINFOLDER}/subsamples/miniaoutput/
+    fi
 }
 
-
 alignContigs(){
-    bowtie2-build ${MAINFOLDER}/velvetoutput/contigs.fa ${MAINFOLDER}/velvetoutput/contigs      #index contigs
+    bowtie2-build ${MAINFOLDER}/"${CONTIGS}"/contigs.fa ${MAINFOLDER}/"${CONTIGS}"/contigs      #index contigs
     
     #align reads to contigs
     for FILE in "${FILELIST[@]}"; do
         NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELIST ${NAME}  ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
     done
     for FILE in "${FILELISTU[@]}"; do
         NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELISTU ${NAME} ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/velvetoutput/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
     done
     echo ==== Done Aligning ====
 }
@@ -220,7 +234,7 @@ mapContigs(){
     if [ -n "${REFFILE}" ]; then
         NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
         bowtie2-build ${REFFILE} ${NAME}        #bowtie2-build [options]* <reference_in> <bt2_base>
-        bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${MAINFOLDER}/velvetoutput/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${MAINFOLDER}/velvetoutput/align_contigs.sam    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
+        bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${MAINFOLDER}/"${CONTIGS}"/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${MAINFOLDER}/"${CONTIGS}"/align_contigs.sam    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
 	echo ==== Done Mapping Contigs ====
     fi
 }
@@ -258,7 +272,7 @@ runSISRS(){
 
 copyRefContigs(){
     grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${MAINFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${MAINFOLDER}/loci.txt"
-    python ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/velvetoutput/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
+    python ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/"${CONTIGS}"/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
 }
 
 gfr_aligntoConservedContigs(){

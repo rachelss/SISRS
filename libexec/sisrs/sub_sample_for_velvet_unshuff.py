@@ -10,9 +10,10 @@ N = int(sys.argv[1])     #number of left reads required per sample for 10x total
 samplep,sampleu = [],[]
 i=0
 
-taxon=sys.argv[2]
-mainfolder=os.path.dirname(os.path.abspath(taxon))
-taxon_files = glob.glob(taxon+'/*.fastq')
+taxonfolder=sys.argv[2]
+mainfolder=os.path.dirname(os.path.abspath(taxonfolder))
+taxon_files = glob.glob(taxonfolder+'/*.fastq')
+taxon=os.path.basename(taxonfolder)
 
 paired1 = [f for f in taxon_files if '_R1' in f]
 unpaired = [f for f in taxon_files if '_R1' not in f]
