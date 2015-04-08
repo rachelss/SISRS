@@ -107,18 +107,17 @@ do
     esac
 done
 
-echo $ASSEMBLER
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
 
-if [[ $ASSEMBLER -eq Velvet ]]; then
+if [[ $ASSEMBLER == "Velvet" ]]; then
     which velveth &>/dev/null
     [ $? -eq 0 ] || { echo "Velvet must be installed to run SISRS. The installation folder must be in your path.    Aborting."; exit 1; }
     CONTIGS=velvetoutput
 fi
 
-if [[ $ASSEMBLER -eq minia ]]; then
+if [[ $ASSEMBLER == "minia" ]]; then
     which minia &>/dev/null
     [ $? -eq 0 ] || { echo "Minia must be installed to run SISRS. The installation folder must be in your path.    Aborting."; exit 1; }
     CONTIGS=miniaoutput
@@ -166,7 +165,7 @@ buildContigs(){
     mkdir ${MAINFOLDER}/subsamples
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
     
-    if [[ $ASSEMBLER -eq Velvet ]]; then
+    if [[ $ASSEMBLER == "Velvet" ]]; then
         #make reference contigs - velveth
         if [ -n "${REFFILE}" ]; then
             if [[ ${#FILELISTU[@]} -gt 0 ]]; then
@@ -201,7 +200,7 @@ buildContigs(){
         echo ==== Velvetg is finished ===
     fi
     
-    if [[ $ASSEMBLER -eq minia ]]; then
+    if [[ $ASSEMBLER == "minia" ]]; then
         mkdir ${MAINFOLDER}/minia_output
         ls ${MAINFOLDER}/subsamples/*fastq | parallel -j ${PROCESSORS} basename > ${MAINFOLDER}/subsamples/minia_read_file.txt
         minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/minia_output/
