@@ -16,9 +16,9 @@ taxon_files = glob.glob(taxonfolder+'/*.fastq')
 taxon=os.path.basename(taxonfolder)
 
 paired1 = [f for f in taxon_files if '_R1' in f]
-print 'paired files: '+paired1
+print 'paired files: '+" ".join(paired1)
 unpaired = [f for f in taxon_files if '_R' not in f]
-print 'unpaired files: '+unpaired
+print 'unpaired files: '+" ".join(unpaired)
 
 for fq in paired1:
     f1=open(fq, 'r')
