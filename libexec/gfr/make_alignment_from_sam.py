@@ -1,4 +1,4 @@
-#! /usr/local/bin/python
+#!/usr/bin/env python2
 #take sam file aligned to single contig and produce whole alignment
 import sys
 from Bio.Seq import Seq

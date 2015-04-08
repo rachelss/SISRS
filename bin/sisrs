@@ -162,7 +162,7 @@ buildContigs(){
     NUMER=$((10*${GENOMESIZE}))
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
     LEFTREADS=$((${NUMER}/${DENOM}))
-    mkdir subsamples
+    mkdir ${MAINFOLDER}/subsamples
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
     
     if [[ $ASSEMBLER -eq Velvet ]]; then
@@ -272,7 +272,7 @@ runSISRS(){
 
 copyRefContigs(){
     grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${MAINFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${MAINFOLDER}/loci.txt"
-    python ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/"${CONTIGS}"/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
+    ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/"${CONTIGS}"/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
 }
 
 gfr_aligntoConservedContigs(){
@@ -316,21 +316,19 @@ gfr_getAlleles(){
     done
 
     parallel -j "${PROCESSORS}" "samtools view {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #convert to sam file
-    parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/separate_sam_by_contig.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
+    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/separate_sam_by_contig.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
     for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "${FOLDER}"_loci/merged.sam; done
 
     for FOLDER in "${FOLDERLISTA[@]}"; do
-        find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "python ${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
+        find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
     done
-    
-#    parallel -j "${PROCESSORS}" 'for j in {}_loci/*sam; do' "python ${DIR}/libexec/gfr/make_alignment_from_sam.py" '$j' "$ALLELES; done" ::: "${FOLDERLISTA[@]}"
 }
 
 gfr_getAlignments(){
     
     parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> {//}/loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
-    python ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
+    ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
     
     for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # delete species fasta files 
         
