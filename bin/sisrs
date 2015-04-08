@@ -201,8 +201,10 @@ buildContigs(){
     fi
     
     if [[ $ASSEMBLER -eq minia ]]; then
-        find ${MAINFOLDER}/subsamples/ -name *.fastq > ${MAINFOLDER}/subsamples/minia_read_file.txt
-        minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores $PROCESSORS -out ${MAINFOLDER}/subsamples/miniaoutput/
+        mkdir ${MAINFOLDER}/minia_output
+        ls ${MAINFOLDER}/subsamples/*fastq > ${MAINFOLDER}/subsamples/minia_read_file.txt
+        minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/minia_output/
+        mv ${MAINFOLDER}/minia_output/.contigs.fa ${MAINFOLDER}/minia_output/contigs.fa
     fi
 }
 
