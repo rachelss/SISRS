@@ -1,4 +1,4 @@
-#! /usr/local/bin/python
+#!/usr/bin/env python2
 #take sam file aligned to single contig and produce whole alignment
 import sys
 from Bio.Seq import Seq
@@ -160,6 +160,7 @@ folder_name='/'.join(contig_read_mappings.split('/')[:-1])
 file_name=contig_read_mappings.split('/')[-1]
 node_name=file_name.split('.')[0]
 
+<<<<<<< HEAD
 bamfile = pysam.AlignmentFile(f, "rb")    #open file
 for col in bamfile.pileup():     #go through each site
     bases = [read.alignment.query_sequence[read.query_position] for read in col.pileups]
@@ -169,6 +170,11 @@ for col in bamfile.pileup():     #go through each site
         print 'N'
 
 
+=======
+totalseq,totalqual=[],[]
+#get alignment
+samfile=open(contig_read_mappings,'r')    #open file
+>>>>>>> release/1.6
 for line in samfile:      #go through file
     if line.startswith('@'):
         continue
