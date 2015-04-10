@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 #!/usr/bin/env python
+=======
+#!/usr/bin/env python2
+>>>>>>> release/1.6
 import sys
 from Bio import SeqIO
 
