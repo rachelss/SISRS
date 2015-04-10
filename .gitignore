@@ -1,3 +1,4 @@
+libexec/gfr/fastaBlast.py
 libexec/sisrs/shuffleSequences_fasta.pl
 libexec/sisrs/shuffleSequences_fastq.pl
 libexec/sisrs/sub_sample_for_velvet.py
