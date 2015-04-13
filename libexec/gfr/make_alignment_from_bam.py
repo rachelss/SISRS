@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
-#takes bam file aligned to ref_genes
-#outputs .fa file for each locus
+#takes bam file aligned to ref_genes for one species
+#outputs .fa file for all loci for one species
 
 import sys
 from decimal import *
@@ -23,9 +23,17 @@ def get_consensus(data):
     
     return c_base
 
+def get_consensus_MR(data): 
+    pos_bases_counts = Counter(data).most_common()
+    if len(pos_bases_counts)>0:
+        c_base = pos_bases_counts[0][0]
+    else:
+        c_base = 'N'
+    
+    return c_base
+
 ######################
 infile = sys.argv[1]
-numalleles=int(sys.argv[2])
 mainfolder_name='/'.join(infile.split('/')[:-2])      #everything but bam file name and sample name
 sp_name=infile.split('/')[-2:-1][0]      #just sample name
 final_seqs={}
@@ -38,7 +46,7 @@ for pileupcolumn in samfile.pileup():       #go through each position for each c
         final_seqs[contig]=[]
     if int(pileupcolumn.n) > 3:     #min 3 reads aligned
         bases_aligned = [pileupread.alignment.query_sequence[pileupread.query_position] for pileupread in pileupcolumn.pileups]     #this is the pileup
-        consensus_base = get_consensus(bases_aligned)            
+        consensus_base = get_consensus_MR(bases_aligned)            
     else:
         consensus_base = 'N'
     final_seqs[contig].append(consensus_base)
