@@ -315,22 +315,10 @@ gfr_mergebam(){
 }
 
 gfr_getAlleles(){
-    for FOLDER in "${FOLDERLISTA[@]}"; do
-        find ${FOLDER}_loci/ -type f -name '*sam' | parallel -j "${PROCESSORS}" "rm -f {}"  #delete old sam files
-    done
-
-    parallel -j "${PROCESSORS}" "samtools view {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #convert to sam file
-    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/separate_sam_by_contig.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
-    for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "${FOLDER}"_loci/merged.sam; done
-
-    for FOLDER in "${FOLDERLISTA[@]}"; do
-        find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
-    done
+    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam ${ALLELES}" ::: "${FOLDERLISTA[@]}"
 }
 
 gfr_getAlignments(){
-    
-    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> {//}/loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
     ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
     
@@ -348,7 +336,6 @@ runGFR(){
     
     gfr_aligntoConservedContigs
     gfr_mergebam
-    gfr_getAlleles
     
     if [ ! -d "${MAINFOLDER}"/loci ]; then
         mkdir "${MAINFOLDER}"/loci
@@ -356,6 +343,7 @@ runGFR(){
         find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old loci
     fi
     
+    gfr_getAlleles
     gfr_getAlignments
 }
 

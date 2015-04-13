@@ -8,7 +8,7 @@ import pysam
 from collections import Counter
 
 #######################
-def get_consensus_one_allele(data): 
+def get_consensus(data): 
     pos_bases_counts = Counter(data).most_common()
     if len(pos_bases_counts)>1:
         prop = Decimal(pos_bases_counts[0][1]) / (Decimal(pos_bases_counts[1][1])+Decimal(pos_bases_counts[0][1]))
@@ -24,25 +24,27 @@ def get_consensus_one_allele(data):
     return c_base
 
 ######################
+infile = sys.argv[1]
 numalleles=int(sys.argv[2])
-mainfolder_name='/'.join(contig_read_mappings.split('/')[:-2])      #everything but bam file name and sample name
-sp_name=contig_read_mappings.split('/')[-2:-1]      #just sample name
+mainfolder_name='/'.join(infile.split('/')[:-2])      #everything but bam file name and sample name
+sp_name=infile.split('/')[-2:-1][0]      #just sample name
 final_seqs={}
-outfile = open(mainfolder_name+'/loci/'+sp_name+'.fa')
+outfile = open(mainfolder_name+'/loci/'+sp_name+'.fa','w')
 
-bamfile = pysam.AlignmentFile(sys.argv[1], "rb" )       #open bamfile
+samfile = pysam.AlignmentFile(infile, "rb" )       #open bamfile
 for pileupcolumn in samfile.pileup():       #go through each position for each contig
-    if pileupcolumn.reference_id not in final_seqs:
-        final_seqs[pileupcolumn.reference_id]=[]
+    contig = samfile.getrname(pileupcolumn.reference_id)
+    if contig not in final_seqs:
+        final_seqs[contig]=[]
     if int(pileupcolumn.n) > 3:     #min 3 reads aligned
         bases_aligned = [pileupread.alignment.query_sequence[pileupread.query_position] for pileupread in pileupcolumn.pileups]     #this is the pileup
         consensus_base = get_consensus(bases_aligned)            
     else:
         consensus_base = 'N'
-    final_seqs[pileupcolumn.reference_id].append(consensus_base)
+    final_seqs[contig].append(consensus_base)
 
 for contig,seq in final_seqs.iteritems():
-    outfile.write('>'+contig)
-    outfile.write(''.join(seq))
+    outfile.write('>'+contig+"\n")
+    outfile.write(''.join(seq)+"\n")
 
 outfile.close()
