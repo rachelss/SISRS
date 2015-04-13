@@ -7,7 +7,7 @@
 #run with non-defaults: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
 #reads must be paired, where the filename contains either R1 or R2
 
-VERSION=1.0
+VERSION=1.6
 
 help() {
     cat <<ENDLINE
@@ -79,7 +79,7 @@ DEBUG=0
 ASSEMBLER=Velvet
 CMD=$1
 
-cmds=(buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
+cmds=(subSample buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
 if [[ "${CMD}" != "sites" ]] && [[ "${CMD}" != "loci" ]] && [[ ! "${cmds[*]}" =~ $CMD ]]; then
     help
     exit 0
@@ -152,7 +152,7 @@ FOLDERLISTA=( $(echo "${FOLDERLISTU[@]} ${FOLDERLIST[@]}" | tr ' ' '\n' | sort -
 
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
 
-buildContigs(){
+subSample(){
     if [ -z $GENOMESIZE ]; then
         echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
         exit 0
@@ -164,7 +164,9 @@ buildContigs(){
     LEFTREADS=$((${NUMER}/${DENOM}))
     mkdir ${MAINFOLDER}/subsamples
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle 
-    
+}
+
+buildContigs(){
     if [[ $ASSEMBLER == "Velvet" ]]; then
         #make reference contigs - velveth
         if [ -n "${REFFILE}" ]; then
