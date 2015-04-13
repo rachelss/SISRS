@@ -123,6 +123,12 @@ if [[ $ASSEMBLER == "minia" ]]; then
     CONTIGS=miniaoutput
 fi
 
+if [[ $ASSEMBLER == "ABYSS" ]]; then
+    which ABYSS &>/dev/null
+    [ $? -eq 0 ] || { echo "ABYSS must be installed to run SISRS. The installation folder must be in your path.    Aborting."; exit 1; }
+    CONTIGS=abyssoutput
+fi
+
 which bowtie2 &>/dev/null
 [ $? -eq 0 ] || { echo "Bowtie2 must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 which parallel &>/dev/null
@@ -207,6 +213,10 @@ buildContigs(){
         ls ${MAINFOLDER}/subsamples/*fastq | parallel -j ${PROCESSORS} basename > ${MAINFOLDER}/subsamples/minia_read_file.txt
         minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/miniaoutput/
         mv ${MAINFOLDER}/miniaoutput/.contigs.fa ${MAINFOLDER}/miniaoutput/contigs.fa
+    fi
+    
+    if [[ $ASSEMBLER == "ABYSS" ]]; then
+        ABYSS -k ${KMER} -o ${MAINFOLDER}/abyssoutput/contigs.fa ${MAINFOLDER}/subsamples/*fastq
     fi
 }
 
