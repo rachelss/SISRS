@@ -331,19 +331,22 @@ gfr_getAlignments(){
         
     ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
     
-    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F})_loci.fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # delete species fasta files 
+    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F})_loci.fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
         
-    find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
+    find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
+    
+        #trim ends
 }
 
 gfr_selectLoci(){
-    find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"
+    find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
     
+    #pick out loci by most species, then most variable in alignment.nex
     COUNT=0
     POS=1
     NUMSP="${#FOLDERLISTA[@]}"
     rm "${MAINFOLDER}"/loci/newpartitions.txt
-    rm "${MAINFOLDER}"/loci//phy_files.txt
+    rm "${MAINFOLDER}"/loci/phy_files.txt
     while (( NUMSP >= 2 )); do
         while read i; do
             F=$( echo $i | sed 's/\.[^.]*$//' )_align.phylip-relaxed
@@ -362,6 +365,8 @@ gfr_selectLoci(){
         done < "${MAINFOLDER}"/loci.txt
         echo $(( N-- ))
     done
+    
+    concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate for raxml analysis
 }
 
 runGFR(){
