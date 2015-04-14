@@ -344,10 +344,10 @@ gfr_selectLoci(){
     #pick out 1000 loci by most species, then most variable in alignment.nex
     COUNT=0
     POS=1
-    NUMSP="${#FOLDERLISTA[@]}"
     rm "${MAINFOLDER}"/loci/newpartitions.txt
     rm "${MAINFOLDER}"/loci/phy_files.txt
-    while (( NUMSP >= 2 )); do
+    
+    for ((NUMSP="${#FOLDERLISTA[@]}";NUMSP>1;NUMSP--)); do
         while read i; do
             F=$( echo $i | sed 's/\.[^.]*$//' )_align.phylip-relaxed
             if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
@@ -363,7 +363,6 @@ gfr_selectLoci(){
                 fi
             fi
         done < "${MAINFOLDER}"/loci.txt
-        echo $(( N-- ))
     done
     
     ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate selected loci for raxml analysis
