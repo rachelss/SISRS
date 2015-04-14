@@ -341,7 +341,7 @@ gfr_getAlignments(){
 gfr_selectLoci(){
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
     
-    #pick out loci by most species, then most variable in alignment.nex
+    #pick out 1000 loci by most species, then most variable in alignment.nex
     COUNT=0
     POS=1
     NUMSP="${#FOLDERLISTA[@]}"
@@ -367,6 +367,8 @@ gfr_selectLoci(){
     done
     
     ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate selected loci for raxml analysis
+    #run as raxml -r <known_tree> -M -m GTRGAMMA -p $RANDOM -T <num_threads> -q "${MAINFOLDER}"/loci/newpartitions.txt -s "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed -n <out_name>
+    
     ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
 }
 
