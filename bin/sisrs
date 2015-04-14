@@ -366,7 +366,8 @@ gfr_selectLoci(){
         echo $(( N-- ))
     done
     
-    concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate for raxml analysis
+    ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate selected loci for raxml analysis
+    ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
 }
 
 runGFR(){
