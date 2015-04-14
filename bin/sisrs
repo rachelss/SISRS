@@ -331,7 +331,7 @@ gfr_getAlignments(){
         
     ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
     
-    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F})_loci.fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
+    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
         
     find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
     
