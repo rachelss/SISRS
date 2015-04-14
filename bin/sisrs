@@ -323,6 +323,7 @@ gfr_mergebam(){
 }
 
 gfr_getAlleles(){
+    parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
     parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
 }
 
