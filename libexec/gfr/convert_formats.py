@@ -2,6 +2,7 @@
 import sys
 from Bio import AlignIO,SeqIO
 from Bio.Alphabet import IUPAC
+import os
 
 def wrap(text, width):
     lines=len(text)/width
@@ -26,7 +27,7 @@ def main():
         sys.exit (1)
     else:
         f = sys.argv[1]
-        fout = "".join(f.split('.')[:-1])
+        fout = os.path.splitext(f)[0]
         formatin = sys.argv[2]
         formatout  = sys.argv[3]
         if formatout == 'nexus':
