@@ -338,6 +338,30 @@ gfr_getAlignments(){
 
 gfr_selectLoci(){
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"
+    
+    COUNT=0
+    POS=1
+    NUMSP="${#FOLDERLISTA[@]}"
+    rm "${MAINFOLDER}"/loci/newpartitions.txt
+    rm "${MAINFOLDER}"/loci//phy_files.txt
+    while (( NUMSP >= 2 )); do
+        while read i; do
+            F=$( echo $i | sed 's/\.[^.]*$//' )_align.phylip-relaxed
+            if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
+                if [[ $(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $1}') -eq ${NUMSP} ]]; then
+                    COUNT=$(( $COUNT + 1 ))
+                    GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
+                    echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
+                    POS=$((${POS}+${GLENGTH}))
+                    echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
+                    if [[ $COUNT -eq 1000 ]] ; then
+                        break
+                    fi
+                fi
+            fi
+        done < "${MAINFOLDER}"/loci.txt
+        echo $(( N-- ))
+    done
 }
 
 runGFR(){
