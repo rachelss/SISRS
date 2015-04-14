@@ -1,4 +1,4 @@
-#! /usr/local/bin/python
+#!/usr/bin/env python2
 import sys
 from Bio import AlignIO,SeqIO
 from Bio.Alphabet import IUPAC
