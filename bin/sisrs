@@ -363,6 +363,9 @@ gfr_selectLoci(){
                 fi
             fi
         done < "${MAINFOLDER}"/loci.txt
+        if [[ $COUNT -eq 1000 ]] ; then
+            break
+        fi
     done
     
     ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate selected loci for raxml analysis
