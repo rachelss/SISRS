@@ -336,6 +336,10 @@ gfr_getAlignments(){
     find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
 }
 
+gfr_selectLoci(){
+    find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"
+}
+
 runGFR(){
     for FOLDER in "${FOLDERLISTA[@]}"; do
         if [ ! -d "$FOLDER"_loci ]; then
@@ -354,6 +358,7 @@ runGFR(){
     
     gfr_getAlleles
     gfr_getAlignments
+    gfr_selectLoci
 }
 
 ####################RUN####################
