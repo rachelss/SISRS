@@ -28,6 +28,6 @@ for record in align:
         sp_to_remove.append(record.id)
 
 #make new alignment wo short seqs
-newalign = MultipleSeqAlignment([record for record in align if record.id not in sp_to_remove], generic_dna)
-
-AlignIO.write(newalign, f+'2', fformat)
+if len(sp_to_remove) < len(align):
+    newalign = MultipleSeqAlignment([record for record in align if record.id not in sp_to_remove], generic_dna)
+    AlignIO.write(newalign, f+'2', fformat)
