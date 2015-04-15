@@ -358,13 +358,13 @@ gfr_selectLoci(){
                     echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
                     POS=$((${POS}+${GLENGTH}))
                     echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
-                    if [[ $COUNT -eq 1000 ]] ; then
+                    if [[ $POS -gt 500000 ]] ; then
                         break
                     fi
                 fi
             fi
         done < "${MAINFOLDER}"/loci.txt
-        if [[ $COUNT -eq 1000 ]] ; then
+        if [[ $POS -gt 500000 ]] ; then
             break
         fi
     done
