@@ -335,11 +335,12 @@ gfr_getAlignments(){
         
     find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
     
-        #trim ends
 }
 
 gfr_selectLoci(){
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
+    
+    find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {}"    #trim ends
     
     #pick out 1000 loci by most species, then most variable in alignment.nex
     COUNT=0
@@ -349,7 +350,7 @@ gfr_selectLoci(){
     
     for ((NUMSP="${#FOLDERLISTA[@]}";NUMSP>1;NUMSP--)); do
         while read i; do
-            F=${i}_align.phylip-relaxed
+            F=${i}_align.phylip-relaxed2
             if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
                 if [[ $(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $1}') -eq ${NUMSP} ]]; then
                     COUNT=$(( $COUNT + 1 ))
