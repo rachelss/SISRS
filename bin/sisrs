@@ -189,11 +189,11 @@ buildContigs(){
                     velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
                 else
                     echo "Running Velvet with SE reads"
-                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
+                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
                 fi
             else
                 echo "Running Velvet with PE reads"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
             fi
         fi
         echo ==== Velveth is finished ====
