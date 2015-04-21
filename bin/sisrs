@@ -278,6 +278,10 @@ runSISRS(){
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
     done
+    
+    ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/alignment.nex nexus phylip-relaxed
+    
+    #run as raxml -s "${MAINFOLDER}"/alignment.phylip-relaxed -n VSm_allbut2 -m ASC_GTRGAMMA -T $1 -p $RANDOM
 }
 
 ####################LOCI#######################
@@ -342,7 +346,7 @@ gfr_selectLoci(){
     
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {}"    #trim ends
     
-    #pick out 1000 loci by most species, then most variable in alignment.nex
+    #pick out loci by most species, then most variable in alignment.nex
     COUNT=0
     POS=1
     rm "${MAINFOLDER}"/loci/newpartitions.txt
