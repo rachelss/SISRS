@@ -257,7 +257,7 @@ mapContigs(){
 }
 
 identifyFixedSites(){
-    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/${CONTIGS}/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
@@ -288,7 +288,7 @@ runSISRS(){
     
     ${DIR}/libexec/sisrs/filter_nexus_for_missing.py alignment.nex ${MISSING}       #alignment w specified number missing
     
-    #run as raxml -s "${MAINFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
+    #run as raxml -s "${MAINFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
 
 ####################LOCI#######################
