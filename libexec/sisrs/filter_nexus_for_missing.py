@@ -1,5 +1,7 @@
-#! /usr/local/bin/python
-#take sam file aligned to single contig and produce whole alignment
+#!/usr/bin/env python2
+#takes nexus file, outputs phylip file
+#only X species allowed to be missing per site
+
 import sys
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord

@@ -14,7 +14,7 @@ def read_resort(species,seqdict,numalleles):
     for seq_record in SeqIO.parse(f, "fasta"):
         allele=[]
         gene=list(seq_record.id[:])
-        allele.append("".join(species.split('.')[:-1]))
+        allele.append(os.path.basename(os.path.splitext(species)[0]))
         if numalleles>1:
             allele.append('_')
             allele.append(gene.pop(-2))

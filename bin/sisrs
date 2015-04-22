@@ -57,13 +57,13 @@ Flags:
       low ploidy with <3 individuals
  -m : the number of species that are allowed to have missing data at
       a site
- -l : the number of alleles for sisrs loci
+ -o : the length of the final loci dataset for dating
 
  Example command:
- sisrs sites -g 50000000 -p 40 -m 4 -f test_data
+ sisrs sites-g 1745690 -p 40 -m 4 -f test_data
  
  Example command:
- sisrs loci -g 50000000 -p 40 -m 4 -f test_data
+ sisrs loci -g 1745690 -p 40 -m 4 -f test_data
 
 ENDLINE
 }
@@ -77,6 +77,7 @@ THRESHOLD=1
 ALLELES=1
 DEBUG=0
 ASSEMBLER=Velvet
+OUTLENGTH=500000
 CMD=$1
 
 cmds=(subSample buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
@@ -87,7 +88,7 @@ fi
     
 OPTIND=2 # tells getopts to start parsing at the second argument
 
-while getopts g:r:k:p:m:a:f:l:n:t:hd option
+while getopts g:r:k:p:m:a:f:n:t:o:hd option
 do
     case "${option}"
 	in
@@ -98,9 +99,9 @@ do
 	m) MISSING=${OPTARG};;
 	f) MAINFOLDER=${OPTARG};;
         a) ASSEMBLER=${OPTARG};;
-	l) ALLELES=${OPTARG};;
 	n) MINREAD=${OPTARG};;
 	t) THRESHOLD=${OPTARG};;
+        t) OUTLENGTH=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
 	\? ) echo "Unknown option" >&2; exit 1;;
@@ -123,6 +124,12 @@ if [[ $ASSEMBLER == "minia" ]]; then
     CONTIGS=miniaoutput
 fi
 
+if [[ $ASSEMBLER == "ABYSS" ]]; then
+    which ABYSS &>/dev/null
+    [ $? -eq 0 ] || { echo "ABYSS must be installed to run SISRS. The installation folder must be in your path.    Aborting."; exit 1; }
+    CONTIGS=abyssoutput
+fi
+
 which bowtie2 &>/dev/null
 [ $? -eq 0 ] || { echo "Bowtie2 must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 which parallel &>/dev/null
@@ -140,7 +147,7 @@ fi
 FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
 FILELISTU=()
 for F in "${FILELISTA[@]}"; do
-    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=(${F})
+    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *subsampled* ]]; then FILELISTU+=(${F})
     fi
 done
 if [[ ${#FILELISTU[@]} -gt 0 ]]; then
@@ -159,6 +166,7 @@ subSample(){
     fi
     
     echo "Subsampling data"
+    if [[ -e subsamples ]]; then rm -r subsamples; fi
     NUMER=$((10*${GENOMESIZE}))
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
     LEFTREADS=$((${NUMER}/${DENOM}))
@@ -167,6 +175,7 @@ subSample(){
 }
 
 buildContigs(){
+    rm -r ${MAINFOLDER}/${CONTIGS}
     if [[ $ASSEMBLER == "Velvet" ]]; then
         #make reference contigs - velveth
         if [ -n "${REFFILE}" ]; then
@@ -208,6 +217,10 @@ buildContigs(){
         minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/miniaoutput/
         mv ${MAINFOLDER}/miniaoutput/.contigs.fa ${MAINFOLDER}/miniaoutput/contigs.fa
     fi
+    
+    if [[ $ASSEMBLER == "ABYSS" ]]; then
+        ABYSS -k ${KMER} -o ${MAINFOLDER}/abyssoutput/contigs.fa ${MAINFOLDER}/subsamples/*fastq
+    fi
 }
 
 alignContigs(){
@@ -244,6 +257,8 @@ mapContigs(){
 }
 
 identifyFixedSites(){
+    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     echo ==== Done Identifying Fixed Sites Without Error ====
@@ -251,9 +266,9 @@ identifyFixedSites(){
 
 outputAlignment(){
     if [ -n "${REFFILE}" ]; then
-        ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER}
+        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) ${REFFILE} ${MAINFOLDER}
     else
-        ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} X ${MAINFOLDER}
+        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) X ${MAINFOLDER}       #alignment with up to all but 2 missing
     fi
 }
 
@@ -270,6 +285,10 @@ runSISRS(){
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
     done
+    
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py alignment.nex ${MISSING}       #alignment w specified number missing
+    
+    #run as raxml -s "${MAINFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
 
 ####################LOCI#######################
@@ -315,28 +334,56 @@ gfr_mergebam(){
 }
 
 gfr_getAlleles(){
-    for FOLDER in "${FOLDERLISTA[@]}"; do
-        find ${FOLDER}_loci/ -type f -name '*sam' | parallel -j "${PROCESSORS}" "rm -f {}"  #delete old sam files
-    done
-
-    parallel -j "${PROCESSORS}" "samtools view {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #convert to sam file
-    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/separate_sam_by_contig.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"   #separate by gene -> lots of sam files per folder
-    for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "${FOLDER}"_loci/merged.sam; done
-
-    for FOLDER in "${FOLDERLISTA[@]}"; do
-        find ${FOLDER}_loci/ -type f -name '*sam'| parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_sam.py {} ${ALLELES}"
-    done
+    parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
+    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
 }
 
 gfr_getAlignments(){
-    
-    parallel -j "${PROCESSORS}" 'for j in {}_loci/*fa; do cat $j >> {//}/loci/{/}.fa; done'  ::: "${FOLDERLISTA[@]}" #concatenate fa files -> all species fa files in main folder
         
     ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
     
-    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # delete species fasta files 
+    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
         
-    find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"
+    find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
+    
+}
+
+gfr_selectLoci(){
+    find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
+    
+    find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {}"    #trim ends
+    
+    #pick out loci by most species, then most variable in alignment.nex
+    COUNT=0
+    POS=1
+    if [[ -e "${MAINFOLDER}"/loci/newpartitions.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitions.txt; fi
+    if [[ -e "${MAINFOLDER}"/loci/phy_files.txt ]]; then rm "${MAINFOLDER}"/loci/phy_files.txt; fi
+    
+    for ((NUMSP="${#FOLDERLISTA[@]}";NUMSP>1;NUMSP--)); do
+        while read i; do
+            F=${i}_align.phylip-relaxed2
+            if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
+                if [[ $(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $1}') -eq ${NUMSP} ]]; then
+                    COUNT=$(( $COUNT + 1 ))
+                    GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
+                    echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
+                    POS=$((${POS}+${GLENGTH}))
+                    echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
+                    if [[ $POS -gt ${OUTLENGTH} ]] ; then
+                        break
+                    fi
+                fi
+            fi
+        done < "${MAINFOLDER}"/loci.txt
+        if [[ $POS -gt ${OUTLENGTH} ]] ; then
+            break
+        fi
+    done
+    
+    ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate selected loci for raxml analysis
+    #run as raxml -r <known_tree> -M -m GTRGAMMA -p $RANDOM -T <num_threads> -q "${MAINFOLDER}"/loci/newpartitions.txt -s "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed -n <out_name>
+    
+    ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
 }
 
 runGFR(){
@@ -348,7 +395,6 @@ runGFR(){
     
     gfr_aligntoConservedContigs
     gfr_mergebam
-    gfr_getAlleles
     
     if [ ! -d "${MAINFOLDER}"/loci ]; then
         mkdir "${MAINFOLDER}"/loci
@@ -356,7 +402,9 @@ runGFR(){
         find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old loci
     fi
     
+    gfr_getAlleles
     gfr_getAlignments
+    gfr_selectLoci
 }
 
 ####################RUN####################
