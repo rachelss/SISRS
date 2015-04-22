@@ -57,6 +57,7 @@ Flags:
       low ploidy with <3 individuals
  -m : the number of species that are allowed to have missing data at
       a site
+ -o : the length of the final loci dataset for dating
 
  Example command:
  sisrs sites-g 1745690 -p 40 -m 4 -f test_data
@@ -76,6 +77,7 @@ THRESHOLD=1
 ALLELES=1
 DEBUG=0
 ASSEMBLER=Velvet
+OUTLENGTH=500000
 CMD=$1
 
 cmds=(subSample buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
@@ -86,7 +88,7 @@ fi
     
 OPTIND=2 # tells getopts to start parsing at the second argument
 
-while getopts g:r:k:p:m:a:f:n:t:hd option
+while getopts g:r:k:p:m:a:f:n:t:o:hd option
 do
     case "${option}"
 	in
@@ -99,6 +101,7 @@ do
         a) ASSEMBLER=${OPTARG};;
 	n) MINREAD=${OPTARG};;
 	t) THRESHOLD=${OPTARG};;
+        t) OUTLENGTH=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
 	\? ) echo "Unknown option" >&2; exit 1;;
@@ -144,7 +147,7 @@ fi
 FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
 FILELISTU=()
 for F in "${FILELISTA[@]}"; do
-    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *shuffled* ]] && [[ $F != *sampled* ]]; then FILELISTU+=(${F})
+    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *subsampled* ]]; then FILELISTU+=(${F})
     fi
 done
 if [[ ${#FILELISTU[@]} -gt 0 ]]; then
@@ -163,6 +166,7 @@ subSample(){
     fi
     
     echo "Subsampling data"
+    if [[ -e subsamples ]]; then rm -r subsamples; fi
     NUMER=$((10*${GENOMESIZE}))
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
     LEFTREADS=$((${NUMER}/${DENOM}))
@@ -171,6 +175,7 @@ subSample(){
 }
 
 buildContigs(){
+    rm -r ${MAINFOLDER}/${CONTIGS}
     if [[ $ASSEMBLER == "Velvet" ]]; then
         #make reference contigs - velveth
         if [ -n "${REFFILE}" ]; then
@@ -261,9 +266,9 @@ identifyFixedSites(){
 
 outputAlignment(){
     if [ -n "${REFFILE}" ]; then
-        ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} ${REFFILE} ${MAINFOLDER}
+        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) ${REFFILE} ${MAINFOLDER}
     else
-        ${DIR}/libexec/sisrs/get_alignment.py ${MISSING} X ${MAINFOLDER}
+        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) X ${MAINFOLDER}       #alignment with up to all but 2 missing
     fi
 }
 
@@ -281,9 +286,9 @@ runSISRS(){
         ${cmds[$i]}
     done
     
-    ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/alignment.nex nexus phylip-relaxed
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py alignment.nex ${MISSING}       #alignment w specified number missing
     
-    #run as raxml -s "${MAINFOLDER}"/alignment.phylip-relaxed -n VSm_allbut2 -m ASC_GTRGAMMA -T $1 -p $RANDOM
+    #run as raxml -s "${MAINFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
 
 ####################LOCI#######################
@@ -351,8 +356,8 @@ gfr_selectLoci(){
     #pick out loci by most species, then most variable in alignment.nex
     COUNT=0
     POS=1
-    rm "${MAINFOLDER}"/loci/newpartitions.txt
-    rm "${MAINFOLDER}"/loci/phy_files.txt
+    if [[ -e "${MAINFOLDER}"/loci/newpartitions.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitions.txt; fi
+    if [[ -e "${MAINFOLDER}"/loci/phy_files.txt ]]; then rm "${MAINFOLDER}"/loci/phy_files.txt; fi
     
     for ((NUMSP="${#FOLDERLISTA[@]}";NUMSP>1;NUMSP--)); do
         while read i; do
@@ -364,13 +369,13 @@ gfr_selectLoci(){
                     echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
                     POS=$((${POS}+${GLENGTH}))
                     echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
-                    if [[ $POS -gt 500000 ]] ; then
+                    if [[ $POS -gt ${OUTLENGTH} ]] ; then
                         break
                     fi
                 fi
             fi
         done < "${MAINFOLDER}"/loci.txt
-        if [[ $POS -gt 500000 ]] ; then
+        if [[ $POS -gt ${OUTLENGTH} ]] ; then
             break
         fi
     done
