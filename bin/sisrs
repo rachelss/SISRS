@@ -257,6 +257,7 @@ mapContigs(){
 }
 
 identifyFixedSites(){
+    samtools faidx ${MAINFOLDER}/${CONTIGS}/contigs.fa
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/${CONTIGS}/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     
     #put base for each site in a dictionary (allows no variation when calling sites)
