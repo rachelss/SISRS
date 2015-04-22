@@ -214,11 +214,12 @@ buildContigs(){
     if [[ $ASSEMBLER == "minia" ]]; then
         mkdir ${MAINFOLDER}/miniaoutput
         ls ${MAINFOLDER}/subsamples/*fastq | parallel -j ${PROCESSORS} basename > ${MAINFOLDER}/subsamples/minia_read_file.txt
-        minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/miniaoutput/
+        minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -kmer-size ${KMER} -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/miniaoutput/
         mv ${MAINFOLDER}/miniaoutput/.contigs.fa ${MAINFOLDER}/miniaoutput/contigs.fa
     fi
     
     if [[ $ASSEMBLER == "ABYSS" ]]; then
+        mkdir ${MAINFOLDER}/abyssoutput
         ABYSS -k ${KMER} -o ${MAINFOLDER}/abyssoutput/contigs.fa ${MAINFOLDER}/subsamples/*fastq
     fi
 }
