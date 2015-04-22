@@ -59,10 +59,10 @@ Flags:
       a site
 
  Example command:
- sisrs sites -g 50000000 -p 40 -m 4 -f test_data
+ sisrs sites-g 1745690 -p 40 -m 4 -f test_data
  
  Example command:
- sisrs loci -g 50000000 -p 40 -m 4 -f test_data
+ sisrs loci -g 1745690 -p 40 -m 4 -f test_data
 
 ENDLINE
 }
@@ -193,11 +193,11 @@ buildContigs(){
                     velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
                 else
                     echo "Running Velvet with SE reads"
-                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
+                    velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -short ${MAINFOLDER}/subsamples/*subsampledu.fastq
                 fi
             else
                 echo "Running Velvet with PE reads"
-                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary ${REFFILE} -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
+                velveth ${MAINFOLDER}/velvetoutput ${KMER} -create_binary -fastq -shortPaired ${MAINFOLDER}/subsamples/*subsampledp.fastq
             fi
         fi
         echo ==== Velveth is finished ====
@@ -252,6 +252,8 @@ mapContigs(){
 }
 
 identifyFixedSites(){
+    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/velvetoutput/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     echo ==== Done Identifying Fixed Sites Without Error ====
