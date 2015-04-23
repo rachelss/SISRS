@@ -198,7 +198,7 @@ def write_alignment(fi,alignment,numbi):
     ALIGNMENT.write('[ '+ " ".join(alignment.ref_loc)+' ]'+"\n")
     ALIGNMENT.write('[ '+ " ".join(alignment.locations)+' ]'+"\n")
     for species in pathlist: #write sequences for each species
-        ALIGNMENT.write(species.replace('./','')+"\t"+("".join(alignment.species_data[species]))+"\n")
+        ALIGNMENT.write(os.path.basename(species)+"\t"+("".join(alignment.species_data[species]))+"\n")
         
     bi_ref_loc,bi_loc,bi_ref=[],[],[]
     pi_ref_loc,pi_loc,pi_ref=[],[],[]
@@ -225,13 +225,13 @@ def write_alignment(fi,alignment,numbi):
     ALIGNMENTBI.write('[ '+ " ".join(bi_ref_loc)+' ]'+"\n")
     ALIGNMENTBI.write('[ '+ " ".join(bi_loc)+' ]'+"\n")
     for species in pathlist: #write sequences for each species
-        ALIGNMENTBI.write(species.replace('./','')+"\t"+("".join(bi_sp_data[species]))+"\n")
+        ALIGNMENTBI.write(os.path.basename(species)+"\t"+("".join(bi_sp_data[species]))+"\n")
     
     ALIGNMENTPI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(pi_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')    
     ALIGNMENTPI.write('[ '+ " ".join(pi_ref_loc)+' ]'+"\n")
     ALIGNMENTPI.write('[ '+ " ".join(pi_loc)+' ]'+"\n")
     for species in pathlist: #write sequences for each species
-        ALIGNMENTPI.write(species.replace('./','')+"\t"+("".join(pi_sp_data[species]))+"\n")
+        ALIGNMENTPI.write(os.path.basename(species)+"\t"+("".join(pi_sp_data[species]))+"\n")
         
     if len(alignment.ref) > 0:
         ALIGNMENT.write('reference'+"\t"+("".join(alignment.ref))+"\n")
