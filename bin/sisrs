@@ -164,7 +164,7 @@ subSample(){
     fi
     
     echo "Subsampling data"
-    if [[ -e subsamples ]]; then rm -r subsamples; fi
+    if [[ -e "${MAINFOLDER}"/subsamples ]]; then rm -r "${MAINFOLDER}"/subsamples; fi
     NUMER=$((10*${GENOMESIZE}))
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
     LEFTREADS=$((${NUMER}/${DENOM}))
@@ -173,7 +173,7 @@ subSample(){
 }
 
 buildContigs(){
-    rm -r ${MAINFOLDER}/${CONTIGS}
+    if [[ -e "${MAINFOLDER}"/"${CONTIGS}" ]]; then rm -r ${MAINFOLDER}/${CONTIGS}; fi
     if [[ $ASSEMBLER == "velvet" ]]; then
         #make reference contigs - velveth
         if [ -n "${REFFILE}" ]; then
@@ -286,7 +286,7 @@ runSISRS(){
         ${cmds[$i]}
     done
     
-    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py alignment.nex ${MISSING}       #alignment w specified number missing
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${MAINFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing
     
     #run as raxml -s "${MAINFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
