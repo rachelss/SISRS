@@ -62,11 +62,11 @@ def makerefdict(reffasta):
         
     return refdict #name:sequence_as_list
 
-def get_pileup_files(f):
+def get_pileup_files(f):    #get folders containing pkl files
     pathlist=[]
     for path,dirs,files in os.walk(f):
-        for file in files:
-            if file.endswith(".pkl"):
+        for fi in files:
+            if fi.endswith(".pkl"):
                 pathlist.append(path)
     pathlist=list(set(pathlist))
     pathlist.sort()
@@ -248,6 +248,7 @@ def write_alignment(fi,alignment,numbi):
 
 #########################
 num_missing = int(sys.argv[1])
+assembler = sys.argv[4]
 basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c'}
 
 pathlist = get_pileup_files(sys.argv[3])
@@ -261,7 +262,7 @@ numbi = alignment.numsnps()     #prints numbers of snps, biallelic snps, and sin
 nodedict = dict((loc.split('/')[0],'X') for loc in set(alignment.locations))    #make each contig name a key with an empty value (if it has a snp)
 if sys.argv[2] is not 'X':
     ref=makerefdict(sys.argv[2])        #make dict for reference chromosomes
-    samfile=open(sys.argv[3]+'/velvetoutput/align_contigs.sam','r') #sam file contains alignment of contigs to reference ref genome - has chr and pos
+    samfile=open(sys.argv[3]+'/'+assembler+'output/align_contigs.sam','r') #sam file contains alignment of contigs to reference ref genome - has chr and pos
     for line in samfile:
         if not line.startswith('@'):    #skip header
             splitline=line.split()
