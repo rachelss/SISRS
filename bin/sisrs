@@ -335,7 +335,15 @@ gfr_mergebam(){
 
 gfr_getAlleles(){
     parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
-    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
+    parallel -j "${PROCESSORS}" "samtools view {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #sam files
+    parallel -j "${PROCESSORS}" "rm {}_loci/*fa" ::: "${FOLDERLISTA[@]}"
+    parallel -j "${PROCESSORS}" "while read LINE; do
+        SPLITLINE=($LINE)
+        echo '>'${SPLITLINE[0]} >> ${SPLITLINE[2]}.fa
+        echo ${SPLITLINE[9]} >> ${SPLITLINE[2]}.fa
+    done < {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"                #get reads per species per contig
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"  #align sequences
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/get_alleles.py {}"       #get consensus
 }
 
 gfr_getAlignments(){
