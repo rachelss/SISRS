@@ -348,11 +348,35 @@ gfr_getAlignments(){
     
 }
 
-gfr_selectLoci(){
+gfr_trimLoci(){
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
     
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {}"    #trim ends
+}
+
+gfr_selectLoci2(){
+    #pick out loci by most variable in alignment.nex
+    COUNT=0
+    POS=1
+    if [[ -e "${MAINFOLDER}"/loci/newpartitions.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitions.txt; fi
+    if [[ -e "${MAINFOLDER}"/loci/phy_files.txt ]]; then rm "${MAINFOLDER}"/loci/phy_files.txt; fi
     
+    while read i; do
+        F=${i}_align.phylip-relaxed2
+        if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
+            COUNT=$(( $COUNT + 1 ))
+            GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
+            echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
+            POS=$((${POS}+${GLENGTH}))
+            echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
+            if [[ $POS -gt 500000 ]] ; then
+                break
+            fi
+        fi
+    done < "${MAINFOLDER}"/loci.txt
+}
+
+gfr_selectLoci1(){
     #pick out loci by most species, then most variable in alignment.nex
     COUNT=0
     POS=1
@@ -369,17 +393,19 @@ gfr_selectLoci(){
                     echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
                     POS=$((${POS}+${GLENGTH}))
                     echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
-                    if [[ $POS -gt ${OUTLENGTH} ]] ; then
+                    if [[ $POS -gt 500000 ]] ; then
                         break
                     fi
                 fi
             fi
         done < "${MAINFOLDER}"/loci.txt
-        if [[ $POS -gt ${OUTLENGTH} ]] ; then
+        if [[ $POS -gt 500000 ]] ; then
             break
         fi
     done
-    
+}
+  
+gfr_catLoci(){    
     ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate selected loci for raxml analysis
     #run as raxml -r <known_tree> -M -m GTRGAMMA -p $RANDOM -T <num_threads> -q "${MAINFOLDER}"/loci/newpartitions.txt -s "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed -n <out_name>
     
@@ -404,7 +430,9 @@ runGFR(){
     
     gfr_getAlleles
     gfr_getAlignments
-    gfr_selectLoci
+    gfr_trimLoci
+    gfr_selectLoci2
+    gfr_catLoci
 }
 
 ####################RUN####################
