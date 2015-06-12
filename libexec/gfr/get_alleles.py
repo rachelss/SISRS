@@ -6,7 +6,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna,IUPAC, Gapped
 from Bio.Align import MultipleSeqAlignment,AlignInfo
 from Bio import AlignIO,SeqIO
-from collections import Counter
+from collections import Counter,defaultdict
 import operator
 import math
 from decimal import *
@@ -23,7 +23,7 @@ def get_maj_consensus(data):
     c_base = pos_bases_counts[0][0]
     return c_base
 
-def get_consensus(data):
+def get_80_20_consensus(data):      #takes list of bases, returns consensus based on 80/20 rule
     pos_bases_counts = Counter(data).most_common()
     if len(pos_bases_counts)>1:
         prop = Decimal(pos_bases_counts[0][1]) / (Decimal(pos_bases_counts[1][1])+Decimal(pos_bases_counts[0][1]))
@@ -36,90 +36,140 @@ def get_consensus(data):
     else:
         c_base = 'N'
     
-    return c_base, len(data)
+    return c_base
 
-def likelihoodtest(listbases,reads1,reads2):  #function to do the likelihood test of Hohenlohe 2010 - takes a sequence in list form
-    base_freq=Counter(listbases).most_common(5)
-    phasing = 'p'
-    if len(reads1) == 0:
-        reads1 = [i for i,b in enumerate(list_bases)]
+def get_one_allele(basereads,min_bases):      #takes list of info for each position when info is dict(base:[reads], base:[reads]), returns an allele
+    final_allele=[]
+    for pos in basereads:
+        baselist = [[b]*len(ids) for b,ids in pos.iteritems()]
+        baselist = [item for inner_list in baselist for item in inner_list]
+        base = get_80_20_consensus(baselist)
+        if len(baselist)>=min_bases:
+            final_allele.append(base)
+        else:
+            final_allele.append('N')
+    return("".join(final_allele))
     
-    if len(base_freq) == 0:
-        return 'n','n',len(listbases),phasing,reads1,reads2
-    if len(base_freq) == 1:
-        return base_freq[0][0],base_freq[0][0],len(listbases),phasing,reads1,reads2
+def likelihoodtest(bpreads):        #returns one base (one or two copies) or two bases
+    bpfreq = {b: float(len(r)) for b,r in bpreads.iteritems()}
+    bpfreqlist = sorted(bpfreq.items(), key=operator.itemgetter(1),reverse=True)      #sort bases by frequency and put in list
+    n=[i[1] for i in bpfreqlist]
+    
+    A=n[0]/sum(n)
+    A=math.log(A)
+    A=n[0]*A
+    Bn=sum(n[1:])
+    Bd=3*sum(n)
+    B=Bn*math.log(Bn/Bd)
+    Cn=sum(n[0:2])
+    Cd=2*sum(n)
+    C=Cn*math.log(Cn/Cd)
+    if len(n)>2:
+        Dn=sum(n[2:])
+        Dd=2*sum(n)
+        D=Dn*math.log(Dn/Dd)
     else:
-        #function from Hohenlohe 2010
-        part1a = factorial_div(len(listbases),base_freq[0][1])   #use shortcut method for factorials in fractions
-        otherallelecounts = [factorial(c[1]) for i,c in enumerate(base_freq) if i>0]
-        part1b = 1/Decimal(reduce(operator.mul, otherallelecounts, 1))
-        homopart2=(Decimal(base_freq[0][1])/len(listbases))**(base_freq[0][1])
-        homopart3=(Decimal(len(listbases)-base_freq[0][1])/(3*len(listbases)))**(len(listbases)-base_freq[0][1])
-        if len(base_freq)>1:
-            hetpart2=(Decimal(base_freq[0][1]+base_freq[1][1])/(2*len(listbases)))**(base_freq[0][1]+base_freq[1][1])
-        if len(base_freq) == 2:      #anything to the 0 = 1, but the computer needs help with this
-            hetpart3=1
-        elif len(base_freq) == 3:
-            hetpart3=(Decimal(base_freq[2][1])/(2*len(listbases)))**(base_freq[2][1])
-        else:
-            hetpart3=(Decimal(base_freq[2][1]+base_freq[3][1])/(2*len(listbases)))**(base_freq[2][1]+base_freq[3][1])
-        probhomo=part1a*part1b*homopart2*homopart3
-        probhet=part1a*part1b*hetpart2*hetpart3
-        probhomo+=Decimal(0.000001)      #compensate for limitations of computer
-        probhet+=Decimal(0.000001)
-        if probhomo=="inf":
-            probhomo=Decimal(1.7976931348623157e+308)
-        if probhet=="inf":
-            probhet=Decimal(1.7976931348623157e+308)
-#        print probhet
-        ln1=(math.log(probhomo))
-        ln2=(math.log(probhet))
-        likelihood=Decimal(2*(ln1-ln2))
-        if likelihood>=3.84:                 #alpha = 0.05 for test
-            return base_freq[0][0], base_freq[0][0],len(listbases),phasing,reads1,reads2             #return correct bases to go into allele
-        elif likelihood<=(-3.84):
-            newreads1=[i for i,b in enumerate(list_bases) if b is base_freq[0][0]]
-            newreads2=[i for i,b in enumerate(list_bases) if b is base_freq[1][0]]
-            oneone = set(newreads1).intersection(set(reads1))
-            onetwo = set(newreads1).intersection(set(reads2))
-            twoone = set(newreads2).intersection(set(reads1))
-            twotwo = set(newreads2).intersection(set(reads2))
-            if not oneone and not onetwo and not twoone and not twotwo:     #can't link snps
-                phasing = 'u'
-                return base_freq[0][0], base_freq[1][0],len(listbases),phasing,list(newreads1),list(newreads2)
-            elif (len(onetwo)+len(twoone))<(len(oneone)+len(twotwo)):
-                phasing = 'p'
-                return base_freq[0][0], base_freq[1][0],len(listbases),phasing,list(newreads1),list(newreads2)
-            elif (len(onetwo)+len(twoone))>(len(oneone)+len(twotwo)):
-                phasing = 'p'
-                return base_freq[1][0], base_freq[0][0],len(listbases),phasing,list(newreads2),list(newreads1)
+        D=0
+    LR = 2*(A+B-C-D)
+    
+    if LR>=3.84:                 #alpha = 0.05 for test
+        return bpfreqlist[0][0], bpfreqlist[0][0]             #return correct bases to go into allele
+    elif LR<=(-3.84):
+        return bpfreqlist[0][0], bpfreqlist[1][0]
+    else:
+        return bpfreqlist[0][0],'n'
+        
+def phase(bpreads,pastreads1,pastreads2):   #returns two bases in correct order given current and previous snp reads
+    bpfreq = {b: float(len(r)) for b,r in bpreads.iteritems()}
+    bpfreqlist = sorted(bpfreq.items(), key=operator.itemgetter(1),reverse=True)
+    bases = [bpfreqlist[0][0],bpfreqlist[1][0]]
+    reads1=bpreads[bases[0]]
+    reads2=bpreads[bases[1]]
+
+    d = set(reads1).intersection(set(pastreads1))
+    e = set(reads2).intersection(set(pastreads2))
+    f = set(reads1).intersection(set(pastreads2))
+    g = set(reads2).intersection(set(pastreads1))
+
+    if (len(d)+len(e))<(len(f)+len(g)):          #if there are more shared if the alleles were swapped, swap
+        return bases[1],bases[0],reads2,reads1
+    
+    else:     #if no linkage, uncertain linkage, or correct linkage leave as is
+        return bases[0],bases[1],reads1,reads2
+
+def get_two_alleles(basesreads,min_bases):    #returns two strings = alleles
+    allele1,allele2=[],[]
+    reads1,reads2=[],[]
+    for pos in basereads:
+        baselist = [[b]*len(ids) for b,ids in pos.iteritems()]
+        baselist = [item for inner_list in baselist for item in inner_list]
+        
+        if len(baselist)>=min_bases:        
+            if len(pos)==1:
+                allele1.append(pos.keys()[0])
+                allele2.append(pos.keys()[0])
             else:
-                phasing = 'u'
-                return base_freq[0][0], base_freq[1][0],len(listbases),phasing,list(newreads1),list(newreads2)
+                pos_allele1,pos_allele2 = likelihoodtest(pos)
+                if (pos_allele2 != pos_allele1) and (pos_allele2 != 'n'):
+                    pos_allele1,pos_allele2, reads1, reads2 = phase(pos,reads1,reads2)
+                allele1.append(pos_allele1)
+                allele2.append(pos_allele2)
         else:
-            return 'n','n',len(listbases),phasing,reads1,reads2
+            allele1.append('N')
+            allele2.append('N')
+    
+    return "".join(allele1),"".join(allele2)
+
+def base_reads(seqlist):
+    allinfo=[]
+    bases = ['A','C','G','T','a','c','g','t']
+    for i in range(len(seqlist[0])):
+        reads = defaultdict(list)
+        for seq in seqlist:
+            if seq[i] in bases:
+                reads[seq[i]].append(seq.id)
+        allinfo.append(reads)
+    return allinfo         #[{base:[id,id...],base:[id,id...]}, ]   
+
 
 ######################
-bases = ['A','C','G','T','a','c','g','t']
-min_bases=1
+if __name__ == '__main__':
 
-handle = open(sys.argv[1], "rU")
-allseqs = list(SeqIO.parse(handle, "fasta"))
-handle.close()
-
-final_seq=[]
-
-for i in range(len(allseqs[0])):
-    data = [seq[i] for seq in allseqs if seq[i] in bases]
-    if len(data)>=min_bases:
-        b = get_consensus(data)
-        final_seq.append(b)
-    elif 0<len(data)<min_bases:
-        final_seq.append('N')
+    min_bases=1
+    sp=sys.argv[1].split('/')[-2].replace('_loci','')        #species = folder name
+    num_alleles=int(sys.argv[2])
+    
+    handle = open(sys.argv[1], "rU")
+    allseqs = list(SeqIO.parse(handle, "fasta"))
+    handle.close()
+    
+    if len(allseqs)==0:     #mafft didn't align b/c only one sequence
+        if min_bases==1:
+            handle = open(sys.argv[1].replace('_align.fa','.fa'), "rU")     #read that one seq
+            seq=list(SeqIO.parse(handle, "fasta"))
+            handle.close()
+            
+            allele1=str(seq[0].seq)
+            num_alleles=1
+        else:
+            'There was only one read for '+sys.argv[1]
+            sys.exit(1)
+    
+    else:
+        basereads = base_reads(allseqs)      #[{base:[id,id...],base:[id,id...]}, ]
         
-
-
-outfile = open(sys.argv[1].replace('_align.fa','_alleles.fa'),'w')
-outfile.write('>'+sys.argv[1].replace('_align.fa',''))
-outfile.write("".join(final_seq))
-outfile.close()
+        if num_alleles==1:
+            allele1 = get_one_allele(basereads,min_bases)
+        elif num_alleles==2:
+            allele1, allele2 = get_two_alleles(basereads,min_bases)
+        else:
+            print 'You must have either one or two alleles'
+            sys.exit(1)
+    
+    outfile = open(sys.argv[1].replace('_align.fa','_alleles.fa'),'w')
+    outfile.write('>'+sp+"\n")
+    outfile.write(allele1+"\n")
+    if num_alleles==2:
+        outfile.write('>'+sp+'_2'+"\n")
+        outfile.write(allele2+"\n")        
+    outfile.close()
