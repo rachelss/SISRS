@@ -349,7 +349,7 @@ gfr_getAlleles(){
 }
 
 gfr_getAlignments(){
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*_alleles.fa' | sed -r 's/^.+\///' | sort | uniq | parallel -j "${PROCESSORS}" "cat ${MAINFOLDER}/*_loci/{} > loci/{}"
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" basename | sort | uniq | parallel -j "${PROCESSORS}" "cat ${MAINFOLDER}/*_loci/{} > ${MAINFOLDER}/loci/{}"
         
     find "${MAINFOLDER}"/loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
     
@@ -460,6 +460,8 @@ elif [[ $CMD = "loci" ]]; then
 	if [ ! -f ${MAINFOLDER}/ref_genes.fa ]; then
 	    echo "** Missing reference, copying from previous SISRS session"
 	    copyRefContigs  # Get ref_genes.fa from previous sisrs run
+        else    #already have ref_genes.fa but need to generate loci.txt
+            grep \> ref_genes.fa | sed 's/>//' > loci.txt 
 	fi
     fi
 
