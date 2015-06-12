@@ -88,7 +88,7 @@ fi
     
 OPTIND=2 # tells getopts to start parsing at the second argument
 
-while getopts g:r:k:p:m:a:f:n:t:o:hd option
+while getopts g:r:k:p:m:a:f:n:t:o:l:hd option
 do
     case "${option}"
 	in
@@ -101,7 +101,8 @@ do
         a) ASSEMBLER=${OPTARG};;
 	n) MINREAD=${OPTARG};;
 	t) THRESHOLD=${OPTARG};;
-        t) OUTLENGTH=${OPTARG};;
+        o) OUTLENGTH=${OPTARG};;
+        l) ALLELES=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
 	\? ) echo "Unknown option" >&2; exit 1;;
@@ -111,6 +112,10 @@ done
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
+
+if [[ "${ALLELES}" != "1" ]] && [[ "${ALLELES}" != "2" ]]; then
+    echo "You must have either 1 or 2 alleles (1 is the default). Aborting."; exit 1;
+fi
 
 if [[ $ASSEMBLER == "velvet" ]]; then
     which velveth &>/dev/null
