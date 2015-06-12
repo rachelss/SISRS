@@ -20,7 +20,7 @@ for line in samfile:
 samfile.close()
 
 for contig,seqs in reads.iteritems():
-    outfile = open(mainfolder_name_+'/'+contig+'.fa','w')
+    outfile = open(mainfolder_name+'/'+contig+'.fa','w')
     for i in seqs:
         outfile.write('>'+i[0]+"\n"+i[1]+"\n")
 outfile.close()
