@@ -88,7 +88,7 @@ fi
     
 OPTIND=2 # tells getopts to start parsing at the second argument
 
-while getopts g:r:k:p:m:a:f:n:t:o:hd option
+while getopts g:r:k:p:m:a:f:n:t:o:l:hd option
 do
     case "${option}"
 	in
@@ -101,7 +101,8 @@ do
         a) ASSEMBLER=${OPTARG};;
 	n) MINREAD=${OPTARG};;
 	t) THRESHOLD=${OPTARG};;
-        t) OUTLENGTH=${OPTARG};;
+        o) OUTLENGTH=${OPTARG};;
+        l) ALLELES=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
 	\? ) echo "Unknown option" >&2; exit 1;;
@@ -111,6 +112,10 @@ done
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
+
+if [[ "${ALLELES}" != "1" ]] && [[ "${ALLELES}" != "2" ]]; then
+    echo "You must have either 1 or 2 alleles (1 is the default). Aborting."; exit 1;
+fi
 
 if [[ $ASSEMBLER == "velvet" ]]; then
     which velveth &>/dev/null
@@ -335,16 +340,17 @@ gfr_mergebam(){
 
 gfr_getAlleles(){
     parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
-    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
+    parallel -j "${PROCESSORS}" "rm {}_loci/*fa" ::: "${FOLDERLISTA[@]}"
+    parallel -j "${PROCESSORS}" "samtools view {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"
+    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/get_reads_from_sam.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #get reads for each contig for each sp if good mapq  
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"  #align sequences
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/get_alleles.py {} 1"       #get consensus
 }
 
 gfr_getAlignments(){
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*_alleles.fa' | sed -r 's/^.+\///' | sort | uniq | parallel -j "${PROCESSORS}" "cat ${MAINFOLDER}/*_loci/{} > loci/{}"
         
-    ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
-    
-    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
-        
-    find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
+    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
     
 }
 
