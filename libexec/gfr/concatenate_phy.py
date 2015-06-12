@@ -18,7 +18,7 @@ phy_files_file = open(sys.argv[1]+'/phy_files.txt','r')
 phy_files = phy_files_file.readlines()
 phy_files_file.close()
 
-allspecies = sys.argv[2:]
+allspecies = [os.path.basename(sp) for sp in sys.argv[2:]]
 cat_data = {s:list() for s in allspecies}
 
 for f in phy_files:

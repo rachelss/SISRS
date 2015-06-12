@@ -369,14 +369,14 @@ gfr_selectLoci2(){
     if [[ -e "${MAINFOLDER}"/loci/phy_files.txt ]]; then rm "${MAINFOLDER}"/loci/phy_files.txt; fi
     
     while read i; do
-        F=${i}_align.phylip-relaxed2
+        F=${i}_alleles_align.phylip-relaxed2
         if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
             COUNT=$(( $COUNT + 1 ))
             GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
             echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
             POS=$((${POS}+${GLENGTH}))
             echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
-            if [[ $POS -gt 500000 ]] ; then
+            if [[ $POS -gt ${OUTLENGTH} ]] ; then
                 break
             fi
         fi
@@ -406,14 +406,14 @@ gfr_selectLoci1(){
                 fi
             fi
         done < "${MAINFOLDER}"/loci.txt
-        if [[ $POS -gt 500000 ]] ; then
+        if [[ $POS -gt ${OUTLENGTH} ]] ; then
             break
         fi
     done
 }
   
 gfr_catLoci(){    
-    ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci $(ls "${MAINFOLDER}"/loci/*fasta | parallel echo {/.})        #concatenate selected loci for raxml analysis
+    ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci "${FOLDERLISTA[@]}"        #concatenate selected loci for raxml analysis
     #run as raxml -r <known_tree> -M -m GTRGAMMA -p $RANDOM -T <num_threads> -q "${MAINFOLDER}"/loci/newpartitions.txt -s "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed -n <out_name>
     
     ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
