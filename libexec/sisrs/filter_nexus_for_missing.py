@@ -15,7 +15,7 @@ import linecache
 ######################
 bases = ['A','C','G','T','a','c','g','t']
 formats = {'nex':'nexus', 'phy':'phylip-relaxed','fa':'fasta'}
-fformat = formats[sys.argv[1].split('.')[1]]
+fformat = formats[path.basename(sys.argv[1]).split('.')[1]]
 missing=int(sys.argv[2])
 data = SeqIO.to_dict(SeqIO.parse(sys.argv[1], fformat))
 locline = linecache.getline(sys.argv[1], 8)
