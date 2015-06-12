@@ -10,7 +10,7 @@ f=sys.argv[1]
 fformat = sys.argv[1].split('.')[-1]
 align = AlignIO.read(f,fformat)
 
-if len(align)>0:
+if len(align)>=numsp*0.5:
     for i in range(len(align[0])):      #go through each base in alignment
         info=[a for a in list(align[:, -i]) if a in bases]      #all bases at pos i
         if float(len(info))>=numsp*0.5:
@@ -29,7 +29,8 @@ if len(align)>0:
         if len(info) == 0:
             sp_to_remove.append(record.id)
     
-    #make new alignment wo missing seqs
-    if len(sp_to_remove) < len(align):
-        newalign = MultipleSeqAlignment([record for record in align if record.id not in sp_to_remove], generic_dna)
-        AlignIO.write(newalign, f+'2', fformat)
+    if len(align)>=numsp*0.5:
+        #make new alignment wo missing seqs
+        if len(sp_to_remove) < len(align):
+            newalign = MultipleSeqAlignment([record for record in align if record.id not in sp_to_remove], generic_dna)
+            AlignIO.write(newalign, f+'2', fformat)
