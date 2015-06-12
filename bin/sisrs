@@ -58,6 +58,7 @@ Flags:
  -m : the number of species that are allowed to have missing data at
       a site
  -o : the length of the final loci dataset for dating
+ -l : the number of alleles
 
  Example command:
  sisrs sites-g 1745690 -p 40 -m 4 -f test_data
