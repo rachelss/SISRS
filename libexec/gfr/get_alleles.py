@@ -135,7 +135,7 @@ def base_reads(seqlist):
 ######################
 if __name__ == '__main__':
 
-    min_bases=1
+    min_bases=int(sys.argv[3])
     sp=sys.argv[1].split('/')[-2].replace('_loci','')        #species = folder name
     num_alleles=int(sys.argv[2])
     
