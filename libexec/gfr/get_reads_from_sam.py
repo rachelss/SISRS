@@ -15,8 +15,9 @@ for line in samfile:
     splitline = line.split()
     if int(splitline[4])>10:
         reads[splitline[2]].append((splitline[0],splitline[9]))    #note: read is already rev-comp if necessary
-    if splitline[6] !='-' and int(splitline[8])>10:     #make sure working with current read secondary mapping not next read
-        reads[splitline[2]].append((splitline[0],splitline[9]))       #include secondary mapping if good
+    #secondary mapping not currently used b/c it should never produce high mapq and this field used to map pair
+#    if splitline[6] !='-' and splitline[6] !='=' and int(splitline[8])>10:     #make sure working with current read secondary mapping not next read
+#        reads[splitline[2]].append((splitline[0],splitline[9]))       #include secondary mapping if good
 samfile.close()
 
 for contig,seqs in reads.iteritems():
