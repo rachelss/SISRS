@@ -19,6 +19,13 @@ def factorial_div(numerator, denominator):   #function for when there's a factor
     else:
         return numerator * factorial_div(numerator-1, denominator)
 
+def trimends(allele):
+    while allele[0]=='N':
+        allele.pop(0)
+    while allele[-1]=='N':
+        allele.pop()
+    return allele
+
 def get_maj_consensus(data):
     pos_bases_counts = Counter(data).most_common()
     c_base = pos_bases_counts[0][0]
@@ -49,6 +56,9 @@ def get_one_allele(basereads,min_bases):      #takes list of info for each posit
             final_allele.append(base)
         else:
             final_allele.append('N')
+            
+    final_allele=trimends(final_allele)
+            
     return("".join(final_allele))
     
 def likelihoodtest(bpreads):        #returns one base (one or two copies) or two bases
@@ -118,6 +128,9 @@ def get_two_alleles(basesreads,min_bases):    #returns two strings = alleles
         else:
             allele1.append('N')
             allele2.append('N')
+            
+    allele1 = trimends(allele1)
+    allele2 = trimends(allele2)
     
     return "".join(allele1),"".join(allele2)
 
