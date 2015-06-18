@@ -352,7 +352,7 @@ gfr_getAlleles(){
 gfr_getAlignments(){
     find "${MAINFOLDER}"/*_loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" basename | sort | uniq | parallel -j "${PROCESSORS}" "cat ${MAINFOLDER}/*_loci/{} > ${MAINFOLDER}/loci/{}"
         
-    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
+    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa" >/dev/null 2>/dev/null      #align
     
 }
 
