@@ -167,7 +167,7 @@ if __name__ == '__main__':
             'There was only one read for '+sys.argv[1]
             sys.exit(1)
     
-    outfile = open(sys.argv[1].replace('_align.fa','_alleles.fa'),'w')
+    outfile = open(sys.argv[1].replace('.fa','_alleles.fa'),'w')
     outfile.write('>'+sp+"\n")
     outfile.write(allele1+"\n")
     if num_alleles==2:
