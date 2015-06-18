@@ -20,10 +20,11 @@ def factorial_div(numerator, denominator):   #function for when there's a factor
         return numerator * factorial_div(numerator-1, denominator)
 
 def trimends(allele):
-    if allele[0]=='N':
+    if set(allele)==set(['N']):
+        allele=[]
+    else:
         while allele[0]=='N':
             allele.pop(0)
-    if allele[-1]=='N':
         while allele[-1]=='N':
             allele.pop()
     return allele
@@ -129,8 +130,7 @@ def get_two_alleles(basesreads,min_bases):    #returns two strings = alleles
                 allele2.append(pos_allele2)
         else:
             allele1.append('N')
-            allele2.append('N')
-    print allele1        
+            allele2.append('N')      
     allele1 = trimends(allele1)
     allele2 = trimends(allele2)
     
