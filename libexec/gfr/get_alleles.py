@@ -20,10 +20,12 @@ def factorial_div(numerator, denominator):   #function for when there's a factor
         return numerator * factorial_div(numerator-1, denominator)
 
 def trimends(allele):
-    while allele[0]=='N':
-        allele.pop(0)
-    while allele[-1]=='N':
-        allele.pop()
+    if allele[0]=='N':
+        while allele[0]=='N':
+            allele.pop(0)
+    if allele[-1]=='N':
+        while allele[-1]=='N':
+            allele.pop()
     return allele
 
 def get_maj_consensus(data):

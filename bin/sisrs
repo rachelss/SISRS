@@ -359,7 +359,7 @@ gfr_getAlignments(){
 gfr_trimLoci(){
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
     
-    find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
+    find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]} ${ALLELES}"    #trim ends
 }
 
 gfr_selectLoci2(){

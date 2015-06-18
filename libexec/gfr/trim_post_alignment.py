@@ -6,6 +6,8 @@ from Bio.Alphabet import generic_dna
 import os
 
 numsp=float(sys.argv[2])
+if int(sys.argv[3])==2:
+    numsp=numsp*2
 bases=['a','c','g','t','A','C','G','T']
 f=sys.argv[1]
 fformat = sys.argv[1].split('.')[-1]
