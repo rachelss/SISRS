@@ -10,6 +10,7 @@ from collections import Counter,defaultdict
 import operator
 import math
 from decimal import *
+import os.path
 
 #######################        
 def factorial_div(numerator, denominator):   #function for when there's a factorial on the top and bottom of a fraction (always assuming the number in the numerator is greater than or equal to the number in the denominator)
@@ -139,23 +140,11 @@ if __name__ == '__main__':
     sp=sys.argv[1].split('/')[-2].replace('_loci','')        #species = folder name
     num_alleles=int(sys.argv[2])
     
-    handle = open(sys.argv[1], "rU")
-    allseqs = list(SeqIO.parse(handle, "fasta"))
-    handle.close()
+    if os.path.exists(sys.argv[1].replace('.fa','_align.fasta')):
+        handle = open(sys.argv[1].replace('.fa','_align.fasta'), "rU")
+        allseqs = list(SeqIO.parse(handle, "fasta"))
+        handle.close()
     
-    if len(allseqs)==0:     #mafft didn't align b/c only one sequence
-        if min_bases==1:
-            handle = open(sys.argv[1].replace('_align.fa','.fa'), "rU")     #read that one seq
-            seq=list(SeqIO.parse(handle, "fasta"))
-            handle.close()
-            
-            allele1=str(seq[0].seq)
-            num_alleles=1
-        else:
-            'There was only one read for '+sys.argv[1]
-            sys.exit(1)
-    
-    else:
         basereads = base_reads(allseqs)      #[{base:[id,id...],base:[id,id...]}, ]
         
         if num_alleles==1:
@@ -164,6 +153,18 @@ if __name__ == '__main__':
             allele1, allele2 = get_two_alleles(basereads,min_bases)
         else:
             print 'You must have either one or two alleles'
+            sys.exit(1)
+    
+    else:     # didn't align b/c only one sequence
+        if min_bases==1:
+            handle = open(sys.argv[1], "rU")     #read that one seq
+            seq=list(SeqIO.parse(handle, "fasta"))
+            handle.close()
+            
+            allele1=str(seq[0].seq)
+            num_alleles=1
+        else:
+            'There was only one read for '+sys.argv[1]
             sys.exit(1)
     
     outfile = open(sys.argv[1].replace('_align.fa','_alleles.fa'),'w')
