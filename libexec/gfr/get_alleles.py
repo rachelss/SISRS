@@ -130,7 +130,7 @@ def get_two_alleles(basesreads,min_bases):    #returns two strings = alleles
         else:
             allele1.append('N')
             allele2.append('N')
-            
+    print allele1        
     allele1 = trimends(allele1)
     allele2 = trimends(allele2)
     
