@@ -4,8 +4,7 @@
 
 import sys
 from decimal import *
-import pysam
-from collections import Counter,defaultdict
+from collections import defaultdict
 import string
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
