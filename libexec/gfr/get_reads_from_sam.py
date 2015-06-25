@@ -20,10 +20,11 @@ class splitseq:
 
 #################################
 infile = sys.argv[1]
-mainfolder_name='/'.join(infile.split('/')[:-1])      #everything but sam file name
+mainfolder_name='/'.join(infile.split('/')[:-2])
+folder_name='/'.join(infile.split('/')[:-1])      #everything but sam file name
 
 #get contig lengths
-contigs = SeqIO.to_dict(SeqIO.parse('../'+mainfolder_name+'/ref_genes.fa', "fasta"))
+contigs = SeqIO.to_dict(SeqIO.parse(mainfolder_name+'/ref_genes.fa', "fasta"))
 for k,v in contigs.iteritems():
     contigs[k]=len(v)
 
@@ -87,7 +88,7 @@ samfile.close()
 
 #add N's to each part of alignment to even things out
 for contig,readlist in reads.iteritems():
-    outfile = open(mainfolder_name+'/'+contig+'.fa','w')
+    outfile = open(folder_name+'/'+contig+'.fa','w')
     for i,r in enumerate(readlist):
         if len(r.h) < maxh:
             reads[contig][i].h = ['N']*(maxh-len(r.h))+r.h
