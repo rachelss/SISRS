@@ -3,9 +3,7 @@
 #outputs .fa file for each locus for one species
 
 import sys
-from decimal import *
-import pysam
-from collections import Counter,defaultdict
+from collections import defaultdict
 
 infile = sys.argv[1]
 reads=defaultdict(list)
