@@ -237,7 +237,7 @@ seqs=getMSA(allseq2)
 
 folder_name='/'.join(sys.argv[1].split('/')[:-1])
 filename=sys.argv[1].split('/')[-1]
-outfile = open(folder_name+'/alignments/'+filename.replace('.fa','_align.fa'),'w')
+outfile = open(folder_name+'/'+filename.replace('.fa','_align.fa'),'w')
 for i,a in enumerate(allseqs):
     outfile.write('>'+a.name+"\n")
     outfile.write(seqs[i]+"\n")
