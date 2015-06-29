@@ -341,7 +341,7 @@ gfr_mergebam(){
 
 gfr_getAlleles(){
     parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" rm {}
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}"rm {}
     parallel -j "${PROCESSORS}" "samtools view -F 4 {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"
     parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/get_reads_from_sam.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #get reads for each contig for each sp if good mapq   
     find "${MAINFOLDER}"/*_loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" sed 's/N//g' "<{} >{.}_unalign.fa"    #remove Ns that show expected alignment
@@ -351,15 +351,17 @@ gfr_getAlleles(){
 
 gfr_getAlignments(){
     find "${MAINFOLDER}"/*_loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" basename | sort | uniq | parallel -j "${PROCESSORS}" "cat ${MAINFOLDER}/*_loci/{} > ${MAINFOLDER}/loci/{}"
+    
+    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles.fa' | parallel -j ${PROCESSORS} "sed '2~2 s/N//g' {} > {.}NN.fa"
         
-    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa" >/dev/null 2>/dev/null      #align
+    find "${MAINFOLDER}"/loci/ -type f -name '*_allelesNN.fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa" >/dev/null 2>/dev/null      #align
     
 }
 
 gfr_trimLoci(){
-    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
+    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles_alignNN.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
     
-    find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
+    find "${MAINFOLDER}"/loci/ -type f -name '*_alignNN.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
 }
 
 gfr_selectLoci2(){
