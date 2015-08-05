@@ -35,10 +35,12 @@ By default, SISRS assumes that
 
 Commands:
  sites : produce an alignment of sites from raw reads
- alignContigs : run sisrs skipping the composite genome assembly
- mapContigs : run sisrs, also skipping alignment of reads to composite genome
- identifyFixedSites : run sisrs, also skipping mapping of contigs to a reference
- outputAlignment : get sisrs alignment from sites id'd for individual species
+ alignContigs : run sisrs sites skipping the composite genome assembly
+ mapContigs : run sisrs sites, also skipping alignment of reads to composite genome
+ identifyFixedSites : run sisrs sites, also skipping mapping of contigs to a reference
+ outputAlignment : run sisrs sites, also skipping determination of fixed sites calls
+ changeMissing : given alignment of sites output a file with only sites missing
+        fewer than a specified number of samples per site
  loci : produce a set of aligned loci based on the most variable regions of
         the composite genome
  
@@ -81,7 +83,7 @@ ASSEMBLER=velvet
 OUTLENGTH=500000
 CMD=$1
 
-cmds=(subSample buildContigs alignContigs mapContigs identifyFixedSites outputAlignment)
+cmds=(subSample buildContigs alignContigs mapContigs identifyFixedSites outputAlignment changeMissing)
 if [[ "${CMD}" != "sites" ]] && [[ "${CMD}" != "loci" ]] && [[ ! "${cmds[*]}" =~ $CMD ]]; then
     help
     exit 0
@@ -278,6 +280,12 @@ outputAlignment(){
     fi
 }
 
+changeMissing(){
+    if [[ ${MISSING} -lt $((${#FOLDERLISTA[@]} - 2)) ]]; then
+        ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${MAINFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing
+    fi
+}
+
 runSISRS(){
     if [[ "${cmds[*]}" =~ "${CMD}" ]]; then               # get pos in list of commands
         for (( i = 0; i < ${#cmds[@]}; i++ )); do
@@ -291,9 +299,7 @@ runSISRS(){
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
     done
-    
-    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${MAINFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing
-    
+     
     #run as raxml -s "${MAINFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
 
