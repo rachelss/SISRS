@@ -15,7 +15,7 @@ import linecache
 ######################
 bases = ['A','C','G','T','a','c','g','t']
 formats = {'nex':'nexus', 'phy':'phylip-relaxed','fa':'fasta'}
-fformat = formats[path.basename(sys.argv[1]).split('.')[1]]
+fformat = formats[sys.argv[1].split('.')[-1]]
 missing=int(sys.argv[2])
 data = SeqIO.to_dict(SeqIO.parse(sys.argv[1], fformat))
 locline = linecache.getline(sys.argv[1], 8)
@@ -41,7 +41,7 @@ for k,v in newdata.iteritems():
     seq = SeqRecord(Seq(''.join(v)), id=k)
     datalist.append(seq)
     
-SeqIO.write(datalist,sys.argv[1].split('.')[0]+'_m'+sys.argv[2]+'.phylip-relaxed', "phylip-relaxed")
-locfile = open('locs_m'+sys.argv[2]+'.txt','w')
+SeqIO.write(datalist,sys.argv[1].split('.')[:-1]+'_m'+sys.argv[2]+'.phylip-relaxed', "phylip-relaxed")
+locfile = open(path.basename(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt','w')
 locfile.write(" ".join(newlocs))
 locfile.close()
