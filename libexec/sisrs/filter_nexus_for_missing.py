@@ -41,7 +41,7 @@ for k,v in newdata.iteritems():
     seq = SeqRecord(Seq(''.join(v)), id=k)
     datalist.append(seq)
     
-SeqIO.write(datalist,"".join(sys.argv[1].split('.')[:-1])+'_m'+sys.argv[2]+'.phylip-relaxed', "phylip-relaxed")
-locfile = open(path.basename(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt','w')
+SeqIO.write(datalist,path.dirname(sys.argv[1])+'/'+path.basename(sys.argv[1]).split('.')[0]+'_m'+sys.argv[2]+'.phylip-relaxed', "phylip-relaxed")
+locfile = open(path.dirname(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt','w')
 locfile.write(" ".join(newlocs))
 locfile.close()
