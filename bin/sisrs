@@ -347,27 +347,22 @@ gfr_mergebam(){
 
 gfr_getAlleles(){
     parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" rm {}
-    parallel -j "${PROCESSORS}" "samtools view -F 4 {}_loci/merged.bam > {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"
-    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/get_reads_from_sam.py {}_loci/merged.sam" ::: "${FOLDERLISTA[@]}"     #get reads for each contig for each sp if good mapq   
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" sed 's/N//g' "<{} >{.}_unalign.fa"    #remove Ns that show expected alignment
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*_unalign.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/free_end_align.py {}"  #align sequences
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*_align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/get_alleles.py {} ${ALLELES} ${MINREAD}"       #get consensus
+    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"  #takes bam file aligned to ref_genes for one species #outputs .fa file for all loci for one species
 }
 
 gfr_getAlignments(){
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*_alleles.fa' | parallel -j "${PROCESSORS}" basename | sort | uniq | parallel -j "${PROCESSORS}" "cat ${MAINFOLDER}/*_loci/{} > ${MAINFOLDER}/loci/{}"
+    ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
     
-    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles.fa' | parallel -j ${PROCESSORS} "sed '2~2 s/N//g' {} > {.}NN.fa"
+    for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
         
-    find "${MAINFOLDER}"/loci/ -type f -name '*_allelesNN.fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa" >/dev/null 2>/dev/null      #align
+    find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
     
 }
 
 gfr_trimLoci(){
-    find "${MAINFOLDER}"/loci/ -type f -name '*_alleles_alignNN.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
+    find "${MAINFOLDER}"/loci/ -type f -name '*align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
     
-    find "${MAINFOLDER}"/loci/ -type f -name '*_alignNN.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
+    find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
 }
 
 gfr_selectLoci2(){
@@ -448,6 +443,7 @@ runGFR(){
     gfr_getAlignments
     gfr_trimLoci
     gfr_selectLoci2
+    gfr_selectLoci1
     gfr_catLoci
 }
 
