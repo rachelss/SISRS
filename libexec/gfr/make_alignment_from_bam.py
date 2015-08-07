@@ -34,6 +34,7 @@ def get_consensus_MR(data):
 
 ######################
 infile = sys.argv[1]
+minread = int(sys.argv[2])
 mainfolder_name='/'.join(infile.split('/')[:-2])      #everything but bam file name and sample name
 sp_name=infile.split('/')[-2]      #just sample name
 sp_name=sp_name.split('_')[0]      #just sample name
@@ -45,9 +46,12 @@ for pileupcolumn in samfile.pileup():       #go through each position for each c
     contig = samfile.getrname(pileupcolumn.reference_id)
     if contig not in final_seqs:
         final_seqs[contig]=[]
-    if int(pileupcolumn.n) > 3:     #min 3 reads aligned
-        bases_aligned = [pileupread.alignment.query_sequence[pileupread.query_position] for pileupread in pileupcolumn.pileups]     #this is the pileup
-        consensus_base = get_consensus_MR(bases_aligned)            
+    if int(pileupcolumn.n) >= minread:     #min 3 reads aligned
+        bases_aligned = [pileupread.alignment.query_sequence[pileupread.query_position] for pileupread in pileupcolumn.pileups if type(pileupread.query_position) is int]     #this is the pileup
+        if len(bases_aligned) >= minread:
+            consensus_base = get_consensus_MR(bases_aligned)
+        else:
+            consensus_base = 'N'
     else:
         consensus_base = 'N'
     final_seqs[contig].append(consensus_base)
