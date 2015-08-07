@@ -347,7 +347,7 @@ gfr_mergebam(){
 
 gfr_getAlleles(){
     parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
-    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"  #takes bam file aligned to ref_genes for one species #outputs .fa file for all loci for one species
+    parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam ${MINREAD}" ::: "${FOLDERLISTA[@]}"  #takes bam file aligned to ref_genes for one species #outputs .fa file for all loci for one species
 }
 
 gfr_getAlignments(){
@@ -373,7 +373,7 @@ gfr_selectLoci2(){
     if [[ -e "${MAINFOLDER}"/loci/phy_files.txt ]]; then rm "${MAINFOLDER}"/loci/phy_files.txt; fi
     
     while read i; do
-        F=${i}_alleles_align.phylip-relaxed2
+        F=${i}_align.phylip-relaxed2
         if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
             COUNT=$(( $COUNT + 1 ))
             GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
@@ -443,7 +443,6 @@ runGFR(){
     gfr_getAlignments
     gfr_trimLoci
     gfr_selectLoci2
-    gfr_selectLoci1
     gfr_catLoci
 }
 
