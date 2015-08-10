@@ -360,6 +360,7 @@ gfr_getAlignments(){
 }
 
 gfr_trimLoci(){
+   
     find "${MAINFOLDER}"/loci/ -type f -name '*align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
     
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
@@ -438,7 +439,7 @@ runGFR(){
     if [ ! -d "${MAINFOLDER}"/loci ]; then
         mkdir "${MAINFOLDER}"/loci
     else
-        find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old loci
+        find "${MAINFOLDER}"/loci/ -type f -name '*' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old loci
     fi
     
     gfr_getAlleles
