@@ -365,21 +365,22 @@ gfr_trimLoci(){
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
 }
 
-gfr_selectLoci2(){
+gfr_selectLoci_MV(){
     #pick out loci by most variable in alignment.nex
     COUNT=0
     POS=1
-    if [[ -e "${MAINFOLDER}"/loci/newpartitions.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitions.txt; fi
-    if [[ -e "${MAINFOLDER}"/loci/phy_files.txt ]]; then rm "${MAINFOLDER}"/loci/phy_files.txt; fi
+    if [[ -e "${MAINFOLDER}"/loci/newpartitionsMV.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitionsMV.txt; fi
+    if [[ -e "${MAINFOLDER}"/loci/phy_filesMV.txt ]]; then rm "${MAINFOLDER}"/loci/phy_filesMV.txt; fi
     
     while read i; do
+
         F=${i}_align.phylip-relaxed2
         if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
             COUNT=$(( $COUNT + 1 ))
             GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
-            echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
+            echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitionsMV.txt           #get partitions
             POS=$((${POS}+${GLENGTH}))
-            echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
+            echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_filesMV.txt
             if [[ $POS -gt ${OUTLENGTH} ]] ; then
                 break
             fi
@@ -387,12 +388,12 @@ gfr_selectLoci2(){
     done < "${MAINFOLDER}"/loci.txt
 }
 
-gfr_selectLoci1(){
+gfr_selectLoci_MS(){
     #pick out loci by most species, then most variable in alignment.nex
     COUNT=0
     POS=1
-    if [[ -e "${MAINFOLDER}"/loci/newpartitions.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitions.txt; fi
-    if [[ -e "${MAINFOLDER}"/loci/phy_files.txt ]]; then rm "${MAINFOLDER}"/loci/phy_files.txt; fi
+    if [[ -e "${MAINFOLDER}"/loci/newpartitionsMS.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitionsMS.txt; fi
+    if [[ -e "${MAINFOLDER}"/loci/phy_filesMS.txt ]]; then rm "${MAINFOLDER}"/loci/phy_filesMS.txt; fi
     
     for ((NUMSP="${#FOLDERLISTA[@]}";NUMSP>1;NUMSP--)); do
         while read i; do
@@ -401,9 +402,9 @@ gfr_selectLoci1(){
                 if [[ $(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $1}') -eq ${NUMSP} ]]; then
                     COUNT=$(( $COUNT + 1 ))
                     GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
-                    echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitions.txt           #get partitions
+                    echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitionsMS.txt           #get partitions
                     POS=$((${POS}+${GLENGTH}))
-                    echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_files.txt
+                    echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_filesMS.txt
                     if [[ $POS -gt 500000 ]] ; then
                         break
                     fi
@@ -420,7 +421,8 @@ gfr_catLoci(){
     ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci "${FOLDERLISTA[@]}"        #concatenate selected loci for raxml analysis
     #run as raxml -r <known_tree> -M -m GTRGAMMA -p $RANDOM -T <num_threads> -q "${MAINFOLDER}"/loci/newpartitions.txt -s "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed -n <out_name>
     
-    ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
+    ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_lociMS.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
+    ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_lociMV.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
 }
 
 runGFR(){
@@ -442,7 +444,8 @@ runGFR(){
     gfr_getAlleles
     gfr_getAlignments
     gfr_trimLoci
-    gfr_selectLoci2
+    gfr_selectLoci_MV
+    gfr_selectLoci_MS
     gfr_catLoci
 }
 
