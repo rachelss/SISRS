@@ -311,7 +311,7 @@ runSISRS(){
 
 copyRefContigs(){
     grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${MAINFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${MAINFOLDER}/loci.txt"
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py {}/contigs.fa ${MAINFOLDER}/loci.txt {}/ref_genes.fa"  ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${MAINFOLDER}/loci.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
 }
 
 fromRefToSpRef(){
@@ -334,14 +334,14 @@ fromRefToSpRef(){
     
     samtools faidx ${MAINFOLDER}/ref_genes.fa
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/ref_genes.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {}" ::: "${FOLDERLISTA[@]}"    
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py" {} ::: "${FOLDERLISTA[@]}"    
     
-    parallel --jobs "${PROCESSORS}" "mv {}/contigs.fa {}/ref_genes.fa"  ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" mv {}/contigs.fa {}/ref_genes.fa  ::: "${FOLDERLISTA[@]}"
 }
 
 gfr_aligntoConservedContigs(){
-    parallel --jobs "${PROCESSORS} bowtie2-build {}/ref_genes.fa {}/ref_genes" ::: "${FOLDERLISTA[@]}"   #build index for conserved contigs
-    find "${MAINFOLDER}"/*_loci/ -type f -name '*bam' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old bam
+    parallel --jobs "${PROCESSORS}" bowtie2-build '{}/ref_genes.fa {}/ref_genes' ::: "${FOLDERLISTA[@]}"   #build index for conserved contigs
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*bam' | parallel -j "${PROCESSORS}" rm -f {}    #delete old bam
     
     for FOLDER in "${FOLDERLIST[@]}"; do
         for FILE in "${FOLDER}"/*R1*.fastq; do
@@ -375,7 +375,7 @@ gfr_mergebam(){
 }
 
 gfr_getAlleles(){
-    parallel -j "${PROCESSORS}" "samtools index {}_loci/merged.bam" ::: "${FOLDERLISTA[@]}"
+    parallel -j "${PROCESSORS}" samtools index {}_loci/merged.bam ::: "${FOLDERLISTA[@]}"
     parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/make_alignment_from_bam.py {}_loci/merged.bam ${MINREAD}" ::: "${FOLDERLISTA[@]}"  #takes bam file aligned to ref_genes for one species #outputs .fa file for all loci for one species
 }
 
