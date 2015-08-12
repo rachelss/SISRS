@@ -269,7 +269,7 @@ identifyFixedSites(){
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {} ${MAINFOLDER}/${CONTIGS}/contigs.fa" ::: "${FOLDERLISTA[@]}"
 
     parallel --jobs "${PROCESSORS}" "samtools faidx {}/contigs.fa" ::: "${FOLDERLISTA[@]}"
-    parallel --jobs "${PROCESSORS}" "samtools mpileup -f $(dirname {})/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f $(dirname {})/contigs.fa $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
