@@ -33,7 +33,7 @@ def getallbases(path):
     return allbases,loci
 
 def remove_extra(base_list):
-    bases=['A','C','G','T']
+    bases=['A','C','G','T','*']
     new_base_list=[]
     ibase_list = iter(base_list)
     for b in ibase_list:
@@ -64,6 +64,8 @@ for pos in allbases:
     bases = remove_extra(allbases[pos])             #remove indel info
     b = Counter(bases).most_common()
     if len(b)>0:
+        if b is '*':
+            b='-'
         allbases[pos] = b[0][0]
 
 # Read contig fasta file into dictionary with sequence ID as the key
