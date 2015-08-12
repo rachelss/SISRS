@@ -60,7 +60,11 @@ path=sys.argv[1]
 allbases,loci=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
 for pos in allbases:
     bases = remove_extra(allbases[pos])             #remove indel info
-    allbases[pos] = Counter(bases).most_common()[0][0]
+    b = Counter(bases).most_common()[0][0]
+    if len(b)>0:
+        allbases[pos] = b
+    else:
+        allbases[pos] = 'N'
 
 fasta_dict={l:['N']*n for l,n in loci.iteritems()}
 for locus_pos,base in allbases.iteritems():
