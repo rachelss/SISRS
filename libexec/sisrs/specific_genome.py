@@ -74,13 +74,11 @@ fasta_seq = SeqIO.parse(contig_handle, 'fasta')
 fasta_dict = {read.id:list(str(read.seq)) for read in fasta_seq}
 contig_handle.close()
 
-#fasta_dict={l:['N']*n for l,n in loci.iteritems()}
 for locus_pos,base in allbases.iteritems():
     locus,pos = locus_pos.split('/')
     fasta_dict[locus][int(pos)-1] = base
 
 output = open(path+'/contigs.fa', 'wb')
 for l,seq in fasta_dict.iteritems():
-    print l,seq
     output.write('>'+str(l)+"\n"+"".join(seq)+"\n")    
 output.close()
