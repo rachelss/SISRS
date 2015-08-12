@@ -79,5 +79,6 @@ for locus_pos,base in allbases.iteritems():
 
 output = open(path+'/contigs.fa', 'wb')
 for l,seq in fasta_dict.iteritems():
-    output.write('>'+l+"\n"+"".join(seq)+"\n")    
+    print l,seq
+    output.write('>'+str(l)+"\n"+"".join(seq)+"\n")    
 output.close()
