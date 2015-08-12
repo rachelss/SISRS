@@ -60,9 +60,9 @@ path=sys.argv[1]
 allbases,loci=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
 for pos in allbases:
     bases = remove_extra(allbases[pos])             #remove indel info
-    b = Counter(bases).most_common()[0][0]
+    b = Counter(bases).most_common()
     if len(b)>0:
-        allbases[pos] = b
+        allbases[pos] = b[0][0]
     else:
         allbases[pos] = 'N'
 
