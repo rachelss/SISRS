@@ -266,6 +266,10 @@ mapContigs(){
 identifyFixedSites(){
     samtools faidx ${MAINFOLDER}/${CONTIGS}/contigs.fa
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/${CONTIGS}/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {}" ::: "${FOLDERLISTA[@]}"
+
+    parallel --jobs "${PROCESSORS}" "samtools faidx {}/contigs.fa" ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" "samtools mpileup -f $(dirname {})/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
@@ -307,18 +311,43 @@ runSISRS(){
 
 copyRefContigs(){
     grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${MAINFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${MAINFOLDER}/loci.txt"
-    ${DIR}/libexec/gfr/get_seq.py "${MAINFOLDER}/"${CONTIGS}"/contigs.fa" "${MAINFOLDER}/loci.txt" "${MAINFOLDER}/ref_genes.fa" 
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py {}/contigs.fa ${MAINFOLDER}/loci.txt {}/ref_genes.fa"  ::: "${FOLDERLISTA[@]}"#Usage: python get_seq.py CONTIG.fa LOCI.txt <output.fa>'
+}
+
+fromRefToSpRef(){
+    grep \> "${MAINFOLDER}"/ref_genes.fa | sed 's/>//' |sort|uniq > "${MAINFOLDER}"/loci.txt
+    bowtie2-build ${MAINFOLDER}/ref_genes.fa ${MAINFOLDER}/ref_genes      #index 
+    
+    #align reads to contigs
+    for FILE in "${FILELIST[@]}"; do
+        NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
+        echo ==== Aligning FILELIST ${NAME}  ====
+        #N=1 allows a mismatch #x The basename of the index for the reference genome
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
+    done
+    for FILE in "${FILELISTU[@]}"; do
+        NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
+        echo ==== Aligning FILELISTU ${NAME} ====
+        #N=1 allows a mismatch #x The basename of the index for the reference genome
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - ${NAME}
+    done
+    
+    samtools faidx ${MAINFOLDER}/ref_genes.fa
+    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/ref_genes.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {}" ::: "${FOLDERLISTA[@]}"    
+    
+    parallel --jobs "${PROCESSORS}" "mv {}/contigs.fa {}/ref_genes.fa"  ::: "${FOLDERLISTA[@]}"
 }
 
 gfr_aligntoConservedContigs(){
-    bowtie2-build "${MAINFOLDER}"/ref_genes.fa "${MAINFOLDER}"/ref_genes    #build index for conserved contigs
-    for FOLDER in "${FOLDERLISTA[@]}"; do rm -f "$FOLDER"_loci/*bam; done
+    parallel --jobs "${PROCESSORS} bowtie2-build {}/ref_genes.fa {}/ref_genes" ::: "${FOLDERLISTA[@]}"   #build index for conserved contigs
+    find "${MAINFOLDER}"/*_loci/ -type f -name '*bam' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old bam
     
     for FOLDER in "${FOLDERLIST[@]}"; do
         for FILE in "${FOLDER}"/*R1*.fastq; do
 	    # output sorted bam file w/o unaligned reads - lots per folder
             echo Aligning ${FILE} to conserved contigs
-	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
+	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
         done
     done
     
@@ -459,20 +488,22 @@ elif [[ $CMD = "loci" ]]; then
     # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. If
     # ref_genes.fa doesn't exist then build it from alignment.nex
     echo "**** SISRS loci ****"
-    if [ ! -f ${MAINFOLDER}/ref_genes.fa ] && [ ! -f "${MAINFOLDER}/alignment.nex" ]; then
-	# need to rerun SISRS from scratch to get ref_genes.fa
-	echo "** Missing alignment and reference, running SISRS"
-	runSISRS
-	copyRefContigs
-    else 
-	if [ ! -f ${MAINFOLDER}/ref_genes.fa ]; then
-	    echo "** Missing reference, copying from previous SISRS session"
-	    copyRefContigs  # Get ref_genes.fa from previous sisrs run
-        else    #already have ref_genes.fa but need to generate loci.txt
-            grep \> ref_genes.fa | sed 's/>//' > loci.txt 
-	fi
+    if [[ ! -f "${FOLDERLISTA[0]}"/ref_genes.fa ]]; then
+        echo "** Running SISRS loci **"
+        
+    elif [[ ! -f "${MAINFOLDER}"/alignment.nex ]]; then
+        echo "** Missing reference, getting from SISRS sites alignment **"
+	copyRefContigs  # Get ref_genes.fa from previous sisrs run
+        
+    elif [[ -f "${MAINFOLDER}"/ref_genes.fa ]]; then
+        echo "** Getting species specific references **"
+        fromRefToSpRef        
+    else
+        # need to rerun SISRS from scratch to get ref_genes.fa
+        echo "** Missing alignment and reference, running SISRS sites **"
+        runSISRS
+        copyRefContigs
     fi
-
     # get individual loci
     runGFR
 else
