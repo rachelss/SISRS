@@ -32,19 +32,16 @@ def determine_base(bases,minread,thresh):
     if(len(bases)< minread): #not enough info
         base='N'
     else:
-        counts = Counter(bases)
-        if len(counts)==1:
-            base=bases[0]
+        counts = Counter(bases).most_common(1)
+        if counts[0][1] / float(len(bases)) >= thresh:
+            base=counts[0][0]
         else:
-            if counts.most_common(1)[0][1] / float(len(bases)) >= thresh:
-                base=counts.most_common(1)[0][0]
-            else:
-                base='N'
+            base='N'
                 
     return base
 
 def remove_extra(base_list):
-    bases=['A','C','G','T']
+    bases=['A','C','G','T','*']
     new_base_list=[]
     ibase_list = iter(base_list)
     for b in ibase_list:
@@ -75,6 +72,8 @@ allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:base
 for pos in allbases:
     bases = remove_extra(allbases[pos])             #remove indel info
     base = determine_base(bases,minread,thresh)     #determine if sufficient data and threshold met for calling allele
+    if base is '*':
+        base='-'
     allbases[pos] = base
 
 output = open(path+'/pruned_dict.pkl', 'wb')
