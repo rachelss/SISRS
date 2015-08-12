@@ -486,9 +486,9 @@ if [[ $CMD = "sites" ]] || [[ "${cmds[*]}" =~ $CMD ]]; then
     runSISRS
 elif [[ $CMD = "loci" ]]; then
     # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. 
-    if [[ ! -f "${FOLDERLISTA[0]}"/ref_genes.fa ]]; then
+    if [[ -f "${FOLDERLISTA[0]}"/ref_genes.fa ]]; then
         echo "** Running SISRS loci **"
-    elif [[ ! -f "${MAINFOLDER}"/alignment.nex ]]; then
+    elif [[ -f "${MAINFOLDER}"/alignment.nex ]]; then
         echo "** Missing reference, getting from SISRS sites alignment **"
 	copyRefContigs  # Get ref_genes.fa from previous sisrs run
     elif [[ -f "${MAINFOLDER}"/ref_genes.fa ]]; then
