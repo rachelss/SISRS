@@ -311,7 +311,7 @@ runSISRS(){
 
 copyRefContigs(){
     grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${MAINFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${MAINFOLDER}/loci.txt"
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py {}/contigs.fa ${MAINFOLDER}/loci.txt {}/ref_genes.fa"  ::: "${FOLDERLISTA[@]}"#Usage: python get_seq.py CONTIG.fa LOCI.txt <output.fa>'
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py {}/contigs.fa ${MAINFOLDER}/loci.txt {}/ref_genes.fa"  ::: "${FOLDERLISTA[@]}"
 }
 
 fromRefToSpRef(){
