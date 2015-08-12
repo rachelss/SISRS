@@ -3,6 +3,7 @@ import os
 import sys
 import cPickle
 from collections import Counter
+from Bio import SeqIO
 
 #get combined pileup info
 def getallbases(path):
@@ -56,6 +57,7 @@ def remove_extra(base_list):
 
 ###############################################
 path=sys.argv[1]
+contig_file = sys.argv[2]
 
 allbases,loci=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
 for pos in allbases:
@@ -63,10 +65,14 @@ for pos in allbases:
     b = Counter(bases).most_common()
     if len(b)>0:
         allbases[pos] = b[0][0]
-    else:
-        allbases[pos] = 'N'
 
-fasta_dict={l:['N']*n for l,n in loci.iteritems()}
+# Read contig fasta file into dictionary with sequence ID as the key
+contig_handle = open(contig_file, "r")
+fasta_seq = SeqIO.parse(contig_handle, 'fasta')
+fasta_dict = {read.id:list(str(read.seq)) for read in fasta_seq}
+contig_handle.close()
+
+#fasta_dict={l:['N']*n for l,n in loci.iteritems()}
 for locus_pos,base in allbases.iteritems():
     locus,pos = locus_pos.split('/')
     fasta_dict[locus][int(pos)-1] = base

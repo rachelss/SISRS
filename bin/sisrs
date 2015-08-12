@@ -266,7 +266,7 @@ mapContigs(){
 identifyFixedSites(){
     samtools faidx ${MAINFOLDER}/${CONTIGS}/contigs.fa
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/${CONTIGS}/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {}" ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {} ${MAINFOLDER}/${CONTIGS}/contigs.fa" ::: "${FOLDERLISTA[@]}"
 
     parallel --jobs "${PROCESSORS}" "samtools faidx {}/contigs.fa" ::: "${FOLDERLISTA[@]}"
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f $(dirname {})/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
@@ -411,7 +411,7 @@ gfr_selectLoci_MV(){
             echo DNA, p${COUNT}=${POS}-$((${POS}-1+${GLENGTH})) >> "${MAINFOLDER}"/loci/newpartitionsMV.txt           #get partitions
             POS=$((${POS}+${GLENGTH}))
             echo "${MAINFOLDER}"/loci/$F >> "${MAINFOLDER}"/loci/phy_filesMV.txt
-            if [[ $POS -gt ${OUTLENGTH} ]] ; then
+            if [[ $POS -gt ${OUTLENGTH} ]]; then
                 break
             fi
         fi
