@@ -485,16 +485,12 @@ if [[ $CMD = "sites" ]] || [[ "${cmds[*]}" =~ $CMD ]]; then
     echo "**** SISRS ****"
     runSISRS
 elif [[ $CMD = "loci" ]]; then
-    # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. If
-    # ref_genes.fa doesn't exist then build it from alignment.nex
-    echo "**** SISRS loci ****"
+    # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. 
     if [[ ! -f "${FOLDERLISTA[0]}"/ref_genes.fa ]]; then
         echo "** Running SISRS loci **"
-        
     elif [[ ! -f "${MAINFOLDER}"/alignment.nex ]]; then
         echo "** Missing reference, getting from SISRS sites alignment **"
 	copyRefContigs  # Get ref_genes.fa from previous sisrs run
-        
     elif [[ -f "${MAINFOLDER}"/ref_genes.fa ]]; then
         echo "** Getting species specific references **"
         fromRefToSpRef        
@@ -504,7 +500,6 @@ elif [[ $CMD = "loci" ]]; then
         runSISRS
         copyRefContigs
     fi
-    # get individual loci
     runGFR
 else
     echo "You must specify sisrs sites or loci"
