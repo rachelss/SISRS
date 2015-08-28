@@ -334,7 +334,7 @@ fromRefToSpRef(){
     
     samtools faidx ${MAINFOLDER}/ref_genes.fa
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/ref_genes.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py" {} ::: "${FOLDERLISTA[@]}"    
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py" {} ${MAINFOLDER}/ref_genes.fa ::: "${FOLDERLISTA[@]}"    
     
     parallel --jobs "${PROCESSORS}" mv {}/contigs.fa {}/ref_genes.fa  ::: "${FOLDERLISTA[@]}"
 }
