@@ -448,7 +448,8 @@ gfr_selectLoci_MS(){
 }
   
 gfr_catLoci(){    
-    ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci "${FOLDERLISTA[@]}"        #concatenate selected loci for raxml analysis
+    ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci/phy_filesMS.txt "${MAINFOLDER}"/loci/concat_lociMS.phylip-relaxed "${FOLDERLISTA[@]}"        #concatenate selected loci for raxml analysis
+    ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci/phy_filesMV.txt "${MAINFOLDER}"/loci/concat_lociMV.phylip-relaxed "${FOLDERLISTA[@]}"
     #run as raxml -r <known_tree> -M -m GTRGAMMA -p $RANDOM -T <num_threads> -q "${MAINFOLDER}"/loci/newpartitions.txt -s "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed -n <out_name>
     
     ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_lociMS.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime

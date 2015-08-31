@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+#use <path>/concatenate_phy.py <file list> <output file> <list of species>
 
 import sys
 from Bio.Seq import Seq
@@ -14,11 +15,11 @@ import glob
 
 ######################
 
-phy_files_file = open(sys.argv[1]+'/phy_filesMS.txt','r')
+phy_files_file = open(sys.argv[1],'r')
 phy_files = phy_files_file.readlines()
 phy_files_file.close()
 
-allspecies = [os.path.basename(sp) for sp in sys.argv[2:]]
+allspecies = [os.path.basename(sp) for sp in sys.argv[3:]]
 cat_data = {s:list() for s in allspecies}
 
 for f in phy_files:
@@ -34,28 +35,4 @@ for k,v in cat_data.iteritems():
     seq = SeqRecord(Seq(''.join(v)), id=k)
     datalist.append(seq)
 
-SeqIO.write(datalist,sys.argv[1]+'/concat_lociMS.phylip-relaxed', "phylip-relaxed")
-
-phy_files_file = open(sys.argv[1]+'/phy_filesMV.txt','r')
-phy_files = phy_files_file.readlines()
-phy_files_file.close()
-
-allspecies = [os.path.basename(sp) for sp in sys.argv[2:]]
-cat_data = {s:list() for s in allspecies}
-
-for f in phy_files:
-    data = SeqIO.to_dict(SeqIO.parse(f.rstrip(), "phylip-relaxed"))
-    for k in allspecies:
-        if k in data:
-            cat_data[k].extend(list(data[k].seq))
-        else:
-            cat_data[k].extend(['N'] * len(data[data.keys()[0]].seq))
-
-datalist=[]
-for k,v in cat_data.iteritems():
-    seq = SeqRecord(Seq(''.join(v)), id=k)
-    datalist.append(seq)
-
-SeqIO.write(datalist,sys.argv[1]+'/concat_lociMV.phylip-relaxed', "phylip-relaxed")
-
-
+SeqIO.write(datalist,sys.argv[2], "phylip-relaxed")
