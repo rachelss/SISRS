@@ -353,7 +353,7 @@ gfr_aligntoConservedContigs(){
     
     for FOLDER in "${FOLDERLISTU[@]}"; do
         for FILE in "${FOLDER}"/*reads*fastq; do
-            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${MAINFOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
+            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -F 4 - | samtools sort - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
         done        
     done
 }
