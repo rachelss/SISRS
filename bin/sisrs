@@ -404,7 +404,7 @@ gfr_selectLoci_MV(){
     
     while read i; do
 
-        F=${i}_align.phylip-relaxed2
+        F=${i}_align.phylip-relaxed
         if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
             COUNT=$(( $COUNT + 1 ))
             GLENGTH=$(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $2}')
@@ -427,7 +427,7 @@ gfr_selectLoci_MS(){
     
     for ((NUMSP="${#FOLDERLISTA[@]}";NUMSP>1;NUMSP--)); do
         while read i; do
-            F=${i}_align.phylip-relaxed2
+            F=${i}_align.phylip-relaxed
             if [[ -e "${MAINFOLDER}"/loci/$F ]]; then
                 if [[ $(head -1 "${MAINFOLDER}"/loci/$F|awk '{print $1}') -eq ${NUMSP} ]]; then
                     COUNT=$(( $COUNT + 1 ))
