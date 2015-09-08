@@ -50,9 +50,9 @@ for fq in unpaired:
         elif random.random() < N/float(i+1):   
             replace = random.randint(0,N-1)
             if replace<len(samplep):
-                samplep.remove(samplep[replace])
+                del samplep[replace]
             else:
-                sampleu.remove(sampleu[replace-len(samplep)])
+                del sampleu[replace-len(samplep)]
             sampleu.append(read_info)
         i+=1
     f1.close()
