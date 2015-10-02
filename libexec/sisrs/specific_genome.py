@@ -3,10 +3,12 @@ import os
 import sys
 import cPickle
 from collections import Counter
+from Bio import SeqIO
 
 #get combined pileup info
 def getallbases(path):
     allbases=dict()
+    loci={}
     for fi in os.listdir(path):
         if fi.endswith("pileups"):
             filein=open(path+'/'+fi,'r')
@@ -18,27 +20,17 @@ def getallbases(path):
                     bases=bases.replace(',',ref)
                     bases=bases.upper() #everything in uppercase
                     bases=list(bases)
+                    
                     loc=node+'/'+pos
                     if loc in allbases:
                         allbases[loc].extend(bases)
                     else:
                         allbases[loc]=bases
+                    
+                    loci[node]=int(pos)
             filein.close()
     
-    return allbases
-
-#prune by whether there's enough info and species are fixed
-def determine_base(bases,minread,thresh):
-    if(len(bases)< minread): #not enough info
-        base='N'
-    else:
-        counts = Counter(bases).most_common(1)
-        if counts[0][1] / float(len(bases)) >= thresh:
-            base=counts[0][0]
-        else:
-            base='N'
-                
-    return base
+    return allbases,loci
 
 def remove_extra(base_list):
     bases=['A','C','G','T','*']
@@ -65,17 +57,28 @@ def remove_extra(base_list):
 
 ###############################################
 path=sys.argv[1]
-minread=int(sys.argv[2])
-thresh=float(sys.argv[3])
+contig_file = sys.argv[2]
 
-allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
+allbases,loci=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
 for pos in allbases:
     bases = remove_extra(allbases[pos])             #remove indel info
-    base = determine_base(bases,minread,thresh)     #determine if sufficient data and threshold met for calling allele
-    if base is '*':
-        base='-'
-    allbases[pos] = base
+    b = Counter(bases).most_common()
+    if len(b)>0:
+        if b is '*':
+            b='-'
+        allbases[pos] = b[0][0]
 
-output = open(path+'/pruned_dict.pkl', 'wb')
-cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
+# Read contig fasta file into dictionary with sequence ID as the key
+contig_handle = open(contig_file, "r")
+fasta_seq = SeqIO.parse(contig_handle, 'fasta')
+fasta_dict = {read.id:list(str(read.seq)) for read in fasta_seq}
+contig_handle.close()
+
+for locus_pos,base in allbases.iteritems():
+    locus,pos = locus_pos.split('/')
+    fasta_dict[locus][int(pos)-1] = base
+
+output = open(path+'/contigs.fa', 'wb')
+for l,seq in fasta_dict.iteritems():
+    output.write('>'+str(l)+"\n"+"".join(seq)+"\n")    
 output.close()

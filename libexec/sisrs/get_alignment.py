@@ -36,8 +36,8 @@ class Alignment:
         print str(len(self.locations))+' variable sites'
         singletons,bi=0,0
         for i in range(len(self.locations)):
-            bases = [self.species_data[sp][i] for sp in self.species_data if self.species_data[sp][i] in ['A','C','G','T']]
-            c = Counter(bases).most_common(4)
+            bases = [self.species_data[sp][i] for sp in self.species_data if self.species_data[sp][i] in ['A','C','G','T','-']]
+            c = Counter(bases).most_common(5)
             if c[1][1]==1:
                 singletons+=1
                 self.single.append(1)
@@ -249,7 +249,7 @@ def write_alignment(fi,alignment,numbi):
 #########################
 num_missing = int(sys.argv[1])
 assembler = sys.argv[4]
-basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c'}
+basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c','-':'-'}
 
 pathlist = get_pileup_files(sys.argv[3])
 num_species = len(pathlist)

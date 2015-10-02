@@ -37,7 +37,7 @@ infile = sys.argv[1]
 minread = int(sys.argv[2])
 mainfolder_name='/'.join(infile.split('/')[:-2])      #everything but bam file name and sample name
 sp_name=infile.split('/')[-2]      #just sample name
-sp_name=sp_name.split('_')[0]      #just sample name
+sp_name=sp_name.replace('_loci','')      #just sample name
 final_seqs={}
 outfile = open(mainfolder_name+'/loci/'+sp_name+'.fa','w')
 
