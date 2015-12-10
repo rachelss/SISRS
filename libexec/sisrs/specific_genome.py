@@ -60,6 +60,9 @@ path=sys.argv[1]
 contig_file = sys.argv[2]
 
 allbases,loci=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
+if len(loci)==0:
+    print 'No data for '+path
+    sys.exit(1)
 for pos in allbases:
     bases = remove_extra(allbases[pos])             #remove indel info
     b = Counter(bases).most_common()
