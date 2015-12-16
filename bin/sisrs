@@ -141,6 +141,9 @@ which bowtie2 &>/dev/null
 [ $? -eq 0 ] || { echo "Bowtie2 must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 which parallel &>/dev/null
 [ $? -eq 0 ] || { echo "GNU parallel must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+which samtools &>/dev/null
+[ $? -eq 0 ] || { echo "Samtools v1 or greater must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+[[ $(samtools --version-only| cut -c1) -ge 1 ]] || { echo "Samtools v1 or greater must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 
 #get paired fastq
 FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
@@ -174,7 +177,7 @@ if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum o
 subSample(){
     if [ -z $GENOMESIZE ]; then
         echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
-        exit 0
+        exit 1
     fi
     
     echo "Subsampling data"
