@@ -5,9 +5,10 @@
     arguments:
     data  -- extension should be nex/phy/fa
     missing -- the number of species in the alignment allowed to have missing data
+    
+    output:
+    phylip formatted file ending with _mX.phylip-relaxed where X is the number missing
     """
-#takes nexus file, outputs phylip file
-#only X species allowed to be missing per site
 
 import sys
 from os import path

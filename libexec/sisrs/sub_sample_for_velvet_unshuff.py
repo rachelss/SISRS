@@ -1,10 +1,25 @@
 #!/usr/bin/env python2
+
+""" Subsample fastq data using reservoir sampling
+    assumes reads are 100 bp
+    samples read pairs or unpaired
+    
+    arguments:
+        number of pairs of reads (or half the number of total reads)
+        folder in which to find fastq
+    
+    output:
+        file with paired samples
+        file with unpaired samples
+        in subsamples folder
+
+    run: parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"
+"""
+
 import sys
 import random
 import glob
 import os
-
-#parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"
 
 N = int(sys.argv[1])     #number of left reads required per sample for 10x total coverage; (10*genome size) / (read size*2*num_samples)
 samplep,sampleu = [],[]
