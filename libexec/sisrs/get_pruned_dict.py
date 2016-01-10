@@ -3,27 +3,27 @@ import os
 import sys
 import cPickle
 from collections import Counter
+import glob
 
 #get combined pileup info
 def getallbases(path):
     allbases=dict()
-    for fi in os.listdir(path):
-        if fi.endswith("pileups"):
-            filein=open(path+'/'+fi,'r')
-            for line in filein:
-                splitline=line.split()
-                if len(splitline)>4:
-                    node,pos,ref,num,bases,qual=line.split()
-                    bases=bases.replace('.',ref) #insert ref base
-                    bases=bases.replace(',',ref)
-                    bases=bases.upper() #everything in uppercase
-                    bases=list(bases)
-                    loc=node+'/'+pos
-                    if loc in allbases:
-                        allbases[loc].extend(bases)
-                    else:
-                        allbases[loc]=bases
-            filein.close()
+    for fi in glob.glob('path/*pileups'):
+        filein=open(fi,'r')
+        for line in filein:
+            splitline=line.split()
+            if len(splitline)>4:
+                node,pos,ref,num,bases,qual=line.split()
+                bases=bases.replace('.',ref) #insert ref base
+                bases=bases.replace(',',ref)
+                bases=bases.upper() #everything in uppercase
+                bases=list(bases)
+                loc=node+'/'+pos
+                if loc in allbases:
+                    allbases[loc].extend(bases)
+                else:
+                    allbases[loc]=bases
+        filein.close()
     
     return allbases
 
