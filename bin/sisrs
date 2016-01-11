@@ -274,7 +274,7 @@ alignContigs(){
     
 mapContigs(){
     #index bam
-    parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     echo ==== Done Indexing Bam Files ====
        
     #map contigs to reference
