@@ -1,11 +1,9 @@
 #!/usr/bin/env bash
-#you must compile velvet prior to running sisrs - see the manual for appropriate compilation parameters
-#you must install bowtie2
-#you must install samtools
+
 #this script uses python2.7 - it has not been tested with python3
-#run format: ./sisrs
+
 #run with non-defaults: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
-#reads must be paired, where the filename contains either R1 or R2
+#for paired reads the filename should contain either _R1 or _R2
 
 VERSION=1.6
 
@@ -117,6 +115,11 @@ DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs 
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
 MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
 
+FILEID=_R1
+FILEID2=$(echo ${FILEID} | sed 's/1/2/')
+
+######checks########
+
 if [[ "${ALLELES}" != "1" ]] && [[ "${ALLELES}" != "2" ]]; then
     echo "You must have either 1 or 2 alleles (1 is the default). Aborting."; exit 1;
 fi
@@ -145,8 +148,13 @@ which samtools &>/dev/null
 [ $? -eq 0 ] || { echo "Samtools v1 or greater must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 [[ $(samtools --version-only| cut -c1) -ge 1 ]] || { echo "Samtools v1 or greater must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 
+
+###########actions##############
+
+FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )   
+
 #get paired fastq
-FILELIST=( $( find "${MAINFOLDER}" -name "*R1*fastq" ) )     #all fastq file paths as array
+FILELIST=( $( find "${MAINFOLDER}" -name *${FILEID}*fastq ) )     #all fastq file paths as array
 if [[ ${#FILELIST[@]} -gt 0 ]]; then
     declare -a ALLFOLDERLIST=()
     for F in "${FILELIST[@]}"; do ALLFOLDERLIST+=("$( dirname "${F}" )"); done       #array of directories containing fastq files
@@ -154,10 +162,9 @@ if [[ ${#FILELIST[@]} -gt 0 ]]; then
 fi
 
 #get unpaired fastq
-FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )     
 FILELISTU=()
 for F in "${FILELISTA[@]}"; do
-    if [[ $F != *R1* ]] && [[ $F != *R2* ]] && [[ $F != *subsampled* ]]; then FILELISTU+=(${F})
+    if [[ $F != *${FILEID}*fastq ]] && [[ $F != *${FILEID2}*fastq ]] && [[ $F != *subsampled* ]]; then FILELISTU+=(${F})
     fi
 done
 if [[ ${#FILELISTU[@]} -gt 0 ]]; then
@@ -173,6 +180,8 @@ if [[ ${#FOLDERLISTA[@]} -lt 1 ]]; then
 fi
 
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
+
+##############################
 
 subSample(){
     if [ -z $GENOMESIZE ]; then
@@ -249,10 +258,10 @@ alignContigs(){
     
     #align reads to contigs
     for FILE in "${FILELIST[@]}"; do
-        NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
+        NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELIST ${NAME}  ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - ${NAME}
     done
     for FILE in "${FILELISTU[@]}"; do
         NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
@@ -265,7 +274,7 @@ alignContigs(){
     
 mapContigs(){
     #index bam
-    parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools index $( echo {} | sed sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     echo ==== Done Indexing Bam Files ====
        
     #map contigs to reference
@@ -279,7 +288,7 @@ mapContigs(){
 
 identifyFixedSites(){
     samtools faidx ${MAINFOLDER}/${CONTIGS}/contigs.fa
-    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/${CONTIGS}/contigs.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/${CONTIGS}/contigs.fa" '$( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {} ${MAINFOLDER}/${CONTIGS}/contigs.fa" ::: "${FOLDERLISTA[@]}"
     
     if [[ $? != 0 ]]; then
@@ -288,7 +297,7 @@ identifyFixedSites(){
     fi
 
     parallel --jobs "${PROCESSORS}" "samtools faidx {}/contigs.fa" ::: "${FOLDERLISTA[@]}"
-    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f $(dirname {})/contigs.fa $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f $(dirname {})/contigs.fa $( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
@@ -352,10 +361,10 @@ fromRefToSpRef(){
     
     #align reads to contigs
     for FILE in "${FILELIST[@]}"; do
-        NAME=$( echo ${FILE} | sed 's/R1//' | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
+        NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELIST ${NAME}  ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools -@ "${PROCESSORS}" view -Su -F 4 - | samtools sort -@ "${PROCESSORS}"- ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools -@ "${PROCESSORS}" view -Su -F 4 - | samtools sort -@ "${PROCESSORS}"- ${NAME}
     done
     for FILE in "${FILELISTU[@]}"; do
         NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
@@ -365,7 +374,7 @@ fromRefToSpRef(){
     done
     
     samtools faidx ${MAINFOLDER}/ref_genes.fa
-    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/ref_genes.fa" '$( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed 's/R1//' | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/ref_genes.fa" '$( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py" {} ${MAINFOLDER}/ref_genes.fa ::: "${FOLDERLISTA[@]}"    
     
     parallel --jobs "${PROCESSORS}" mv {}/contigs.fa {}/ref_genes.fa  ::: "${FOLDERLISTA[@]}"
@@ -376,10 +385,10 @@ gfr_aligntoConservedContigs(){
     find "${MAINFOLDER}"/*_loci/ -type f -name '*bam' | parallel -j "${PROCESSORS}" rm -f {}    #delete old bam
     
     for FOLDER in "${FOLDERLIST[@]}"; do
-        for FILE in "${FOLDER}"/*R1*.fastq; do
+        for FILE in "${FOLDER}"/*${FILEID}*fastq; do
 	    # output sorted bam file w/o unaligned reads - lots per folder
             echo Aligning ${FILE} to conserved contigs
-	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed 's/R1/R2/' ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
+	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
         done
     done
     
