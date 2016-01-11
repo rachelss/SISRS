@@ -3,9 +3,10 @@ SISRS
 
 SISRS: Site Identification from Short Read Sequences  
 Version 1.6  
-Copyright (c) 2013-2015 Rachel Schwartz <Rachel.Schwartz@asu.edu>  
+Copyright (c) 2013-2016 Rachel Schwartz <Rachel.Schwartz@asu.edu>  
 https://github.com/rachelss/SISRS  
-More information: http://arxiv.org/abs/1305.3665  
+More information: Schwartz, R.S., K.M Harkins, A.C. Stone, and R.A. Cartwright. 2015. A composite genome approach to identify phylogenetically informative data from next-generation sequencing. BMC Bioinformatics. 16:193. 
+(http://www.biomedcentral.com/1471-2105/16/193/)
 
 Talk from Evolution 2014 describing SISRS and its application:  
 https://www.youtube.com/watch?v=0OMPuWc-J2E&list=UUq2cZF2DnfvIUVg4tyRH5Ng
@@ -20,10 +21,10 @@ This program is distributed in the hope that it will be useful, but without any 
 Requirements
 ============
 
-* Velvet (including the perl script for merging paired reads) - http://www.ebi.ac.uk/~zerbino/velvet/
-* Bowtie2 - http://bowtie-bio.sourceforge.net/bowtie2/index.shtml
+* Velvet (http://www.ebi.ac.uk/~zerbino/velvet/) OR Minia (http://minia.genouest.org/)
+* Bowtie2 (http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * Python 2.7 and Biopython
-* Samtools (http://www.htslib.org/)
+* Samtools v1 or greater (http://www.htslib.org/)
 * GNU Parallel (http://www.gnu.org/software/parallel/)
 
 Input
@@ -31,8 +32,7 @@ Input
 
 Next-gen sequence data such as Illumina HiSeq reads.
 Data must be sorted into folders by taxon (e.g. species or genus).
-Paired reads in fastq format must be specified by R1 and R2 in the (otherwise identical) filenames.
-There should be no other R1 or R2 in the filename. If your file name is SRR287599_R2 you must change it to SRr287599_R2 or anything else you prefer.
+Paired reads in fastq format must be specified by _R1 and _R2 in the (otherwise identical) filenames.
 Paired and unpaired reads must have a fastq file extension.
 
 Running SISRS
@@ -79,8 +79,9 @@ Flags:
       low ploidy with <3 individuals
  * -m : the number of species that are allowed to have missing data at
       a site
+ * -o : the length of the final loci dataset for dating
  * -l : the number of alleles for sisrs loci
- * -a : change the assembler (specify Velvet or minia)
+ * -a : assembler (velvet, minia, or abyss)
 
 Output
 ======
