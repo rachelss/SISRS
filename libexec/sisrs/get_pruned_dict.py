@@ -8,7 +8,7 @@ import glob
 #get combined pileup info
 def getallbases(path):
     allbases=dict()
-    for fi in glob.glob('path/*pileups'):
+    for fi in glob.glob(path+'/*pileups'):
         filein=open(fi,'r')
         for line in filein:
             splitline=line.split()
