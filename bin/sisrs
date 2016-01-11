@@ -195,7 +195,7 @@ subSample(){
     DENOM=$((100*2*${#FOLDERLISTA[@]}))      #assumes 100bp reads - add option in future
     LEFTREADS=$((${NUMER}/${DENOM}))
     mkdir ${MAINFOLDER}/subsamples
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {} ${FILEID} ${FILEID}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle
     
     if [[ $? != 0 ]]; then
         echo "Subsampling failed"

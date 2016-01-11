@@ -7,11 +7,13 @@
     arguments:
         number of pairs of reads (or half the number of total reads)
         folder in which to find fastq
+        label for forward reads
+        label for reverse reads
     
     output:
         file with paired samples
         file with unpaired samples
-        in subsamples folder
+            in subsamples folder
 
     run: parallel --jobs "${PROCESSORS}" "python ${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {}" ::: "${FOLDERLISTA[@]}"
 """
@@ -27,17 +29,20 @@ i=0
 
 taxonfolder=sys.argv[2]
 mainfolder=os.path.dirname(os.path.abspath(taxonfolder))
-taxon_files = glob.glob(taxonfolder+'/*.fastq')
+taxon_files = glob.glob(taxonfolder+'/*fastq')
 taxon=os.path.basename(taxonfolder)
 
-paired1 = [f for f in taxon_files if '_R1' in f]
+fileid = sys.argv[3]
+fileid2 = sys.argv[4]
+
+paired1 = [f for f in taxon_files if fileid in f]
 print 'paired files: '+" ".join(paired1)
-unpaired = [f for f in taxon_files if '_R' not in f]
+unpaired = [f for f in taxon_files if fileid not in f and fileid2 not in f]
 print 'unpaired files: '+" ".join(unpaired)
 
 for fq in paired1:
     f1=open(fq, 'r')
-    f2=open(fq.replace('_R1','_R2'), 'r')
+    f2=open(fq.replace(fileid,fileid2), 'r')
     
     for line in f1:
         if not line: break      #have less than desired coverage
