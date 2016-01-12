@@ -90,7 +90,7 @@ test_remove_extra('A+1CAAA-10*******AAA^--1*AA-2CAA-2**A-2***','AAAAAAAAD')
 
 allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
 for pos in allbases:
-    base = determine_base(bases,minread,thresh)     #determine if sufficient data and threshold met for calling allele
+    base = determine_base(allbases[pos],minread,thresh)     #determine if sufficient data and threshold met for calling allele
     if base is 'D':
         base='-'
     allbases[pos] = base
