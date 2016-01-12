@@ -32,16 +32,16 @@ def getallbases(path):
                 bases=bases.replace(',',ref)
                 bases=bases.replace('*','D')    #using D is easier than *
                 bases=bases.upper() #everything in uppercase
-                bases = remove_extra(bases)
+                bases2 = remove_extra(bases)
 
-                assert len(bases) == num, 'bases are being counted incorrectly '+\
-                                          "".join(bases)+' should only be '+str(num)+' bases'
+                assert len(bases2) == num, 'bases are being counted incorrectly: '+\
+                                          bases + ' should have '+str(num)+' bases, but it is being converted to '+"".join(bases2)
 
                 loc=node+'/'+pos
                 if loc in allbases:
-                    allbases[loc].extend(bases)
+                    allbases[loc].extend(bases2)
                 else:
-                    allbases[loc]=bases
+                    allbases[loc]=bases2
         filein.close()
     
     return allbases
