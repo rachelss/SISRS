@@ -1,4 +1,17 @@
 #!/usr/bin/env python2
+
+"""Take multiple mpileup files and determine the base at each position of the reference genome
+
+    arguments:
+        path: folder containing mpileup files ending in pileups
+        minread: number of reads at a position required to call a base
+        thresh: proportion of reads that must be one base for calling to occur
+        
+    output:
+        path/pruned_dict.pkl : contains pickled dictionary of position:base
+
+"""
+
 import sys
 import cPickle
 from collections import Counter
