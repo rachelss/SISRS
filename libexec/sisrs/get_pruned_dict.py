@@ -34,7 +34,7 @@ def getallbases(path):
                 bases=bases.upper() #everything in uppercase
                 bases2 = remove_extra(bases)
 
-                assert len(bases2) == num, 'bases are being counted incorrectly: '+\
+                assert len(bases2) == int(num), 'bases are being counted incorrectly: '+\
                                           bases + ' should have '+str(num)+' bases, but it is being converted to '+"".join(bases2)
 
                 loc=node+'/'+pos
