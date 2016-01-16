@@ -62,7 +62,7 @@ def determine_base(bases,minread,thresh):
 def remove_extra(base_str):
     bases=['A','C','G','T','D']     #D indicates del
     new_base_list=[]
-    ibase_list = iter(re.findall('\-|\-[0-9]+|\-*[A-Z]+|\+[0-9]+|\^.',base_str))  #group by bases, indels, read start (need this to get rid of following ascii code), don't worry about $
+    ibase_list = iter(re.findall('\-$|\-[0-9]+|\-*[A-Z]+|\+[0-9]+|\^.',base_str))  #group by bases, indels, read start (need this to get rid of following ascii code), don't worry about $
     for b in ibase_list:
         if b[0] in string.ascii_uppercase:     #allows for any other characters - filter out later (in case of ZAAA)
             new_base_list.extend(b)         #get bases
