@@ -282,6 +282,7 @@ assembler = sys.argv[4]
 basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c','-':'-'}
 
 allbases,alllocs,pathlist = read_pkls(mainfolder)      #dict of species:(loc:base), sorted list of unique position names
+print pathlist
 num_species = len(pathlist)
 
 alignment=get_phy_sites(pathlist,allbases,alllocs,num_missing)       #return Alignment object of informative sites
