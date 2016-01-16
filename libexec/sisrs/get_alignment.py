@@ -94,7 +94,6 @@ def read_pkls(path):
     for fi in filelist:
         d = os.path.dirname(fi)     #sp relative path
         pathlist.append(d)
-        print d
         species = os.path.basename(d)
         print 'Reading data: '+ species     #print sp name
         
@@ -115,7 +114,7 @@ def read_pkls(path):
 def get_phy_sites(pathlist,allbases,alllocs,num_missing):
     ''' gets the alignment i.e. the list of bases for each species, where all sites are variable among species  '''
     
-    splist = [os.path.basename for path in pathlist]
+    splist = [os.path.basename(path) for path in pathlist]
     alignment = Alignment()
     alignment.species_data = {species: [] for species in splist}
     
@@ -285,7 +284,6 @@ assembler = sys.argv[4]
 basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c','-':'-'}
 
 allbases,alllocs,pathlist = read_pkls(mainfolder)      #dict of species:(loc:base), sorted list of unique position names
-print pathlist
 num_species = len(pathlist)
 
 alignment=get_phy_sites(pathlist,allbases,alllocs,num_missing)       #return Alignment object of informative sites
