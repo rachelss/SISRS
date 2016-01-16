@@ -67,10 +67,12 @@ def remove_extra(base_str):
         if b[0] in string.ascii_uppercase:     #allows for any other characters - filter out later (in case of ZAAA)
             new_base_list.extend(b)         #get bases
         elif b[0]=='+' or b[0]=='-':        #skip indels
-            i = int(b[1:])                  #account for ints >=10
-            b2=ibase_list.next()
-            if len(b2) > i:
-                new_base_list.extend(b2[i:])    #can have real bases after indel bases
+            if len(b)>1:
+                if b[1].isdigit():
+                    i = int(b[1:])                  #account for ints >=10
+                    b2=ibase_list.next()
+                    if len(b2) > i:
+                        new_base_list.extend(b2[i:])    #can have real bases after indel bases
         elif b[0]=='^':                        #skip read qual noted at end of read
             continue
     new_base_list = [i for i in new_base_list if i in bases]    #filter unknown bases
