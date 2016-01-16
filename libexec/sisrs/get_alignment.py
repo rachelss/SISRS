@@ -107,9 +107,10 @@ def read_pkls(path):
         allbases[species]=sp_bases
     
     alllocs=list(set(alllocs))
-    print pathlist
+    pathlist.sort()
+    alllocs.sort()
         
-    return allbases,alllocs.sort(),pathlist.sort()
+    return allbases,alllocs,pathlist
 
 def get_phy_sites(pathlist,allbases,alllocs,num_missing):
     ''' gets the alignment i.e. the list of bases for each species, where all sites are variable among species  '''
