@@ -238,7 +238,7 @@ def write_alignment(fi,alignment,numbi):
     ALIGNMENT.write('[ '+ " ".join(alignment.ref_loc)+' ]'+"\n")
     ALIGNMENT.write('[ '+ " ".join(alignment.locations)+' ]'+"\n")
     for species in spp: #write sequences for each species
-        ALIGNMENT.write(species+"\t"+("".join(alignment.species_data[species]))+"\n")
+        ALIGNMENT.write(species+"\t"+"".join(alignment.species_data[species])+"\n")
         
 
     bi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
