@@ -243,6 +243,7 @@ def write_alignment(fi,alignment,numbi):
 
     bi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
     bi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
+    bi_sp_data={}
     for species in spp:
         bi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
     if len(alignment.ref) > 0:
@@ -250,6 +251,7 @@ def write_alignment(fi,alignment,numbi):
     
     pi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
     pi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
+    pi_sp_data={}
     for species in spp:
         pi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
     if len(alignment.ref) > 0:
