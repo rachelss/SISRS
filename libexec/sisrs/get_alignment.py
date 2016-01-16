@@ -94,6 +94,7 @@ def read_pkls(path):
     for fi in filelist:
         d = os.path.dirname(fi)     #sp relative path
         pathlist.append(d)
+        print d
         species = os.path.basename(d)
         print 'Reading data: '+ species     #print sp name
         
@@ -106,6 +107,7 @@ def read_pkls(path):
         allbases[species]=sp_bases
     
     alllocs=list(set(alllocs))
+    print pathlist
         
     return allbases,alllocs.sort(),pathlist.sort()
 
