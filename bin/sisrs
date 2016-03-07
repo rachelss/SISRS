@@ -261,13 +261,13 @@ alignContigs(){
         NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELIST ${NAME}  ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}
     done
     for FILE in "${FILELISTU[@]}"; do
         NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELISTU ${NAME} ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/"${CONTIGS}"/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}
     done
     echo ==== Done Aligning ====
 }
@@ -304,12 +304,12 @@ identifyFixedSites(){
     for FILE in "${FILELIST[@]}"; do
         NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' )
         echo ==== Aligning FILELIST ${NAME}  ====
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}
     done
     for FILE in "${FILELISTU[@]}"; do
         NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' )
         echo ==== Aligning FILELISTU ${NAME} ====
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}
     done
     
     parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam' ::: "${FILELIST[@]}"
@@ -381,13 +381,13 @@ fromRefToSpRef(){
         NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELIST ${NAME}  ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools -@ "${PROCESSORS}" view -Su -F 4 - | samtools sort -@ "${PROCESSORS}"- ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools -@ "${PROCESSORS}" view -Su -F 4 - | samtools sort -@ "${PROCESSORS}"- -o ${NAME}
     done
     for FILE in "${FILELISTU[@]}"; do
         NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
         echo ==== Aligning FILELISTU ${NAME} ====
         #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - ${NAME}
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}
     done
     
     samtools faidx ${MAINFOLDER}/ref_genes.fa
@@ -405,13 +405,13 @@ gfr_aligntoConservedContigs(){
         for FILE in "${FOLDER}"/*${FILEID}*fastq; do
 	    # output sorted bam file w/o unaligned reads - lots per folder
             echo Aligning ${FILE} to conserved contigs
-	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
+	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq})  
         done
     done
     
     for FOLDER in "${FOLDERLISTU[@]}"; do
         for FILE in "${FOLDER}"/*reads*fastq; do
-            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - "$FOLDER"_loci/$(basename ${FILE/.fastq})  
+            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq})  
         done        
     done
 }
