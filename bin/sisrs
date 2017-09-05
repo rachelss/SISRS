@@ -221,7 +221,7 @@ fi
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
 
 ##############################
-if [[$ASSEMBLER != "premade"]];then
+if [[ $ASSEMBLER != "premade" ]];then
     subSample(){
         if [ -z $GENOMESIZE ]; then
             echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
