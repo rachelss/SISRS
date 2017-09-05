@@ -69,8 +69,8 @@ Flags:
  -l : the number of alleles
  -a : assembler (velvet, minia, abyss, or premade)
       -If using a premade composite genome, it must be in a folder named
-      'premade' in the same directory as the folders of read data, and
-      must be called 'contigs.fa'
+      'premadeoutput' in the same directory as the folders of read data,
+      and must be called 'contigs.fa'
 
  Example command:
  sisrs sites -g 1745690 -p 40 -m 4 -f /usr/test_data
