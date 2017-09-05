@@ -229,7 +229,7 @@ if [[ $ASSEMBLER == "premade" ]];then
     }
 fi
 
-if [[ $ASSEMBLER!="premade" ]];then
+if [[ $ASSEMBLER !="premade" ]];then
     subSample(){
         if [ -z $GENOMESIZE ]; then
             echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
