@@ -307,12 +307,12 @@ alignContigs(){
 
     #align reads to contigs
     for FOLDER in "${FOLDERLISTA[@]}";do
-    FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
-    FASTQLIST=( $(join_by , "${FASTQ[@]}"))
-    FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
-    echo ==== Aligning FILELISTU ${NAME} ====
-    #N=1 allows a mismatch #x The basename of the index for the reference genome
-    bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/"${CONTIGS}"/contigs -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDERNAME}.bam
+        FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
+        FASTQLIST=( $(join_by , "${FASTQ[@]}"))
+        FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
+        echo ==== Aligning FILELISTU ${NAME} ====
+        #N=1 allows a mismatch #x The basename of the index for the reference genome
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/"${CONTIGS}"/contigs -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDERNAME}.bam
     done
 
     echo ==== Done Aligning ====
