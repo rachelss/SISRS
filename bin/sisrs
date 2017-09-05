@@ -222,9 +222,15 @@ if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum o
 
 ##############################
 if [[ $ASSEMBLER == "premade" ]];then
-    subSample(){ echo "No subsampling necessary, using pre-assembled composite genome in ${CONTIGS}, continuing..." }
-    buildContigs(){ echo "No contig building necessary, using pre-assembled composite genome in ${CONTIGS}, continuing..." }
-else
+    subSample(){
+       echo "No subsampling necessary, using pre-assembled composite genome in ${CONTIGS}, continuing..."
+    }
+    buildContigs(){
+      echo "No contig building necessary, using pre-assembled composite genome in ${CONTIGS}, continuing..."
+    }
+fi
+
+if [[ $ASSEMBLER!="premade" ]];then
     subSample(){
         if [ -z $GENOMESIZE ]; then
             echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
