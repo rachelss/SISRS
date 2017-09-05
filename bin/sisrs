@@ -87,7 +87,6 @@ KMER=21
 MINREAD=3
 PROCESSORS=1
 MAINFOLDER=$( echo "$(pwd)")
-OUTFOLDER=$( echo "$(pwd)")
 THRESHOLD=1
 ALLELES=1
 DEBUG=0
@@ -166,7 +165,7 @@ which samtools &>/dev/null
 
 ###########Link Outfolder##############
 
-if [[ "${MAINFOLDER}" = "${OUTFOLDER}" ]]; then     #Check if data folder and output folder are the same
+if [[ "${MAINFOLDER}" = "${OUTFOLDER}" ]] || [[ -z $OUTFOLDER ]]; then     #Check if data folder and output folder are the same
     echo "Note: SISRS writing into data folder"
     OUTFOLDER="${MAINFOLDER}"
 
