@@ -9,7 +9,7 @@ VERSION=1.6
 
 help() {
     cat <<ENDLINE
-    
+
  SISRS: Site Identification from Short Read Sequences
  Version 1.6
  Copyright (c) 2013-2015 Rachel Schwartz <Rachel.Schwartz@asu.edu>
@@ -41,9 +41,9 @@ Commands:
         fewer than a specified number of samples per site
  loci : produce a set of aligned loci based on the most variable regions of
         the composite genome
- 
+
 Flags:
-    
+
  -g : MANDATORY if running sisrs from the beginning - the approximate genome size
       - this will reduce the size of the composite assembly by using a subset
       of reads to approximate 10x coverage
@@ -63,7 +63,7 @@ Flags:
 
  Example command:
  sisrs sites -g 1745690 -p 40 -m 4 -f test_data
- 
+
  Example command:
  sisrs loci -g 1745690 -p 40 -m 4 -f test_data
 
@@ -86,8 +86,8 @@ cmds=(subSample buildContigs alignContigs mapContigs identifyFixedSites outputAl
 if [[ "${CMD}" != "sites" ]] && [[ "${CMD}" != "loci" ]] && [[ ! "${cmds[*]}" =~ $CMD ]]; then
     help
     exit 0
-fi 
-    
+fi
+
 OPTIND=2 # tells getopts to start parsing at the second argument
 
 while getopts g:r:k:p:m:a:f:n:t:o:l:hd option
@@ -151,7 +151,7 @@ which samtools &>/dev/null
 
 ###########actions##############
 
-FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )   
+FILELISTA=( $( find "${MAINFOLDER}" -name "*fastq" ) )
 
 #get paired fastq
 FILELIST=( $( find "${MAINFOLDER}" -name *${FILEID}*fastq ) )     #all fastq file paths as array
@@ -188,7 +188,7 @@ subSample(){
         echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
         exit 1
     fi
-    
+
     echo "Subsampling data"
     if [[ -e "${MAINFOLDER}"/subsamples ]]; then rm -r "${MAINFOLDER}"/subsamples; fi
     NUMER=$((10*${GENOMESIZE}))
@@ -196,7 +196,7 @@ subSample(){
     LEFTREADS=$((${NUMER}/${DENOM}))
     mkdir ${MAINFOLDER}/subsamples
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/sub_sample_for_velvet_unshuff.py ${LEFTREADS} {} ${FILEID} ${FILEID2}" ::: "${FOLDERLISTA[@]}"   #subsample data and shuffle
-    
+
     if [[ $? != 0 ]]; then
         echo "Subsampling failed"
         exit 1
@@ -235,18 +235,18 @@ buildContigs(){
             fi
         fi
         echo ==== Velveth is finished ====
-        
+
         velvetg ${MAINFOLDER}/velvetoutput -exp_cov auto -cov_cutoff auto# -min_contig_lgth 100     #run velvet - output contigs
         echo ==== Velvetg is finished ===
     fi
-    
+
     if [[ $ASSEMBLER == "minia" ]]; then
         mkdir ${MAINFOLDER}/miniaoutput
         ls ${MAINFOLDER}/subsamples/*fastq | parallel -j ${PROCESSORS} basename > ${MAINFOLDER}/subsamples/minia_read_file.txt
         minia -in ${MAINFOLDER}/subsamples/minia_read_file.txt -kmer-size ${KMER} -nb-cores "${PROCESSORS}" -out ${MAINFOLDER}/miniaoutput/
         mv ${MAINFOLDER}/miniaoutput/.contigs.fa ${MAINFOLDER}/miniaoutput/contigs.fa
     fi
-    
+
     if [[ $ASSEMBLER == "ABYSS" ]]; then
         mkdir ${MAINFOLDER}/abyssoutput
         ABYSS -k ${KMER} -o ${MAINFOLDER}/abyssoutput/contigs.fa ${MAINFOLDER}/subsamples/*fastq
@@ -255,7 +255,7 @@ buildContigs(){
 
 alignContigs(){
     bowtie2-build ${MAINFOLDER}/"${CONTIGS}"/contigs.fa ${MAINFOLDER}/"${CONTIGS}"/contigs      #index contigs
-    
+
     #align reads to contigs
     for FILE in "${FILELIST[@]}"; do
         NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
@@ -271,12 +271,12 @@ alignContigs(){
     done
     echo ==== Done Aligning ====
 }
-    
+
 mapContigs(){
     #index bam
     parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam' ::: "${FILELIST[@]}"
     echo ==== Done Indexing Bam Files ====
-       
+
     #map contigs to reference
     if [ -n "${REFFILE}" ]; then
         NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
@@ -288,10 +288,10 @@ mapContigs(){
 
 identifyFixedSites(){
     samtools faidx ${MAINFOLDER}/${CONTIGS}/contigs.fa
-    
+
     parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${MAINFOLDER}"/"${CONTIGS}"/contigs.fa '"$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam' -A '> "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {} ${MAINFOLDER}/${CONTIGS}/contigs.fa" ::: "${FOLDERLISTA[@]}"
-    
+
     if [[ $? != 0 ]]; then
         echo "specific_genome.py failed"
         exit 1
@@ -299,7 +299,7 @@ identifyFixedSites(){
 
     parallel --jobs "${PROCESSORS}" "samtools faidx {}/contigs.fa" ::: "${FOLDERLISTA[@]}"
     parallel --jobs "${PROCESSORS}" 'bowtie2-build' {}/contigs.fa {}/contigs ::: "${FOLDERLISTA[@]}"
-    
+
     #align reads to contigs
     for FILE in "${FILELIST[@]}"; do
         NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' )
@@ -311,11 +311,11 @@ identifyFixedSites(){
         echo ==== Aligning FILELISTU ${NAME} ====
         bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}.bam
     done
-    
+
     parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam' ::: "${FILELIST[@]}"
-    
+
     parallel --jobs "${PROCESSORS}" 'samtools mpileup -f "$(dirname {})"/contigs.fa "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam -A > "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
-    
+
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     if [[ $? != 0 ]]; then
@@ -335,7 +335,7 @@ outputAlignment(){
         echo "get_alignment.py failed"
         exit 1
     fi
-    
+
 }
 
 changeMissing(){
@@ -361,7 +361,7 @@ runSISRS(){
     for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
     done
-     
+
     #run as raxml -s "${MAINFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
 
@@ -374,8 +374,8 @@ copyRefContigs(){
 
 fromRefToSpRef(){
     grep \> "${MAINFOLDER}"/ref_genes.fa | sed 's/>//' |sort|uniq > "${MAINFOLDER}"/loci.txt
-    bowtie2-build ${MAINFOLDER}/ref_genes.fa ${MAINFOLDER}/ref_genes      #index 
-    
+    bowtie2-build ${MAINFOLDER}/ref_genes.fa ${MAINFOLDER}/ref_genes      #index
+
     #align reads to contigs
     for FILE in "${FILELIST[@]}"; do
         NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
@@ -389,37 +389,37 @@ fromRefToSpRef(){
         #N=1 allows a mismatch #x The basename of the index for the reference genome
         bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${MAINFOLDER}/ref_genes -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}.bam
     done
-    
+
     samtools faidx ${MAINFOLDER}/ref_genes.fa
     parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${MAINFOLDER}/ref_genes.fa" '$( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py" {} ${MAINFOLDER}/ref_genes.fa ::: "${FOLDERLISTA[@]}"    
-    
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py" {} ${MAINFOLDER}/ref_genes.fa ::: "${FOLDERLISTA[@]}"
+
     parallel --jobs "${PROCESSORS}" mv {}/contigs.fa {}/ref_genes.fa  ::: "${FOLDERLISTA[@]}"
 }
 
 gfr_aligntoConservedContigs(){
     parallel --jobs "${PROCESSORS}" bowtie2-build '{}/ref_genes.fa {}/ref_genes' ::: "${FOLDERLISTA[@]}"   #build index for conserved contigs
     find "${MAINFOLDER}"/*_loci/ -type f -name '*bam' | parallel -j "${PROCESSORS}" rm -f {}    #delete old bam
-    
+
     for FOLDER in "${FOLDERLIST[@]}"; do
         for FILE in "${FOLDER}"/*${FILEID}*fastq; do
 	    # output sorted bam file w/o unaligned reads - lots per folder
             echo Aligning ${FILE} to conserved contigs
-	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq}).bam  
+	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq}).bam
         done
     done
-    
+
     for FOLDER in "${FOLDERLISTU[@]}"; do
         for FILE in "${FOLDER}"/*reads*fastq; do
-            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq}).bam  
-        done        
+            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq}).bam
+        done
     done
 }
 
 gfr_mergebam(){
     declare -a TOMERGE=()
     for FOLDER in "${FOLDERLISTA[@]}"; do
-        rm -f "$FOLDER"_loci/merged.bam        # remove existing merged.bam file    
+        rm -f "$FOLDER"_loci/merged.bam        # remove existing merged.bam file
         if [[ $(ls -l "$FOLDER"_loci/*bam | wc -l) -eq 1 ]]; then      #if only one file just link
             F="$FOLDER"_loci/*bam
             ln $(echo "$F") "$FOLDER"_loci/merged.bam
@@ -439,17 +439,17 @@ gfr_getAlleles(){
 
 gfr_getAlignments(){
     ${DIR}/libexec/gfr/genealign_from_allgenes.py ${ALLELES} "${MAINFOLDER}"  #make files for each gene containing seq for each species
-    
+
     for F in "${FOLDERLISTA[@]}"; do mv "${MAINFOLDER}"/loci/$(basename ${F}).fa "${MAINFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
-        
+
     find "${MAINFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
-    
+
 }
 
 gfr_trimLoci(){
-   
+
     find "${MAINFOLDER}"/loci/ -type f -name '*align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
-    
+
     find "${MAINFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
 }
 
@@ -459,7 +459,7 @@ gfr_selectLoci_MV(){
     POS=1
     if [[ -e "${MAINFOLDER}"/loci/newpartitionsMV.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitionsMV.txt; fi
     if [[ -e "${MAINFOLDER}"/loci/phy_filesMV.txt ]]; then rm "${MAINFOLDER}"/loci/phy_filesMV.txt; fi
-    
+
     while read i; do
 
         F=${i}_align.phylip-relaxed
@@ -482,7 +482,7 @@ gfr_selectLoci_MS(){
     POS=1
     if [[ -e "${MAINFOLDER}"/loci/newpartitionsMS.txt ]]; then rm "${MAINFOLDER}"/loci/newpartitionsMS.txt; fi
     if [[ -e "${MAINFOLDER}"/loci/phy_filesMS.txt ]]; then rm "${MAINFOLDER}"/loci/phy_filesMS.txt; fi
-    
+
     for ((NUMSP="${#FOLDERLISTA[@]}";NUMSP>1;NUMSP--)); do
         while read i; do
             F=${i}_align.phylip-relaxed
@@ -504,12 +504,12 @@ gfr_selectLoci_MS(){
         fi
     done
 }
-  
-gfr_catLoci(){    
+
+gfr_catLoci(){
     ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci/phy_filesMS.txt "${MAINFOLDER}"/loci/concat_lociMS.phylip-relaxed "${FOLDERLISTA[@]}"        #concatenate selected loci for raxml analysis
     ${DIR}/libexec/gfr/concatenate_phy.py "${MAINFOLDER}"/loci/phy_filesMV.txt "${MAINFOLDER}"/loci/concat_lociMV.phylip-relaxed "${FOLDERLISTA[@]}"
     #run as raxml -r <known_tree> -M -m GTRGAMMA -p $RANDOM -T <num_threads> -q "${MAINFOLDER}"/loci/newpartitions.txt -s "${MAINFOLDER}"/loci/concat_loci.phylip-relaxed -n <out_name>
-    
+
     ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_lociMS.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
     ${DIR}/libexec/gfr/convert_formats.py "${MAINFOLDER}"/loci/concat_lociMV.phylip-relaxed phylip-relaxed mega       #convert format to mega for reltime
 }
@@ -520,16 +520,16 @@ runGFR(){
             mkdir "$FOLDER"_loci
         fi
     done
-    
+
     gfr_aligntoConservedContigs
     gfr_mergebam
-    
+
     if [ ! -d "${MAINFOLDER}"/loci ]; then
         mkdir "${MAINFOLDER}"/loci
     else
         find "${MAINFOLDER}"/loci/ -type f -name '*' | parallel -j "${PROCESSORS}" "rm -f {}"    #delete old loci
     fi
-    
+
     gfr_getAlleles
     gfr_getAlignments
     gfr_trimLoci
@@ -544,7 +544,7 @@ if [[ $CMD = "sites" ]] || [[ "${cmds[*]}" =~ $CMD ]]; then
     echo "**** SISRS ****"
     runSISRS
 elif [[ $CMD = "loci" ]]; then
-    # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file. 
+    # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file.
     if [[ -f "${FOLDERLISTA[0]}"/ref_genes.fa ]]; then
         echo "** Running SISRS loci **"
     elif [[ -f "${MAINFOLDER}"/alignment.nex ]]; then
@@ -552,7 +552,7 @@ elif [[ $CMD = "loci" ]]; then
 	copyRefContigs  # Get ref_genes.fa from previous sisrs run
     elif [[ -f "${MAINFOLDER}"/ref_genes.fa ]]; then
         echo "** Getting species specific references **"
-        fromRefToSpRef        
+        fromRefToSpRef
     else
         # need to rerun SISRS from scratch to get ref_genes.fa
         echo "** Missing alignment and reference, running SISRS sites **"
