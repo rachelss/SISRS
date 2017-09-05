@@ -303,20 +303,18 @@ fi
 
 alignContigs(){
     bowtie2-build ${OUTFOLDER}/"${CONTIGS}"/contigs.fa ${OUTFOLDER}/"${CONTIGS}"/contigs      #index contigs
+    function join_by { local IFS="$1"; shift; echo "$*"; }
 
     #align reads to contigs
-    for FILE in "${FILELIST[@]}"; do
-        NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
-        echo ==== Aligning FILELIST ${NAME}  ====
-        #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/"${CONTIGS}"/contigs -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}.bam
-    done
-    for FILE in "${FILELISTU[@]}"; do
-        NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
-        echo ==== Aligning FILELISTU ${NAME} ====
-        #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/"${CONTIGS}"/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}.bam
-    done
+    for FOLDER in "${FOLDERLISTA[@]}";do
+    FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
+    FASTQLIST=( $(join_by , "${FASTQ[@]}"))
+    FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
+    echo ==== Aligning FILELISTU ${NAME} ====
+    #N=1 allows a mismatch #x The basename of the index for the reference genome
+    bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/"${CONTIGS}"/contigs -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDERNAME}.bam
+        done
+
     echo ==== Done Aligning ====
 }
 
