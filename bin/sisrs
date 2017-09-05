@@ -151,7 +151,7 @@ elif [[ $ASSEMBLER == "abyss" ]]; then
     [ $? -eq 0 ] || { echo "Abyss must be installed to run SISRS. The installation folder must be in your path. Abyss is called as 'ABYSS'.    Aborting."; exit 1; }
     CONTIGS=abyssoutput
 elif [[ $ASSEMBLER == "premade" ]]; then
-    CONTIGS=premade
+    CONTIGS=premadeoutput
 else
     echo "You must specify the assembler as velvet, minia, abyss, or point sisrs to a directory (-c) which contains a preassembled composite genome called 'contigs.fa'. If you do not specify an assembler SISRS will use velvet as the default.  Aborting."; exit 1;
 fi
@@ -221,7 +221,10 @@ fi
 if [ -z "$MISSING" ]; then MISSING=$((${#FOLDERLISTA[@]} - 2)); fi    #minimum of data for 2 species unless otherwise specified
 
 ##############################
-if [[ $ASSEMBLER != "premade" ]];then
+if [[ $ASSEMBLER == "premade" ]];then
+    subSample(){echo "No subsampling necessary, using pre-assembled composite genome in ${CONTIGS}, continuing..."}
+    buildContigs(){echo "No contig building necessary, using pre-assembled composite genome in ${CONTIGS}, continuing..."}
+else
     subSample(){
         if [ -z $GENOMESIZE ]; then
             echo "You must enter the approximate size of the genome / transcriptome. For more information run sisrs -h"
