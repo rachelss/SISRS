@@ -326,14 +326,14 @@ alignContigs(){
 
 mapContigs(){
     #index bam
-    parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam' ::: "${FILELIST[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {}"/"$(basename {} ) )".bam' ::: "${FOLDERLISTA[@]}"
     echo ==== Done Indexing Bam Files ====
 
     #map contigs to reference
     if [ -n "${REFFILE}" ]; then
         NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
         bowtie2-build ${REFFILE} ${NAME}        #bowtie2-build [options]* <reference_in> <bt2_base>
-        bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${OUTFOLDER}/"${CONTIGS}"/contigs.fa > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) -S ${OUTFOLDER}/"${CONTIGS}"/align_contigs.sam    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
+        bowtie2 -p ${PROCESSORS} -N 1 -x ${NAME} -f -U ${OUTFOLDER}/"${CONTIGS}"/contigs.fa -S ${OUTFOLDER}/"${CONTIGS}"/align_contigs.sam    #bowtie2 -x <ref_base> -U <fq files> -S <output sam>
 	echo ==== Done Mapping Contigs ====
     fi
 }
