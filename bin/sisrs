@@ -326,7 +326,7 @@ alignContigs(){
 
 mapContigs(){
     #index bam
-    parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {}"/"$(basename {} ) )".bam' ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {}/$(basename {} ) )".bam' ::: "${FOLDERLISTA[@]}"
     echo ==== Done Indexing Bam Files ====
 
     #map contigs to reference
@@ -341,7 +341,7 @@ mapContigs(){
 identifyFixedSites(){
     samtools faidx ${OUTFOLDER}/${CONTIGS}/contigs.fa
 
-    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa '"$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam' -A '> "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa "$( echo {}/$(basename {} ) )".bam > "$( echo {}/$(basename {} ) )".pileups ::: "${FOLDERLISTA[@]}" "${FOLDERLISTA[@]}"
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {} ${OUTFOLDER}/${CONTIGS}/contigs.fa" ::: "${FOLDERLISTA[@]}"
 
     if [[ $? != 0 ]]; then
@@ -353,6 +353,21 @@ identifyFixedSites(){
     parallel --jobs "${PROCESSORS}" 'bowtie2-build' {}/contigs.fa {}/contigs ::: "${FOLDERLISTA[@]}"
 
     #align reads to contigs
+    for FOLDER in "${FOLDERLISTA[@]}";do
+        FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
+        FASTQLIST=( $(join_by , "${FASTQ[@]}"))
+        FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
+        echo ==== Aligning ${FOLDERNAME} as Single-Ended ====
+        #Align all species reads against composite genome. N=1 allows a mismatch #x The basename of the index for the reference genome
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${FOLDER}/contigs -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDER}/${FOLDERNAME}_Temp.bam
+        #Extract uniquely mapping reads
+        samtools view -@ "${PROCESSORS}" -H ${FOLDER}/${FOLDERNAME}_Temp.bam > ${FOLDER}/${FOLDERNAME}_Header.sam
+        samtools view -@ "${PROCESSORS}" ${FOLDER}/${FOLDERNAME}_Temp.bam | grep -v "XS:" | cat ${FOLDER}/${FOLDERNAME}_Header.sam - | samtools view -@ "${PROCESSORS}" -b - > ${FOLDER}/${FOLDERNAME}.bam
+        #Remove temporary files
+        rm ${FOLDER}/${FOLDERNAME}_Temp.bam
+        rm ${FOLDER}/${FOLDERNAME}_Header.sam
+    done
+    echo =============DONERAL==================
     for FILE in "${FILELIST[@]}"; do
         NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' )
         echo ==== Aligning FILELIST ${NAME}  ====
