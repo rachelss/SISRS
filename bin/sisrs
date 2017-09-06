@@ -355,9 +355,9 @@ identifyFixedSites(){
 
     #align reads to contigs
     for FOLDER in "${FOLDERLISTA[@]}";do
-        rm *.bam
-        rm *.bai
-        rm *.pileups
+        rm ${FOLDER}/*.bam
+        rm ${FOLDER}/*.bai
+        rm ${FOLDER}/*.pileups
         FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
         FASTQLIST=( $(join_by , "${FASTQ[@]}"))
         FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
