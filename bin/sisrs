@@ -341,7 +341,7 @@ mapContigs(){
 identifyFixedSites(){
     samtools faidx ${OUTFOLDER}/${CONTIGS}/contigs.fa
 
-    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa "$( echo {}/$(basename {} ) )".bam > "echo $( echo {}/$(basename {} ) )".pileups ::: "${FOLDERLISTA[@]}" "${FOLDERLISTA[@]}" "${FOLDERLISTA[@]}" "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa '"$( echo {}/$(basename {} ) )".bam' > '"$( echo {}/$(basename {} ) )".pileups' ::: "${FOLDERLISTA[@]}" "${FOLDERLISTA[@]}" "${FOLDERLISTA[@]}" "${FOLDERLISTA[@]}"
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {} ${OUTFOLDER}/${CONTIGS}/contigs.fa" ::: "${FOLDERLISTA[@]}"
 
     if [[ $? != 0 ]]; then
