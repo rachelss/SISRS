@@ -354,6 +354,9 @@ identifyFixedSites(){
 
     #align reads to contigs
     for FOLDER in "${FOLDERLISTA[@]}";do
+        rm *.bam
+        rm *.bai
+        rm *.pileups
         FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
         FASTQLIST=( $(join_by , "${FASTQ[@]}"))
         FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
@@ -367,10 +370,9 @@ identifyFixedSites(){
         rm ${FOLDER}/${FOLDERNAME}_Temp.bam
         rm ${FOLDER}/${FOLDERNAME}_Header.sam
     done
-    echo =============DONERAL==================
 
     parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {}/$(basename {} ) )".bam' ::: "${FOLDERLISTA[@]}"
-    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f "$(dirname {})"/contigs.fa "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam -A > "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' {}/contigs.fa '"$( echo {}/$(basename {} ) )".bam' '> "$( echo {}/$(basename {} ) )".pileups' ::: "${FOLDERLISTA[@]}"
 
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
