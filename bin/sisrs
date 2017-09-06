@@ -341,7 +341,7 @@ mapContigs(){
 identifyFixedSites(){
     samtools faidx ${OUTFOLDER}/${CONTIGS}/contigs.fa
 
-    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa "$( echo {}/$(basename {} ) )"'.bam >' "$( echo {}/$(basename {} ) )"'.pileups' ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa '"$( echo {}/$(basename {} ) )".bam' '"> $( echo {}/$(basename {} ) )"'.pileups ::: "${FOLDERLISTA[@]}"
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py {} ${OUTFOLDER}/${CONTIGS}/contigs.fa" ::: "${FOLDERLISTA[@]}"
 
     if [[ $? != 0 ]]; then
@@ -368,19 +368,8 @@ identifyFixedSites(){
         rm ${FOLDER}/${FOLDERNAME}_Header.sam
     done
     echo =============DONERAL==================
-    for FILE in "${FILELIST[@]}"; do
-        NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' )
-        echo ==== Aligning FILELIST ${NAME}  ====
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}.bam
-    done
-    for FILE in "${FILELISTU[@]}"; do
-        NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' )
-        echo ==== Aligning FILELISTU ${NAME} ====
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x $(dirname ${FILE})/contigs -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}.bam
-    done
 
-    parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam' ::: "${FILELIST[@]}"
-
+    parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {}/$(basename {} ) )".bam' ::: "${FOLDERLISTA[@]}"
     parallel --jobs "${PROCESSORS}" 'samtools mpileup -f "$(dirname {})"/contigs.fa "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".bam -A > "$( echo {} | sed 's/"${FILEID}"//' | sed s/\.[^.]*$// )".pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
 
     #put base for each site in a dictionary (allows no variation when calling sites)
