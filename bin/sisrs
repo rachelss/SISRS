@@ -371,7 +371,6 @@ identifyFixedSites(){
         rm ${FOLDER}/${FOLDERNAME}.pileups
         FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
         FASTQLIST=( $(join_by , "${FASTQ[@]}"))
-        FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
         echo ==== Aligning ${FOLDERNAME} as Single-Ended ====
         #Align all species reads against composite genome. N=1 allows a mismatch #x The basename of the index for the reference genome
         bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${FOLDER}/contigs -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDER}/${FOLDERNAME}_Temp.bam
@@ -438,7 +437,7 @@ runSISRS(){
 ####################LOCI#######################
 
 copyRefContigs(){
-    grep -oe "[A-Z]*_*[0-9]*_*len[^/]*" "${OUTFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/loci.txt"
+    grep -oe "SISRS_[^/]*" "${OUTFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/loci.txt"
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/loci.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
 }
 
@@ -447,21 +446,29 @@ fromRefToSpRef(){
     bowtie2-build ${OUTFOLDER}/ref_genes.fa ${OUTFOLDER}/ref_genes      #index
 
     #align reads to contigs
-    for FILE in "${FILELIST[@]}"; do
-        NAME=$( echo ${FILE} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
-        echo ==== Aligning FILELIST ${NAME}  ====
-        #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools -@ "${PROCESSORS}" view -Su -F 4 - | samtools sort -@ "${PROCESSORS}"- -o ${NAME}.bam
-    done
-    for FILE in "${FILELISTU[@]}"; do
-        NAME=$( echo ${FILE} | sed 's/\.[^.]*$//' ) #includes folder but not the read or the extension
-        echo ==== Aligning FILELISTU ${NAME} ====
-        #N=1 allows a mismatch #x The basename of the index for the reference genome
-        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/ref_genes -U ${FILE} > >(tee ${NAME}_stdout.log) 2> >(tee ${NAME}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${NAME}.bam
+    for FOLDER in "${FOLDERLISTA[@]}";do
+        FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
+        mv ${FOLDER}/${FOLDERNAME}.bam > ${FOLDER}/${FOLDERNAME}.bam_sites
+        mv ${FOLDER}/${FOLDERNAME}.bam.bai > ${FOLDER}/${FOLDERNAME}.bam.bai_sites
+        mv ${FOLDER}/${FOLDERNAME}.pileups > ${FOLDER}/${FOLDERNAME}.pileups_sites
+        FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
+        FASTQLIST=( $(join_by , "${FASTQ[@]}"))
+        echo ==== Aligning ${FOLDERNAME} as Single-Ended ====
+        #Align all species reads against composite genome. N=1 allows a mismatch #x The basename of the index for the reference genome
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/ref_genes -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDER}/${FOLDERNAME}_Temp.bam
+        #Extract uniquely mapping reads
+        samtools view -@ "${PROCESSORS}" -H ${FOLDER}/${FOLDERNAME}_Temp.bam > ${FOLDER}/${FOLDERNAME}_Header.sam
+        samtools view -@ "${PROCESSORS}" ${FOLDER}/${FOLDERNAME}_Temp.bam | grep -v "XS:" | cat ${FOLDER}/${FOLDERNAME}_Header.sam - | samtools view -@ "${PROCESSORS}" -b - > ${FOLDER}/${FOLDERNAME}.bam
+        #Remove temporary files
+        rm ${FOLDER}/${FOLDERNAME}_Temp.bam
+        rm ${FOLDER}/${FOLDERNAME}_Header.sam
     done
 
     samtools faidx ${OUTFOLDER}/ref_genes.fa
-    parallel --jobs "${PROCESSORS}" "samtools mpileup -f ${OUTFOLDER}/ref_genes.fa" '$( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).bam -A > $( echo {} | sed s/${FILEID}// | sed 's/\.[^.]*$//' ).pileups' ::: "${FILELIST[@]}" "${FILELISTU[@]}"
+
+    parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {}/$(basename {} ) )".bam' ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' ${OUTFOLDER}/ref_genes.fa '"$( echo {}/$(basename {} ) )".bam' '> "$( echo {}/$(basename {} ) )".pileups' ::: "${FOLDERLISTA[@]}"
+
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/specific_genome.py" {} ${OUTFOLDER}/ref_genes.fa ::: "${FOLDERLISTA[@]}"
 
     parallel --jobs "${PROCESSORS}" mv {}/contigs.fa {}/ref_genes.fa  ::: "${FOLDERLISTA[@]}"
@@ -471,18 +478,19 @@ gfr_aligntoConservedContigs(){
     parallel --jobs "${PROCESSORS}" bowtie2-build '{}/ref_genes.fa {}/ref_genes' ::: "${FOLDERLISTA[@]}"   #build index for conserved contigs
     find "${OUTFOLDER}"/*_loci/ -type f -name '*bam' | parallel -j "${PROCESSORS}" rm -f {}    #delete old bam
 
-    for FOLDER in "${FOLDERLIST[@]}"; do
-        for FILE in "${FOLDER}"/*${FILEID}*fastq; do
-	    # output sorted bam file w/o unaligned reads - lots per folder
-            echo Aligning ${FILE} to conserved contigs
-	    bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -1 ${FILE} -2 $( echo ${FILE}|sed s/${FILEID}/${FILEID2}/ ) > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq}).bam
-        done
-    done
-
-    for FOLDER in "${FOLDERLISTU[@]}"; do
-        for FILE in "${FOLDER}"/*reads*fastq; do
-            bowtie2 -p "${PROCESSORS}" -N 1 --local -x "${FOLDER}"/ref_genes -U ${FILE} > >(tee ${FILE/.fastq/}_stdout.log) 2> >(tee ${FILE/.fastq/}_stderr.log >&2) | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o "$FOLDER"_loci/$(basename ${FILE/.fastq}).bam
-        done
+    for FOLDER in "${FOLDERLISTA[@]}";do
+        FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
+        FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
+        FASTQLIST=( $(join_by , "${FASTQ[@]}"))
+        echo ==== Aligning ${FOLDERNAME} to Conserved Contigs ====
+        #Align all species reads against composite genome. N=1 allows a mismatch #x The basename of the index for the reference genome
+        bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${FOLDER}/ref_genes -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDER}_loci/${FOLDERNAME}_Temp.bam
+        #Extract uniquely mapping reads
+        samtools view -@ "${PROCESSORS}" -H ${FOLDER}_loci/${FOLDERNAME}_Temp.bam > ${FOLDER}_loci/${FOLDERNAME}_Header.sam
+        samtools view -@ "${PROCESSORS}" ${FOLDER}_loci/${FOLDERNAME}_Temp.bam | grep -v "XS:" | cat ${FOLDER}_loci/${FOLDERNAME}_Header.sam - | samtools view -@ "${PROCESSORS}" -b - > ${FOLDER}_loci/${FOLDERNAME}.bam
+        #Remove temporary files
+        rm ${FOLDER}_loci/${FOLDERNAME}_Temp.bam
+        rm ${FOLDER}_loci/${FOLDERNAME}_Header.sam
     done
 }
 
