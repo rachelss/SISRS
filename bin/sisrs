@@ -173,14 +173,15 @@ function join_by { local IFS="$1"; shift; echo "$*"; }
 
 if [[ "${MAINFOLDER}" = "${OUTFOLDER}" ]] || [[ -z $OUTFOLDER ]]; then     #Check if data folder and output folder are the same
     echo "Note: SISRS writing into data folder"
-    OUTFOLDER="${MAINFOLDER}"
+    OUTFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
 
 elif [[ "${CMD}" = "alignContigs" ]] || [[ "${CMD}" = "mapContigs" ]] || [[ "${CMD}" = "identifyFixedSites" ]] || [[ "${CMD}" = "outputAlignment" ]] || [[ "${CMD}" = "changeMissing" ]]; then
     echo "For ${CMD}, data folder (-f) and output folder (-z) must be the same. Aborting."
     exit 1
 
 elif [[ ! -d "${OUTFOLDER}" ]]; then
-    cp -as "${MAINFOLDER}" "${OUTFOLDER}"     #Create output directory with links to data files if directory does not already exist
+    cp -as "${MAINFOLDER}" "${OUTFOLDER}" #Create output directory with links to data files if directory does not already exist
+    OUTFOLDER=$( echo "${OUTFOLDER}" | sed -e "s/\/*$//" )
 
 else
     echo "${OUTFOLDER} already exists. Checking if empty..."
@@ -190,6 +191,7 @@ else
     else
         echo "${OUTFOLDER} exists and is empty. SISRS continuing..."
         cp -as "${MAINFOLDER}/"* "${OUTFOLDER}"   #Populate exisiting empty output directory with links to data files
+        OUTFOLDER=$( echo "${OUTFOLDER}" | sed -e "s/\/*$//" )
     fi
 fi
 
