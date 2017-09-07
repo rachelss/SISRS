@@ -21,9 +21,9 @@ This program is distributed in the hope that it will be useful, but without any 
 Requirements
 ============
 * Built-In Genome Assemblers (Required if SISRS is building your composite genome)
-  * Velvet (http://www.ebi.ac.uk/~zerbino/velvet/)
-  * Minia (http://minia.genouest.org/)
-  * AbySS (http://www.bcgsc.ca/platform/bioinfo/software/abyss)
+  * Velvet (tested with v.1.2.10) (http://www.ebi.ac.uk/~zerbino/velvet/)
+  * Minia (tested with v.2.0.7) (http://minia.genouest.org/)
+  * AbySS (tested with v.2.0.2) (http://www.bcgsc.ca/platform/bioinfo/software/abyss)
 * Bowtie2 (http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
 * Python 2.7, Biopython, and PySAM
 * Samtools v1.3.1 (http://www.htslib.org/)
