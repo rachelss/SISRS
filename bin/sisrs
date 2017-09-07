@@ -448,9 +448,6 @@ fromRefToSpRef(){
     #align reads to contigs
     for FOLDER in "${FOLDERLISTA[@]}";do
         FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
-        mv ${FOLDER}/${FOLDERNAME}.bam > ${FOLDER}/${FOLDERNAME}.bam_sites
-        mv ${FOLDER}/${FOLDERNAME}.bam.bai > ${FOLDER}/${FOLDERNAME}.bam.bai_sites
-        mv ${FOLDER}/${FOLDERNAME}.pileups > ${FOLDER}/${FOLDERNAME}.pileups_sites
         FASTQ=( $( find ${FOLDER} -name "*fastq" ) )
         FASTQLIST=( $(join_by , "${FASTQ[@]}"))
         echo ==== Aligning ${FOLDERNAME} as Single-Ended ====
