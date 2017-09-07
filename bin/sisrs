@@ -300,9 +300,10 @@ if [[ $ASSEMBLER != "premade" ]];then
             ls ${OUTFOLDER}/subsamples/*fastq | parallel -j ${PROCESSORS} basename > ${OUTFOLDER}/subsamples/minia_read_file.txt
             minia -in ${OUTFOLDER}/subsamples/minia_read_file.txt -kmer-size ${KMER} -nb-cores "${PROCESSORS}" -out ${OUTFOLDER}/miniaoutput/
             mv ${OUTFOLDER}/miniaoutput/.contigs.fa ${OUTFOLDER}/miniaoutput/contigs.fa
+            rm ${OUTFOLDER}/miniaoutput/.h5
         fi
 
-        if [[ $ASSEMBLER == "ABYSS" ]]; then
+        if [[ $ASSEMBLER == "abyss" ]]; then
             mkdir ${OUTFOLDER}/abyssoutput
             ABYSS -k ${KMER} -o ${OUTFOLDER}/abyssoutput/contigs.fa ${OUTFOLDER}/subsamples/*fastq
         fi
