@@ -160,8 +160,12 @@ which bowtie2 &>/dev/null
 which parallel &>/dev/null
 [ $? -eq 0 ] || { echo "GNU parallel must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 which samtools &>/dev/null
-[ $? -eq 0 ] || { echo "Samtools v1 or greater must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
-[[ $(samtools --version-only| cut -c1) -ge 1 ]] || { echo "Samtools v1 or greater must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+[ $? -eq 0 ] || { echo "Samtools v1.3.1 must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+[[ $(samtools --version-only| cut -c1-5) == "1.3.1" ]] || { echo "Samtools v1.3.1 must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+which rename.sh &>/dev/null
+[ $? -eq 0 ] || { echo "BBMap must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
+which mafft &>/dev/null
+[ $? -eq 0 ] || { echo "MAFFT must be installed to run SISRS. The installation folder must be in your path. Aborting."; exit 1; }
 
 function join_by { local IFS="$1"; shift; echo "$*"; }
 
