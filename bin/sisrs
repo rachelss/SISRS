@@ -57,8 +57,8 @@ Flags:
  -r : the path to the reference genome in fasta format
  -k : k-mer size (for assembly)
  -f : the folder containing the folders of reads (absolute path)
- -z : the folder where SISRS will output data (absolute path, must be empty
-      or non-existent directory)
+ -z : the folder where SISRS will output data (Default: -f, othewise must be
+      absolute path of empty or non-existent directory)
  -n : the number of reads required to call a base at a site
  -t : the threshold for calling a site; e.g. 0.99 means that >99% of
       bases for that taxon must be one allele; only recommended for
