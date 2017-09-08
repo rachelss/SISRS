@@ -71,6 +71,9 @@ Flags:
       -If using a premade composite genome, it must be in a folder named
       'premadeoutput' in the same directory as the folders of read data,
       and must be called 'contigs.fa'
+ -c : continous command mode for calling subcommands: default=1, calling a
+      subcommand runs that subcommand and all subsequent steps in the pipeline;
+      0, calling a subcommand runs only that subcommand
 
  Example command:
  sisrs sites -g 1745690 -p 40 -m 4 -f /usr/test_data
@@ -93,6 +96,7 @@ DEBUG=0
 ASSEMBLER=velvet
 OUTLENGTH=500000
 CMD=$1
+SUBCOMMAND=1
 
 cmds=(subSample buildContigs alignContigs mapContigs identifyFixedSites outputAlignment changeMissing)
 if [[ "${CMD}" != "sites" ]] && [[ "${CMD}" != "loci" ]] && [[ ! "${cmds[*]}" =~ $CMD ]]; then
@@ -102,7 +106,7 @@ fi
 
 OPTIND=2 # tells getopts to start parsing at the second argument
 
-while getopts g:r:k:p:m:a:f:z:n:t:o:l:hd option
+while getopts g:r:k:p:m:a:f:z:n:t:o:l:c:hd option
 do
     case "${option}"
 	in
@@ -118,6 +122,7 @@ do
 	t) THRESHOLD=${OPTARG};;
   o) OUTLENGTH=${OPTARG};;
   l) ALLELES=${OPTARG};;
+  c) SUBCOMMAND=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
 	\? ) echo "Unknown option" >&2; exit 1;;
@@ -428,9 +433,14 @@ runSISRS(){
     else
         i=0
     fi
-    for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
+    if [[ ${SUBCOMMAND} == 1 ]]; then
+      for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
-    done
+      done
+    else
+      echo ===Running ${cmds{$i} Alone===}
+      ${cmds[$i]}
+    fi
 
     #run as raxml -s "${OUTFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
