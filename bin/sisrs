@@ -438,7 +438,7 @@ runSISRS(){
         ${cmds[$i]}
       done
     else
-      echo ===Running ${cmds{$i}} Alone===}
+      echo ===Running "${cmds{$i}}" Alone===
       ${cmds[$i]}
     fi
 
