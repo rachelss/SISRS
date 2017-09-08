@@ -422,13 +422,13 @@ outputAlignment(){
 }
 
 changeMissing(){
-    if [[ ${MISSING} -lt $((${#FOLDERLISTA[@]} - 2)) ]]; then
-        ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing
-    fi
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
     fi
+    #Clean locs_m*.txt file
+    tr " " "\n" < ${OUTFOLDER}/locs_m${MISSING}.txt > locs_m${MISSING}_newLine.txt
 }
 
 runSISRS(){
@@ -456,8 +456,7 @@ runSISRS(){
 ####################LOCI#######################
 
 copyRefContigs(){
-    grep -oe "SISRS_[^/]*" "${OUTFOLDER}/alignment.nex" | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/loci.txt"
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/loci.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/locs_m${MISSING}.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
 }
 
 fromRefToSpRef(){
