@@ -333,15 +333,13 @@ alignContigs(){
         rm ${FOLDER}/${FOLDERNAME}_Temp.bam
         rm ${FOLDER}/${FOLDERNAME}_Header.sam
     done
-
     echo ==== Done Aligning ====
-}
-
-mapContigs(){
     #index bam
     parallel --jobs "${PROCESSORS}" 'samtools index "$( echo {}/$(basename {} ) )".bam' ::: "${FOLDERLISTA[@]}"
     echo ==== Done Indexing Bam Files ====
+}
 
+mapContigs(){
     #map contigs to reference
     if [ -n "${REFFILE}" ]; then
         NAME=$( echo ${REFFILE} | sed 's/\.[^.]*$//' )
