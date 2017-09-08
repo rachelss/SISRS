@@ -180,10 +180,6 @@ if [[ "${MAINFOLDER}" = "${OUTFOLDER}" ]] || [[ -z $OUTFOLDER ]]; then     #Chec
     echo "Note: SISRS writing into data folder"
     OUTFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
 
-elif [[ "${CMD}" = "alignContigs" ]] || [[ "${CMD}" = "mapContigs" ]] || [[ "${CMD}" = "identifyFixedSites" ]] || [[ "${CMD}" = "outputAlignment" ]] || [[ "${CMD}" = "changeMissing" ]]; then
-    echo "For ${CMD}, data folder (-f) and output folder (-z) must be the same. Aborting."
-    exit 1
-
 elif [[ ! -d "${OUTFOLDER}" ]]; then
     cp -as "${MAINFOLDER}" "${OUTFOLDER}" #Create output directory with links to data files if directory does not already exist
     OUTFOLDER=$( echo "${OUTFOLDER}" | sed -e "s/\/*$//" )
