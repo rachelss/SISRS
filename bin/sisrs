@@ -3,8 +3,6 @@
 #this script uses python2.7 - it has not been tested with python3
 
 #run with non-defaults: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
-#for paired reads the filename should contain either _R1 or _R2
-#This fork/branch treats all reads as single-ended for mapping purposes, and only keeps uniquely mapping reads
 
 VERSION=1.6
 
@@ -22,32 +20,44 @@ Usage:
 
 By default, SISRS assumes that
 
- * A reference genome is not available and a composite assembly
-   will be assembled using Velvet
+ * A reference genome is not available and a composite assembly will be
+   assembled using Velvet
  * The K-mer size to be used by Velvet in contig assembly is 21.
  * Only one processor is available.
  * Files are in fastq format.
- * A site is only required to have data for two species to be included
-   in the final alignment.
+ * Paired read filenames end with _R1 and _R2
+ * A site is only required to have data for two species to be included in the
+   final alignment.
  * Folders containing reads are in the present working directory
  * SISRS data will be output into the present working directory
  * A minimum of three reads are required to call the base at a site
    for a taxon.
 
 Commands:
- sites : produce an alignment of sites from raw reads
+ sites: produce an alignment of sites from raw reads
 
- alignContigs : run sisrs sites skipping the composite genome assembly
- mapContigs : run sisrs sites, also skipping alignment of reads to composite genome
- identifyFixedSites : run sisrs sites, also skipping mapping of contigs to a reference
- outputAlignment : run sisrs sites, also skipping determination of fixed sites calls
- changeMissing : given alignment of sites output a file with only sites missing
-        fewer than a specified number of samples per site
+ loci: produce a set of aligned loci based on the most variable regions of
+       the composite genome
 
- loci : produce a set of aligned loci based on the most variable regions of
-        the composite genome
+ ===Subcommands of sites===
 
-Flags:
+ subSample: run sisrs subsampling scheme, subsampling reads from all taxa to
+            ~10X coverage across species, relative to user-given genome size
+
+ buildContigs: run sisrs assembly step with user-given assembler
+
+ alignContigs: align reads to composite genome as single-ended, uniqely mapped
+
+ mapContigs: align composite genome reads to a reference genome (optional)
+
+ identifyFixedSites: find sites with no within-taxa variation
+
+ outputAlignment: output alignment file of sisrs sites
+
+ changeMissing: given alignment of sites, output a file with only sites missing
+                fewer than a specified number of samples per site
+
+Option Flags:
 
  -g : the approximate genome size (MANDATORY if sisrs will be assembling a
       composite genome)
@@ -67,17 +77,21 @@ Flags:
       a site
  -o : the length of the final loci dataset for dating
  -l : the number of alleles
- -a : assembler (velvet, minia, abyss, or premade)
+ -a : assembler [velvet, minia, abyss, or premade]
       -If using a premade composite genome, it must be in a folder named
       'premadeoutput' in the same directory as the folders of read data,
       and must be called 'contigs.fa'
- -c : continous command mode for calling subcommands (1,0): default=1, calling a
-      subcommand runs that subcommand and all subsequent steps in the pipeline;
-      0, calling a subcommand runs only that subcommand
+ -c : continous command mode for calling subcommands [1,0]
+      Default=1, calling a subcommand runs that subcommand and all subsequent
+      steps in the pipeline; 0, calling a subcommand runs only that subcommand
+
+Note Regarding Subcommands: If calling a subcommand of sisrs, the folder
+                            specified by -f (or pwd) must contain a previous
+                            sisrs run that has reached previous steps
 
  Example command:
  sisrs sites -g 1745690 -p 40 -m 4 -f /usr/test_data
- sisrs sites -g 1745690 -p 40 -m 4 -f /usr/test_data -z /usr/SISRS_Output_test_data
+ sisrs sites -g 1745690 -p 40 -m 4 -f /usr/test_data -z /usr/SISRS_Output
 
  Example command:
  sisrs loci -g 1745690 -p 40 -m 4 -f /usr/test_data
