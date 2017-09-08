@@ -71,7 +71,7 @@ Flags:
       -If using a premade composite genome, it must be in a folder named
       'premadeoutput' in the same directory as the folders of read data,
       and must be called 'contigs.fa'
- -c : continous command mode for calling subcommands: default=1, calling a
+ -c : continous command mode for calling subcommands (1,0): default=1, calling a
       subcommand runs that subcommand and all subsequent steps in the pipeline;
       0, calling a subcommand runs only that subcommand
 
