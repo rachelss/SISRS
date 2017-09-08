@@ -459,8 +459,8 @@ copyRefContigs(){
   if [[ -e "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" ]];then
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
   else
-    echo locs_m${MISSING}_Clean.txt not found in ${OUTFOLDER}. Running changeMissing...
-    changeMissing()
+    echo === locs_m${MISSING}_Clean.txt not found in ${OUTFOLDER}. Running changeMissing... ===
+    ${changeMissing}
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
   fi
 }
