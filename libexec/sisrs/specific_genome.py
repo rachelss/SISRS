@@ -29,6 +29,7 @@ def getallbases(path):
 
         filein.close()
 
+    with open (path+'/*pileups',"r") as filein:
     return allbases
 
 def remove_extra(base_list):
