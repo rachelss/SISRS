@@ -19,25 +19,23 @@ def remove_extra(base_list):
     bases=['A','C','G','T','*']
     indels=['+','-']
     new_base_list=[]
-    ibase_list = iter(base_list)
+    ibase_list = iter(bases)
     for b in ibase_list:
-
-        if b in bases:
+        if b in okbases:
             if b=='*':
                 new_base_list.append('N')   #Replace deletions with Ns as placeholder
             else
                 new_base_list.append(b)     #Get base
-
         elif b in indels:                   #skip indels
             i = int(ibase_list.next())
             while i>0:
                 z=ibase_list.next()
                 i = i-1
-
         elif b=='^':                        #skip read qual noted at end of read
             z=ibase_list.next()
 
-    return new_base_list
+return cleanList
+
 
 ###############################################
 path=sys.argv[1]
