@@ -15,9 +15,15 @@ def getallbases(path):
     with open (path+'/*pileups',"r") as filein:
     return allbases
 
-def remove_extra(base_list):
-    bases=['A','C','G','T','*']
+def getCleanList(bases):
+    bases=bases.replace('.',ref) #insert ref base
+    bases=bases.replace(',',ref)
+    bases=bases.upper() #everything in uppercase
+    bases=list(bases)
+
+    okbases=['A','C','G','T','*']
     indels=['+','-']
+
     new_base_list=[]
     ibase_list = iter(bases)
     for b in ibase_list:
