@@ -11,7 +11,6 @@ import glob
 #get combined pileup info
 def getallbases(path):
     allbases=dict()
-    loci={}
     for fi in glob.glob(path+'/*pileups'):
         filein=open(fi,'r')
         for line in filein:
