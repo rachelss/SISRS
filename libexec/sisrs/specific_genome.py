@@ -64,8 +64,8 @@ for pos in allbases:
     bases = remove_extra(allbases[pos])             #remove indel info
     b = Counter(bases).most_common()
     if len(b)>0:
-        if b is '*':
-            b='-'
+        if b[0][0]=='*':
+            b[0][0]='N'
         allbases[pos] = b[0][0]
 
 # Read contig fasta file into dictionary with sequence ID as the key
