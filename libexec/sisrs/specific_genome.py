@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+#This script assumes a single pileup file per taxon
+#Add an assert statement to test this
 import os
 import sys
 import cPickle
@@ -20,13 +22,13 @@ def getallbases(path):
                 bases=bases.replace(',',ref)
                 bases=bases.upper() #everything in uppercase
                 bases=list(bases)
-                
+
                 loc=node+'/'+pos
                 if loc in allbases:
                     allbases[loc].extend(bases)
                 else:
                     allbases[loc]=bases
-                
+
                 loci[node]=int(pos)
         filein.close()
 
@@ -52,7 +54,7 @@ def remove_extra(base_list):
             new_base_list.append('-')
         elif b=='^':                        #skip read qual noted at end of read
             z=ibase_list.next()
-    
+
     return new_base_list
 
 ###############################################
@@ -83,5 +85,5 @@ for locus_pos,base in allbases.iteritems():
 
 output = open(path+'/contigs.fa', 'wb')
 for l,seq in fasta_dict.iteritems():
-    output.write('>'+str(l)+"\n"+"".join(seq)+"\n")    
+    output.write('>'+str(l)+"\n"+"".join(seq)+"\n")
 output.close()
