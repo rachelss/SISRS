@@ -12,23 +12,6 @@ import glob
 def getallbases(path):
     assert len(glob.glob1(path,"*.pileups"))==1
     allbases=dict()
-
-    for fi in glob.glob(path+'/*pileups'):
-        filein=open(fi,'r')
-        for line in filein:
-            splitline=line.split()
-            if len(splitline)>4:
-                node,pos,ref,num,bases,qual=line.split()
-                bases=bases.replace('.',ref) #insert ref base
-                bases=bases.replace(',',ref)
-                bases=bases.upper() #everything in uppercase
-                bases=list(bases)
-
-                loc=node+'/'+pos
-                allbases[loc]=bases
-
-        filein.close()
-
     with open (path+'/*pileups',"r") as filein:
     return allbases
 
