@@ -18,12 +18,12 @@ def getallbases(path):
         if len(splitline)>4:
             node,pos,ref,num,bases,qual=line.split()
             loc=node+'/'+pos
-            bases=getCleanList(bases)
+            bases=getCleanList(ref,bases)
             finalBase=Counter(bases).most_common()
             allbases[loc]=finalBase
     return allbases
 
-def getCleanList(bases):
+def getCleanList(ref,bases):
     bases=bases.replace('.',ref) #insert ref base
     bases=bases.replace(',',ref)
     bases=bases.upper() #everything in uppercase
