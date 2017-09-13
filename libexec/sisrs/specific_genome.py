@@ -24,10 +24,7 @@ def getallbases(path):
                 bases=list(bases)
 
                 loc=node+'/'+pos
-                if loc in allbases:
-                    allbases[loc].extend(bases)
-                else:
-                    allbases[loc]=bases
+                allbases[loc]=bases
 
                 loci[node]=int(pos)
         filein.close()
