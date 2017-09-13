@@ -38,7 +38,7 @@ def getCleanList(ref,bases):
         if b in okbases:
             if b=='*':
                 new_base_list.append('N')   #Replace deletions with Ns as placeholder
-            else
+            else:
                 new_base_list.append(b)     #Get base
         elif b in indels:                   #skip indels
             i = int(ibase_list.next())
