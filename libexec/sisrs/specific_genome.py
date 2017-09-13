@@ -63,11 +63,6 @@ allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:base
 if len(allbases)==0:
     print 'No data for '+path
     sys.exit(1)
-for pos in allbases:
-    bases = remove_extra(allbases[pos])             #remove indel info, no insertions, deletions = N
-    b = Counter(bases).most_common()
-    if len(b)>0:
-        allbases[pos] = b[0][0]
 
 # Read contig fasta file into dictionary with sequence ID as the key
 contig_handle = open(contig_file, "r")
