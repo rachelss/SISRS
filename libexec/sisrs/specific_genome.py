@@ -13,6 +13,14 @@ def getallbases(path):
     assert len(glob.glob1(path,"*.pileups"))==1
     allbases=dict()
     with open (path+'/*pileups',"r") as filein:
+    for line in filein:
+        splitline=line.split()
+        if len(splitline)>4:
+            node,pos,ref,num,bases,qual=line.split()
+            loc=node+'/'+pos
+            bases=getCleanList(bases)
+            finalBase=Counter(bases).most_common()
+            allbases[loc]=finalBase
     return allbases
 
 def getCleanList(bases):
