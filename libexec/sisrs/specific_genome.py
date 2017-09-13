@@ -48,7 +48,7 @@ def getCleanList(ref,bases):
         elif b=='^':                        #skip read qual noted at end of read
             z=ibase_list.next()
 
-return cleanList
+        return cleanList
 
 
 ###############################################
