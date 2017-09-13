@@ -10,6 +10,7 @@ import glob
 
 #get combined pileup info
 def getallbases(path):
+    assert len(glob.glob1(path,"*.pileups"))==1
     allbases=dict()
 
     for fi in glob.glob(path+'/*pileups'):
