@@ -63,7 +63,7 @@ if len(allbases)==0:
     print 'No data for '+path
     sys.exit(1)
 for pos in allbases:
-    bases = remove_extra(allbases[pos])             #remove indel info
+    bases = remove_extra(allbases[pos])             #remove indel info, no insertions, deletions = N
     b = Counter(bases).most_common()
     if len(b)>0:
         allbases[pos] = b[0][0]
