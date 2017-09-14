@@ -12,7 +12,7 @@ import glob
 def getallbases(path):
     assert len(glob.glob1(path,"*.pileups"))==1
     allbases=dict()
-    with open (path+'/*pileups',"r") as filein:
+    with open (path+'/'+basename(path)+'.pileups',"r") as filein:
         for line in filein:
             splitline=line.split()
             if len(splitline)>4:
