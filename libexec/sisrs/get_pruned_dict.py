@@ -79,17 +79,11 @@ def remove_extra(base_str):
 
     return new_base_list        #list of individual bases
 
-def test_remove_extra(teststring,outstring):
-    o = remove_extra(teststring)
-    assert o == list(outstring), 'Test failure: result is '+"".join(o)+' not '+outstring
-
 ###############################################
 if __name__ == "__main__":
     path=sys.argv[1]
     minread=int(sys.argv[2])
     thresh=float(sys.argv[3])
-
-    test_remove_extra('A+1CAAA-10*******AAA^--1*AA-2CAA-2**A-2***'.replace('*','D'),'AAAAAAAAD')
 
     allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
     for pos in allbases:
