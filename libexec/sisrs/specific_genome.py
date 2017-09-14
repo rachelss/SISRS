@@ -19,6 +19,7 @@ def getallbases(path):
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
                 bases=getCleanList(ref,bases)
+                assert len(bases) == int(num), 'bases are being counted incorrectly: '+ bases + ' should have '+str(num)+' bases, but it is being converted to '+"".join(bases2)
                 finalBase=(Counter(bases).most_common()[0][0])
                 allbases[loc]=finalBase
     return allbases
