@@ -53,7 +53,7 @@ def getCleanList(ref,bases):
 
 
 ###############################################
-if __name__ == "__main__:
+if __name__ == "__main__":
     path=sys.argv[1]
     contig_file = sys.argv[2]
 
