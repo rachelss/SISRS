@@ -18,6 +18,7 @@ from collections import Counter
 import glob
 import string
 import re
+from specific_genome import getCleanList
 
 #get combined pileup info
 def getallbases(path):
@@ -89,7 +90,7 @@ if __name__ == "__main__":
     if len(allbases)==0:
         print 'No data for '+path
         sys.exit(1)      #dictionary of combined pileups - locus/pos:bases(as list)
-        
+
     for pos in allbases:
         base = determine_base(allbases[pos],minread,thresh)     #determine if sufficient data and threshold met for calling allele
         if base is 'D':
