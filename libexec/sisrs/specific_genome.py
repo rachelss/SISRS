@@ -10,7 +10,7 @@ import glob
 
 #get combined pileup info
 def getallbases(path):
-    assert len(glob.glob1(path,"*.pileups"))==1
+    assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
     allbases=dict()
     with open (path+'/'+basename(path)+'.pileups',"r") as filein:
         for line in filein:
