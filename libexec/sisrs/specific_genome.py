@@ -44,15 +44,15 @@ def getCleanList(ref,bases):
         elif b in indels:                   #skip indels
             i = int(ibase_list.next())
             j = str.ifdigit(ibase_list.next())
-            if !j:
+            if j:
+                skip=int(i+j)
+                while skip>0:
+                    z=ibase_list.next()
+                    skip=skip-1
+            else:
                 while i>1:
                     z=ibase_list.next()
                     i = i-1
-            else:
-                skip=int(i+j)
-                while skip>0:
-                        z=ibase_list.next()
-                        skip=skip-1
         elif b=='^':                        #skip read qual noted at end of read
             z=ibase_list.next()
 
