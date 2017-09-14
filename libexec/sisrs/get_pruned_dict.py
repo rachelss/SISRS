@@ -6,7 +6,7 @@
         path: folder containing mpileup files ending in pileups
         minread: number of reads at a position required to call a base
         thresh: proportion of reads that must be one base for calling to occur
-        
+
     output:
         path/pruned_dict.pkl : contains pickled dictionary of position:base
 
@@ -43,7 +43,7 @@ def getallbases(path):
                 else:
                     allbases[loc]=bases2
         filein.close()
-    
+
     return allbases
 
 #prune by whether there's enough info and species are fixed
@@ -56,7 +56,7 @@ def determine_base(bases,minread,thresh):
             base=counts[0][0]
         else:
             base='N'
-                
+
     return base
 
 def remove_extra(base_str):
@@ -76,27 +76,28 @@ def remove_extra(base_str):
         elif b[0]=='^':                        #skip read qual noted at end of read
             continue
     new_base_list = [i for i in new_base_list if i in bases]    #filter unknown bases
-    
+
     return new_base_list        #list of individual bases
 
 def test_remove_extra(teststring,outstring):
     o = remove_extra(teststring)
     assert o == list(outstring), 'Test failure: result is '+"".join(o)+' not '+outstring
-    
+
 ###############################################
-path=sys.argv[1]
-minread=int(sys.argv[2])
-thresh=float(sys.argv[3])
+if __name__ == "__main__":
+    path=sys.argv[1]
+    minread=int(sys.argv[2])
+    thresh=float(sys.argv[3])
 
-test_remove_extra('A+1CAAA-10*******AAA^--1*AA-2CAA-2**A-2***'.replace('*','D'),'AAAAAAAAD')
+    test_remove_extra('A+1CAAA-10*******AAA^--1*AA-2CAA-2**A-2***'.replace('*','D'),'AAAAAAAAD')
 
-allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
-for pos in allbases:
-    base = determine_base(allbases[pos],minread,thresh)     #determine if sufficient data and threshold met for calling allele
-    if base is 'D':
-        base='-'
-    allbases[pos] = base
+    allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
+    for pos in allbases:
+        base = determine_base(allbases[pos],minread,thresh)     #determine if sufficient data and threshold met for calling allele
+        if base is 'D':
+            base='-'
+        allbases[pos] = base
 
-output = open(path+'/pruned_dict.pkl', 'wb')
-cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
-output.close()
+    output = open(path+'/pruned_dict.pkl', 'wb')
+    cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
+    output.close()
