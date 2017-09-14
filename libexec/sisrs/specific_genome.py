@@ -12,14 +12,14 @@ import glob
 def getallbases(path):
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
     allbases=dict()
-    with open (path+'/'+basename(path)+'.pileups',"r") as filein:
+    with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in filein:
             splitline=line.split()
             if len(splitline)>4:
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
                 bases=getCleanList(ref,bases)
-                assert len(bases) == int(num), 'bases are being counted incorrectly: '+ bases + ' should have '+str(num)+' bases, but it is being converted to '+"".join(bases2)
+                assert len(bases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(bases2)
                 finalBase=(Counter(bases).most_common()[0][0])
                 allbases[loc]=finalBase
     return allbases
