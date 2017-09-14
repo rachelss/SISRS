@@ -45,7 +45,7 @@ def getCleanList(ref,bases):
             i = int(ibase_list.next())
             j = str(ibase_list.next())
             if str.isdigit(j):
-                skip=int(strg(i)+j)
+                skip=int(str(i)+j)
                 while skip>0:
                     z=ibase_list.next()
                     skip=skip-1
