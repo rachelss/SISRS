@@ -43,9 +43,9 @@ def getCleanList(ref,bases):
                 new_base_list.append(b)     #Get base
         elif b in indels:                   #skip indels
             i = int(ibase_list.next())
-            j = str.ifdigit(ibase_list.next())
-            if j:
-                skip=int(i+j)
+            j = str(ibase_list.next())
+            if str.isdigit(j):
+                skip=int(strg(i)+j)
                 while skip>0:
                     z=ibase_list.next()
                     skip=skip-1
