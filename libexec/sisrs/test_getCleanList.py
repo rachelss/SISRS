@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 from specific_genome import getCleanList
+from specific_genome import getFinalBase_Specific
+from get_pruned_dict import getFinalBase_Pruned
 
 def test_answer():
     assert getCleanList('A','***.......,..^7.^7.^7.^7.^7.^7,') == list('***AAAAAAAAAAAAAAAA')
