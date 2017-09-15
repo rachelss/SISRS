@@ -43,15 +43,12 @@ def getFinalBase_Pruned(cleanBases,bases,minread,thresh):
         singleBase == '-'
     counts=int((Counter(cleanBases).most_common()[0][1]))
 
-    if counts < minread:
-        finalBase='N'
-    else:
+    if counts >= minread and counts/float(len(bases)) >= thresh:
         finalBase=singleBase
+    else:
+        finalBase='N'
 
-    if counts / float(len(bases)) >= thresh:
-        finalBase=singleBase
-    else:
-        finalBase='N'
+    return finalBase
 ###############################################
 if __name__ == "__main__":
     path=sys.argv[1]
