@@ -4,6 +4,7 @@ from specific_genome import getFinalBase_Specific
 from get_pruned_dict import getFinalBase_Pruned
 
 def test_answer():
+    #Test getCleanList (Shared function)
     assert getCleanList('A','***.......,..^7.^7.^7.^7.^7.^7,') == list('***AAAAAAAAAAAAAAAA')
     assert getCleanList('A','t,.*,.-2TT..,,......,,,.,,,') == list('TAA*AAAAAAAAAAAAAAAAAAA')
     assert getCleanList('G','.,,,,*.$..$.,,,,,,,.') == list('GGGGG*GGGGGGGGGGGG')
@@ -14,6 +15,7 @@ def test_answer():
     assert getCleanList('T','***.*,*.***,*') == list('***T*T*T***T*')
     assert getCleanList('T','*************') == list('*************')
 
+    #Test getFinalBase for specific_genome and get_pruned_dict (handle deltions differently and minread/thresh)
     assert getFinalBase_Specific(getCleanList('A','***.......,..^7.^7.^7.^7.^7.^7,'))=='A'
     assert getFinalBase_Pruned(getCleanList('A','***.......,..^7.^7.^7.^7.^7.^7,'),3,1)=='N'
 
@@ -22,11 +24,11 @@ def test_answer():
 
     assert getFinalBase_Specific(getCleanList('G','.,,,,*.$..$.,,,,,,,.'))=='G'
     assert getFinalBase_Pruned(getCleanList('G','.,,,,*.$..$.,,,,,,,.'),3,1)=='N'
-    assert getFinalBase_Pruned(getCleanList('G','.,,,,*.$..$.,,,,,,,.'),3,0.93)=='G'
+    assert getFinalBase_Pruned(getCleanList('G','.,,,,*.$..$.,,,,,,,.'),3,0.93)=='G' #Test threshold
 
     assert getFinalBase_Specific(getCleanList('T',',+1a,+1a,+1a.+1A.+1A,+1a.+1A'))=='T'
     assert getFinalBase_Pruned(getCleanList('T',',+1a,+1a,+1a.+1A.+1A,+1a.+1A'),3,1)=='T'
-    assert getFinalBase_Pruned(getCleanList('T',',+1a,+1a,+1a.+1A.+1A,+1a.+1A'),8,1)=='N'
+    assert getFinalBase_Pruned(getCleanList('T',',+1a,+1a,+1a.+1A.+1A,+1a.+1A'),8,1)=='N'   #Test minread
 
     assert getFinalBase_Specific(getCleanList('T','AAaA*A*aA**aaAa'))=='A'
     assert getFinalBase_Pruned(getCleanList('T','AAaA*A*aA**aaAa'),3,1)=='N'
@@ -40,5 +42,6 @@ def test_answer():
     assert getFinalBase_Specific(getCleanList('T','***.*,*.***,*'))=='N'
     assert getFinalBase_Pruned(getCleanList('T','***.*,*.***,*'),3,1)=='N'
 
+    #Test how to handle deletions
     assert getFinalBase_Specific(getCleanList('T','*************'))=='N'
     assert getFinalBase_Pruned(getCleanList('T','*************'),3,1)=='-'
