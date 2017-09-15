@@ -55,7 +55,7 @@ def getCleanList(ref,bases):
 
     return new_base_list
 
-def getFinalBase_Specific(cleanBase):
+def getFinalBase_Specific(cleanBases):
     finalBase=(Counter(cleanBases).most_common()[0][0])
     if singleBase == '*':
         singleBase == 'N'
