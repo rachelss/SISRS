@@ -18,6 +18,7 @@ from collections import Counter
 import glob
 import string
 import re
+import os
 from specific_genome import getCleanList
 
 #get combined pileup info
