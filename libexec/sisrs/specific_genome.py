@@ -59,6 +59,7 @@ def getFinalBase_Specific(cleanBases):
     finalBase=(Counter(cleanBases).most_common()[0][0])
     print(finalBase)
     if finalBase == '*':
+        print("yes")
         finalBase == 'N'
     return finalBase
 
