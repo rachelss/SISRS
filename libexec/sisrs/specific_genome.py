@@ -20,7 +20,7 @@ def getallbases(path):
                 loc=node+'/'+pos
                 cleanBases=getCleanList(ref,bases)
                 assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
-                finalBase=getFinalBase_Specific(cleanBases,minread,thresh)
+                finalBase=getFinalBase_Specific(cleanBases)
                 allbases[loc]=finalBase
     return allbases
 
@@ -55,7 +55,7 @@ def getCleanList(ref,bases):
 
     return new_base_list
 
-def getFinalBase_Specific(cleanBases,minread,thresh):
+def getFinalBase_Specific(cleanBase):
     finalBase=(Counter(cleanBases).most_common()[0][0])
     if singleBase == '*':
         singleBase == 'N'
