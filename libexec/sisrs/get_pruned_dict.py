@@ -18,6 +18,7 @@ from collections import Counter
 import glob
 import string
 import re
+from specific_genome import getCleanList
 
 #get combined pileup info
 def getallbases(path,minread,thresh):
@@ -50,37 +51,6 @@ def getallbases(path,minread,thresh):
                     allbases[loc]=finalBase
 
     return allbases
-
-def getCleanList(ref,bases):
-    bases=bases.replace('.',ref) #insert ref base
-    bases=bases.replace(',',ref)
-    bases=bases.upper() #everything in uppercase
-    bases=list(bases)
-
-    okbases=['A','C','G','T','*']
-    indels=['+','-']
-
-    new_base_list=[]
-    ibase_list = iter(bases)
-    for b in ibase_list:
-        if b in okbases:
-            new_base_list.append(b)     #Get base
-        elif b in indels:                   #skip indels
-            i = int(ibase_list.next())
-            j = str(ibase_list.next())
-            if str.isdigit(j):
-                skip=int(str(i)+j)
-                while skip>0:
-                    z=ibase_list.next()
-                    skip=skip-1
-            else:
-                while i>1:
-                    z=ibase_list.next()
-                    i = i-1
-        elif b=='^':                        #skip read qual noted at end of read
-            z=ibase_list.next()
-
-    return new_base_list
 
 ###############################################
 if __name__ == "__main__":
