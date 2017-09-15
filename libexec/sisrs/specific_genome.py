@@ -1,4 +1,6 @@
 #!/usr/bin/env python2
+#This script assumes a single pileup file per taxon
+#Add an assert statement to test this
 import os
 import sys
 import cPickle
@@ -8,80 +10,76 @@ import glob
 
 #get combined pileup info
 def getallbases(path):
+    assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
     allbases=dict()
-    loci={}
-    for fi in glob.glob(path+'/*pileups'):
-        filein=open(fi,'r')
+    with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in filein:
             splitline=line.split()
             if len(splitline)>4:
                 node,pos,ref,num,bases,qual=line.split()
-                bases=bases.replace('.',ref) #insert ref base
-                bases=bases.replace(',',ref)
-                bases=bases.upper() #everything in uppercase
-                bases=list(bases)
-                
                 loc=node+'/'+pos
-                if loc in allbases:
-                    allbases[loc].extend(bases)
-                else:
-                    allbases[loc]=bases
-                
-                loci[node]=int(pos)
-        filein.close()
+                cleanBases=getCleanList(ref,bases)
+                assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
+                finalBase=(Counter(cleanBases).most_common()[0][0])
+                allbases[loc]=finalBase
+    return allbases
 
-    return allbases,loci
+def getCleanList(ref,bases):
+    bases=bases.replace('.',ref) #insert ref base
+    bases=bases.replace(',',ref)
+    bases=bases.upper() #everything in uppercase
+    bases=list(bases)
 
-def remove_extra(base_list):
-    bases=['A','C','G','T','*']
+    okbases=['A','C','G','T','*']
+    indels=['+','-']
+
     new_base_list=[]
-    ibase_list = iter(base_list)
+    ibase_list = iter(bases)
     for b in ibase_list:
-        if b in bases:
-            new_base_list.append(b)         #get base
-        elif b=='+':                        #skip insertions
+        if b in okbases:
+            if b=='*':
+                new_base_list.append('D')   #Replace deletions with Ds as placeholder
+            else:
+                new_base_list.append(b)     #Get base
+        elif b in indels:                   #skip indels
             i = int(ibase_list.next())
-            while i>0:
-                z=ibase_list.next()
-                i = i-1
-        elif b=='-':                        #get deletion
-            i = int(ibase_list.next())
-            while i>0:
-                z=ibase_list.next()
-                i = i-1
-            new_base_list.append('-')
+            j = str(ibase_list.next())
+            if str.isdigit(j):
+                skip=int(str(i)+j)
+                while skip>0:
+                    z=ibase_list.next()
+                    skip=skip-1
+            else:
+                while i>1:
+                    z=ibase_list.next()
+                    i = i-1
         elif b=='^':                        #skip read qual noted at end of read
             z=ibase_list.next()
-    
+
     return new_base_list
 
+
 ###############################################
-path=sys.argv[1]
-contig_file = sys.argv[2]
+if __name__ == "__main__":
+    path=sys.argv[1]
+    contig_file = sys.argv[2]
 
-allbases,loci=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
-if len(loci)==0:
-    print 'No data for '+path
-    sys.exit(1)
-for pos in allbases:
-    bases = remove_extra(allbases[pos])             #remove indel info
-    b = Counter(bases).most_common()
-    if len(b)>0:
-        if b is '*':
-            b='-'
-        allbases[pos] = b[0][0]
+    allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
+    if len(allbases)==0:
+        print 'No data for '+path
+        sys.exit(1)
 
-# Read contig fasta file into dictionary with sequence ID as the key
-contig_handle = open(contig_file, "r")
-fasta_seq = SeqIO.parse(contig_handle, 'fasta')
-fasta_dict = {read.id:list(str(read.seq)) for read in fasta_seq}
-contig_handle.close()
+    # Read contig fasta file into dictionary with sequence ID as the key
+    contig_handle = open(contig_file, "r")
+    fasta_seq = SeqIO.parse(contig_handle, 'fasta')
+    fasta_dict = {read.id:list(str(read.seq)) for read in fasta_seq}
+    contig_handle.close()
 
-for locus_pos,base in allbases.iteritems():
-    locus,pos = locus_pos.split('/')
-    fasta_dict[locus][int(pos)-1] = base
+    for locus_pos,base in allbases.iteritems():
+        locus,pos = locus_pos.split('/')
+        fasta_dict[locus][int(pos)-1] = base
 
-output = open(path+'/contigs.fa', 'wb')
-for l,seq in fasta_dict.iteritems():
-    output.write('>'+str(l)+"\n"+"".join(seq)+"\n")    
-output.close()
+    output = open(path+'/contigs.fa', 'wb')
+    for l,seq in fasta_dict.iteritems():
+        output.write('>'+str(l)+"\n"+"".join(seq)+"\n")
+    output.close()
