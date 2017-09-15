@@ -33,7 +33,7 @@ def getallbases(path,minread,thresh):
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
                 assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
-                if finalBase not 'N':
+                if finalBase != 'N':
                     allbases[loc]=finalBase
     return allbases
 
