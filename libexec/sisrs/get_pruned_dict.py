@@ -40,7 +40,7 @@ def getallbases(path,minread,thresh):
 def getFinalBase_Pruned(cleanBases,minread,thresh):
     singleBase=(Counter(cleanBases).most_common()[0][0])
     if singleBase == '*':
-        singleBase == '-'
+        singleBase = '-'
     counts=int((Counter(cleanBases).most_common()[0][1]))
 
     if counts >= minread and counts/float(len(cleanBases)) >= thresh:
