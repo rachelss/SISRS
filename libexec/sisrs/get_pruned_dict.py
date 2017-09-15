@@ -6,7 +6,7 @@
         path: folder containing mpileup files ending in pileups
         minread: number of reads at a position required to call a base
         thresh: proportion of reads that must be one base for calling to occur
-        
+
     output:
         path/pruned_dict.pkl : contains pickled dictionary of position:base
 
@@ -18,85 +18,49 @@ from collections import Counter
 import glob
 import string
 import re
+import os
+from specific_genome import getCleanList
 
 #get combined pileup info
-def getallbases(path):
+def getallbases(path,minread,thresh):
+    assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
     allbases=dict()
-    for fi in glob.glob(path+'/*pileups'):
-        filein=open(fi,'r')
+    with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in filein:
             splitline=line.split()
             if len(splitline)>4:
                 node,pos,ref,num,bases,qual=line.split()
-                bases=bases.replace('.',ref) #insert ref base
-                bases=bases.replace(',',ref)
-                bases=bases.replace('*','D')    #using D is easier than *
-                bases=bases.upper() #everything in uppercase
-                bases2 = remove_extra(bases)
-
-                assert len(bases2) == int(num), 'bases are being counted incorrectly: '+\
-                                          bases + ' should have '+str(num)+' bases, but it is being converted to '+"".join(bases2)
-
                 loc=node+'/'+pos
-                if loc in allbases:
-                    allbases[loc].extend(bases2)
-                else:
-                    allbases[loc]=bases2
-        filein.close()
-    
+                cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
+                assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
+                finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
+                if finalBase != 'N':    #Do not pass Ns to pruned_dictionary, but do pass - as deletion
+                    allbases[loc]=finalBase
     return allbases
 
-#prune by whether there's enough info and species are fixed
-def determine_base(bases,minread,thresh):
-    if(len(bases)< minread): #not enough info
-        base='N'
+def getFinalBase_Pruned(cleanBases,minread,thresh):
+    singleBase=(Counter(cleanBases).most_common()[0][0])
+    if singleBase == '*':
+        singleBase = '-'
+    counts=int((Counter(cleanBases).most_common()[0][1]))
+
+    if counts >= minread and counts/float(len(cleanBases)) >= thresh:
+        finalBase=singleBase
     else:
-        counts = Counter(bases).most_common(1)
-        if counts[0][1] / float(len(bases)) >= thresh:
-            base=counts[0][0]
-        else:
-            base='N'
-                
-    return base
+        finalBase='N'
 
-def remove_extra(base_str):
-    bases=['A','C','G','T','D']     #D indicates del
-    new_base_list=[]
-    ibase_list = iter(re.findall('\-$|\-[0-9]+|\-*[A-Z]*\-*[A-Z]+|\+[0-9]+|\^.',base_str))  #group by bases, indels, read start (need this to get rid of following ascii code), don't worry about $
-    for b in ibase_list:
-        if b[0] in string.ascii_uppercase:     #allows for any other characters - filter out later (in case of ZAAA)
-            new_base_list.extend(b)         #get bases
-        elif b[0]=='+' or b[0]=='-':        #skip indels
-            if len(b)>1:
-                if b[1].isdigit():
-                    i = int(b[1:])                  #account for ints >=10
-                    b2=ibase_list.next()
-                    if len(b2) > i:
-                        new_base_list.extend(b2[i:])    #can have real bases after indel bases
-        elif b[0]=='^':                        #skip read qual noted at end of read
-            continue
-    new_base_list = [i for i in new_base_list if i in bases]    #filter unknown bases
-    
-    return new_base_list        #list of individual bases
-
-def test_remove_extra(teststring,outstring):
-    o = remove_extra(teststring)
-    assert o == list(outstring), 'Test failure: result is '+"".join(o)+' not '+outstring
-    
+    return finalBase
 ###############################################
-path=sys.argv[1]
-minread=int(sys.argv[2])
-thresh=float(sys.argv[3])
+if __name__ == "__main__":
+    path=sys.argv[1]
+    minread=int(sys.argv[2])
+    thresh=float(sys.argv[3])
 
-test_remove_extra('A+1CAAA-10*******AAA^--1*AA-2CAA-2**A-2***'.replace('*','D'),'AAAAAAAAD')
+    allbases=getallbases(path,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
+    if len(allbases)==0:
+        print 'No data for '+path
+        sys.exit(1)      #dictionary of combined pileups - locus/pos:bases(as list)
 
-allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
-for pos in allbases:
-    base = determine_base(allbases[pos],minread,thresh)     #determine if sufficient data and threshold met for calling allele
-    if base is 'D':
-        base='-'
-    allbases[pos] = base
-
-output = open(path+'/pruned_dict.pkl', 'wb')
-cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
-output.close()
+    output = open(path+'/pruned_dict.pkl', 'wb')
+    cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
+    output.close()
