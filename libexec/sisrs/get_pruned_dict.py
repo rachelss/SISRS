@@ -32,26 +32,26 @@ def getallbases(path,minread,thresh):
                 loc=node+'/'+pos
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
                 assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
-                #Extract most common base and its count
-                singleBase=(Counter(cleanBases).most_common()[0][0])
-                if singleBase == '*':
-                    singleBase == '-'
-                counts=int((Counter(cleanBases).most_common()[0][1]))
-
-                if counts < minread:
-                    finalBase='N'
-                else:
-                    finalBase=singleBase
-
-                if counts / float(len(bases)) >= thresh:
-                    finalBase=singleBase
-                else:
-                    finalBase='N'
+                finalBase=getfinalbase(cleanBases,bases,minread,thresh)
                 if finalBase not 'N':
                     allbases[loc]=finalBase
-
     return allbases
 
+def getfinalbase(cleanBases,bases,minread,thresh):
+    singleBase=(Counter(cleanBases).most_common()[0][0])
+    if singleBase == '*':
+        singleBase == '-'
+    counts=int((Counter(cleanBases).most_common()[0][1]))
+
+    if counts < minread:
+        finalBase='N'
+    else:
+        finalBase=singleBase
+
+    if counts / float(len(bases)) >= thresh:
+        finalBase=singleBase
+    else:
+        finalBase='N'
 ###############################################
 if __name__ == "__main__":
     path=sys.argv[1]
