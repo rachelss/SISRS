@@ -38,7 +38,7 @@ def getallbases(path,minread,thresh):
     return allbases
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
-    singleBase=(Counter(cleanBases).most_common()[0][0])
+    singleBase=str((Counter(cleanBases).most_common()[0][0]))
     if singleBase == '*':
         singleBase == '-'
     counts=int((Counter(cleanBases).most_common()[0][1]))
