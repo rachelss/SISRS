@@ -35,7 +35,7 @@ def test_answer():
     assert getFinalBase_Pruned(getCleanList('T','..,....,,,,.,'),3,1)=='T'
 
     assert getFinalBase_Specific(getCleanList('A',',,....+18AGTTAACCCTAAGGGACC,+18agttaaccctaagggacc,+18agttaaccctaagggacc'))=='A'
-    assert getFinalBase_Pruned(getCleanList('A',',,....+18AGTTAACCCTAAGGGACC,+18agttaaccctaagggacc,+18agttaaccctaagggacc'),3,1)=='N'
+    assert getFinalBase_Pruned(getCleanList('A',',,....+18AGTTAACCCTAAGGGACC,+18agttaaccctaagggacc,+18agttaaccctaagggacc'),3,1)=='A'
 
     assert getFinalBase_Specific(getCleanList('T','***.*,*.***,*'))=='N'
     assert getFinalBase_Pruned(getCleanList('T','***.*,*.***,*'),3,1)=='N'
