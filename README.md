@@ -43,11 +43,11 @@ Paired and unpaired reads must have a fastq file extension.
 Running SISRS
 =============
 
-#### Usage:
+## Usage:
 
  sisrs command options
 
- #### By default, SISRS assumes that
+ ### By default, SISRS assumes that
 
   * A reference genome is not available and a composite assembly will be
     assembled using Velvet
@@ -62,12 +62,15 @@ Running SISRS
   * A minimum of three reads are required to call the base at a site
     for a taxon.
 
-#### Commands:  
+### Commands:  
+
 **sites**: produce an alignment of sites from raw reads  
 
 **loci**: produce a set of aligned loci based on the most variable regions of the composite genome  
 
-#### Subcommands of sites
+
+#### Subcommands of sites:
+
 **subSample**: run sisrs subsampling scheme, subsampling reads from all taxa to ~10X coverage across species, relative to user-specified genome size  
 
 **buildContigs**: given subsampled reads, run sisrs composite genome assembly with user-specified assembler  
@@ -81,6 +84,7 @@ Running SISRS
 **outputAlignment**: output alignment file of sisrs sites  
 
 **changeMissing**: given alignment of sites, output a file with only sites missing fewer than a specified number of samples per site  
+
 
  #### Option Flags:
 
