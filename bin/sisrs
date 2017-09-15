@@ -330,6 +330,7 @@ alignContigs(){
     mv ${OUTFOLDER}/${CONTIGS}/contigs.fa ${OUTFOLDER}/${CONTIGS}/contigs_OriginalNames.fa
     rename.sh in=${OUTFOLDER}/${CONTIGS}/contigs_OriginalNames.fa out=${OUTFOLDER}/${CONTIGS}/contigs.fa prefix=SISRS addprefix=t
     echo ==== Scafolds Renamed ====
+    ${DIR}/libexec/sisrs/seq_length.py ${OUTFOLDER}/${CONTIGS} #Create TSV with scaffold lengths
     bowtie2-build ${OUTFOLDER}/"${CONTIGS}"/contigs.fa ${OUTFOLDER}/"${CONTIGS}"/contigs      #index contigs
 
     #Find all FASTQ files in each species folder
