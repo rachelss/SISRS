@@ -423,7 +423,7 @@ outputAlignment(){
 }
 
 changeMissing(){
-    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment_pi.nex ${MISSING}       #alignment w specified number missing from alignment_pi.nex
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing from alignment_pi.nex
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
@@ -431,19 +431,19 @@ changeMissing(){
     #Clean locs_m*.txt file
     tr " " "\n" < ${OUTFOLDER}/locs_m${MISSING}.txt | grep -oe "SISRS_[^/]*" - | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/locs_m${MISSING}_Clean.txt"
 
-    #Parallel processing of alignment.nex for comparison
-    if [[ ! -d "${OUTFOLDER}}/alignmentDataWithSingletons" ]]; then
-        mkdir ${OUTFOLDER}/alignmentDataWithSingletons
-        mv ${OUTFOLDER}/alignment.nex ${OUTFOLDER}/alignmentDataWithSingletons
+    #Parallel processing of alignment_pi.nex for comparison
+    if [[ ! -d "${OUTFOLDER}}/alignmentDataWithoutSingletons" ]]; then
+        mkdir ${OUTFOLDER}/alignmentDataWithoutSingletons
+        mv ${OUTFOLDER}/alignment_pi.nex ${OUTFOLDER}/alignmentDataWithoutSingletons
     fi
 
-    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithSingletons/alignment.nex ${MISSING}       #alignment w specified number missing from alignment.nex
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithoutSingletons/alignment_pi.nex ${MISSING}       #alignment w specified number missing from alignment.nex
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
     fi
     #Clean locs_m*.txt file
-    tr " " "\n" < ${OUTFOLDER}/alignmentDataWithSingletons/locs_m${MISSING}.txt | grep -oe "SISRS_[^/]*" - | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/alignmentDataWithSingletons/locs_m${MISSING}_Clean.txt"
+    tr " " "\n" < ${OUTFOLDER}/alignmentDataWithoutSingletons/locs_m${MISSING}.txt | grep -oe "SISRS_[^/]*" - | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/alignmentDataWithoutSingletons/locs_m${MISSING}_Clean.txt"
 }
 
 runSISRS(){
@@ -465,7 +465,7 @@ runSISRS(){
       ${cmds[$i]}
     fi
 
-    #run as raxml -s "${OUTFOLDER}"/alignment_pi_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
+    #run as raxml -s "${OUTFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
 
 ####################LOCI#######################
