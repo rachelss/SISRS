@@ -465,7 +465,7 @@ runSISRS(){
       ${cmds[$i]}
     fi
 
-    #run as raxml -s "${OUTFOLDER}"/alignment_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
+    #run as raxml -s "${OUTFOLDER}"/alignment_pi_mX.phylip-relaxed -n <out> -m ASC_GTRGAMMA [--asc-corr=lewis] -T $1 -f a -p $RANDOM -N 100 -x $RANDOM
 }
 
 ####################LOCI#######################
