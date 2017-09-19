@@ -423,13 +423,27 @@ outputAlignment(){
 }
 
 changeMissing(){
-    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing from alignment.nex
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
     fi
     #Clean locs_m*.txt file
-    tr " " "\n" < ${OUTFOLDER}/locs_m${MISSING}.txt | grep -oe "SISRS_[^/]*" - | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/locs_m${MISSING}_Clean.txt"
+    grep -oe "SISRS_[^/]*" ${OUTFOLDER}/locs_m${MISSING}.txt | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/locs_m${MISSING}_Clean.txt"
+
+    #Parallel processing of alignment_pi.nex for comparison
+    if [[ ! -d "${OUTFOLDER}}/alignmentDataWithoutSingletons" ]]; then
+        mkdir ${OUTFOLDER}/alignmentDataWithoutSingletons
+        mv ${OUTFOLDER}/alignment_pi.nex ${OUTFOLDER}/alignmentDataWithoutSingletons
+    fi
+
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithoutSingletons/alignment_pi.nex ${MISSING}       #alignment w specified number missing from alignment.nex
+    if [[ $? != 0 ]]; then
+        echo "filtering for missing failed"
+        exit 1
+    fi
+    #Clean locs_m*.txt file
+    grep -oe "SISRS_[^/]*" ${OUTFOLDER}/alignmentDataWithoutSingletons/locs_m${MISSING}.txt | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/alignmentDataWithoutSingletons/locs_m${MISSING}_Clean.txt"
 }
 
 runSISRS(){

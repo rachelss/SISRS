@@ -83,7 +83,7 @@ Running SISRS
 
 **outputAlignment**: output alignment file of sisrs sites  
 
-**changeMissing**: given alignment of sites, output a file with only sites missing fewer than a specified number of samples per site  
+**changeMissing**: given alignment of sites (alignment.nex), output a file with only sites missing fewer than a specified number of samples per site  
 
 
  #### Option Flags:
