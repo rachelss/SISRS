@@ -5,7 +5,7 @@
     arguments:
     data  -- extension should be nex/phy/fa
     missing -- the number of species in the alignment allowed to have missing data
-    
+
     output:
     phylip formatted file ending with _mX.phylip-relaxed where X is the number missing
     """
@@ -20,7 +20,7 @@ from Bio.Align import MultipleSeqAlignment, AlignInfo
 from Bio import AlignIO, SeqIO
 
 ######################
-bases = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't']
+bases = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't','-']
 formats = {'nex':'nexus', 'phy':'phylip-relaxed', 'fa':'fasta'}
 fformat = formats[sys.argv[1].split('.')[-1]]
 missing = int(sys.argv[2])
@@ -49,5 +49,5 @@ for k,v in newdata.iteritems():
 
 SeqIO.write(datalist, path.dirname(sys.argv[1])+'/'+path.basename(sys.argv[1]).split('.')[0]+'_m'+sys.argv[2]+'.phylip-relaxed', "phylip-relaxed")
 locfile = open(path.dirname(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt', 'w')
-locfile.write(" ".join(newlocs))
+locfile.write("\n".join(newlocs))
 locfile.close()
