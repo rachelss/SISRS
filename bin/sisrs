@@ -423,7 +423,7 @@ outputAlignment(){
 }
 
 changeMissing(){
-    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment_pi.nex ${MISSING}       #alignment w specified number missing
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
@@ -555,7 +555,7 @@ gfr_trimLoci(){
 }
 
 gfr_selectLoci_MV(){
-    #pick out loci by most variable in alignment.nex
+    #pick out loci by most variable in alignment_pi.nex
     COUNT=0
     POS=1
     if [[ -e "${OUTFOLDER}"/loci/newpartitionsMV.txt ]]; then rm "${OUTFOLDER}"/loci/newpartitionsMV.txt; fi
@@ -578,7 +578,7 @@ gfr_selectLoci_MV(){
 }
 
 gfr_selectLoci_MS(){
-    #pick out loci by most species, then most variable in alignment.nex
+    #pick out loci by most species, then most variable in alignment_pi.nex
     COUNT=0
     POS=1
     if [[ -e "${OUTFOLDER}"/loci/newpartitionsMS.txt ]]; then rm "${OUTFOLDER}"/loci/newpartitionsMS.txt; fi
@@ -645,10 +645,10 @@ if [[ $CMD = "sites" ]] || [[ "${cmds[*]}" =~ $CMD ]]; then
     echo "**** SISRS ****"
     runSISRS
 elif [[ $CMD = "loci" ]]; then
-    # Run SISRS with loci (GFR). First check if alignment.nex and/or ref_genes.fa. If there is no alignment.nex then rerun SISRS to produce file.
+    # Run SISRS with loci (GFR). First check if alignment_pi.nex and/or ref_genes.fa. If there is no alignment_pi.nex then rerun SISRS to produce file.
     if [[ -f "${FOLDERLISTA[0]}"/ref_genes.fa ]]; then
         echo "** Running SISRS loci **"
-    elif [[ -f "${OUTFOLDER}"/alignment.nex ]]; then
+    elif [[ -f "${OUTFOLDER}"/alignment_pi.nex ]]; then
         echo "** Missing reference, getting from SISRS sites alignment **"
 	copyRefContigs  # Get ref_genes.fa from previous sisrs run
     elif [[ -f "${OUTFOLDER}"/ref_genes.fa ]]; then
