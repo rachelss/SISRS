@@ -482,7 +482,7 @@ copyRefContigs(){
     LOCDIR=${OUTFOLDER}/alignmentDataWithoutSingletons
   fi
 
-  if [[ -e "{${LOCDIR}}/locs_m${MISSING}_Clean.txt" ]];then
+  if [[ -e "${LOCDIR}/locs_m${MISSING}_Clean.txt" ]];then
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${LOCDIR}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
   else
     echo === locs_m${MISSING}_Clean.txt not found in ${LOCDIR}. Running changeMissing... ===
