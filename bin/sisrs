@@ -478,8 +478,10 @@ runSISRS(){
 copyRefContigs(){
   if [[ ${SINGLETON} == 1 ]]; then
     LOCDIR=${OUTFOLDER}
+    echo === Using data from alignment.nex (Including Singletons) ===
   else
     LOCDIR=${OUTFOLDER}/alignmentDataWithoutSingletons
+    echo === Using data from alignment_pi.nex (Excluding Singletons) ===
   fi
 
   if [[ -e "${LOCDIR}/locs_m${MISSING}_Clean.txt" ]];then
