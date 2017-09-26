@@ -81,6 +81,9 @@ Option Flags:
       -If using a premade composite genome, it must be in a folder named
       'premadeoutput' in the same directory as the folders of read data,
       and must be called 'contigs.fa'
+ -s : Include singleton sites in alingment for 'loci' [1,0]
+      Default=1, singleton substitutions are considered; 0, singlton sites
+      are removed from the alignment prior to running 'loci'
  -c : continous command mode for calling subcommands [1,0]
       Default=1, calling a subcommand runs that subcommand and all subsequent
       steps in the pipeline; 0, calling a subcommand runs only that subcommand
@@ -109,6 +112,7 @@ ALLELES=1
 DEBUG=0
 ASSEMBLER=velvet
 OUTLENGTH=500000
+SINGLETON=1
 CMD=$1
 SUBCOMMAND=1
 
@@ -120,7 +124,7 @@ fi
 
 OPTIND=2 # tells getopts to start parsing at the second argument
 
-while getopts g:r:k:p:m:a:f:z:n:t:o:l:c:hd option
+while getopts g:r:k:p:m:a:f:z:n:t:o:l:s:c:hd option
 do
     case "${option}"
 	in
@@ -136,6 +140,7 @@ do
 	t) THRESHOLD=${OPTARG};;
   o) OUTLENGTH=${OPTARG};;
   l) ALLELES=${OPTARG};;
+  s) SINGLETON=${OPTARG};;
   c) SUBCOMMAND=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
@@ -471,12 +476,18 @@ runSISRS(){
 ####################LOCI#######################
 
 copyRefContigs(){
-  if [[ -e "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" ]];then
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
+  if [[ ${SINGLETON} == 1 ]]; then
+    LOCDIR=${OUTFOLDER}
   else
-    echo === locs_m${MISSING}_Clean.txt not found in ${OUTFOLDER}. Running changeMissing... ===
+    LOCDIR=${OUTFOLDER}/alignmentDataWithoutSingletons
+  fi
+
+  if [[ -e "{${LOCDIR}}/locs_m${MISSING}_Clean.txt" ]];then
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${LOCDIR}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
+  else
+    echo === locs_m${MISSING}_Clean.txt not found in ${LOCDIR}. Running changeMissing... ===
     changeMissing
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${LOCDIR}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
   fi
 }
 
