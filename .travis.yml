@@ -1,3 +1,9 @@
 language: python
+sudo: required
+dist: trusty
+before_install:
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq samtools bowtie2 python-biopython python-pysam parallel mafft
+
 install: true
 script: ls
