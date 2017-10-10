@@ -81,6 +81,9 @@ Option Flags:
       -If using a premade composite genome, it must be in a folder named
       'premadeoutput' in the same directory as the folders of read data,
       and must be called 'contigs.fa'
+ -s : Include singleton sites in alingment for 'loci' [1,0]
+      Default=1, singleton substitutions are considered; 0, singlton sites
+      are removed from the alignment prior to running 'loci'
  -c : continous command mode for calling subcommands [1,0]
       Default=1, calling a subcommand runs that subcommand and all subsequent
       steps in the pipeline; 0, calling a subcommand runs only that subcommand
@@ -109,6 +112,7 @@ ALLELES=1
 DEBUG=0
 ASSEMBLER=velvet
 OUTLENGTH=500000
+SINGLETON=1
 CMD=$1
 SUBCOMMAND=1
 
@@ -120,7 +124,7 @@ fi
 
 OPTIND=2 # tells getopts to start parsing at the second argument
 
-while getopts g:r:k:p:m:a:f:z:n:t:o:l:c:hd option
+while getopts g:r:k:p:m:a:f:z:n:t:o:l:s:c:hd option
 do
     case "${option}"
 	in
@@ -136,6 +140,7 @@ do
 	t) THRESHOLD=${OPTARG};;
   o) OUTLENGTH=${OPTARG};;
   l) ALLELES=${OPTARG};;
+  s) SINGLETON=${OPTARG};;
   c) SUBCOMMAND=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
@@ -471,12 +476,22 @@ runSISRS(){
 ####################LOCI#######################
 
 copyRefContigs(){
-  if [[ -e "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" ]];then
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
+  if [[ ${SINGLETON} == 1 ]]; then
+    LOCDIR=${OUTFOLDER}
+    echo "=== Using data from alignment.nex (Including Singletons) ==="
   else
-    echo === locs_m${MISSING}_Clean.txt not found in ${OUTFOLDER}. Running changeMissing... ===
+    LOCDIR=${OUTFOLDER}/alignmentDataWithoutSingletons
+    echo "=== Using data from alignment_pi.nex (Excluding Singletons) ==="
+  fi
+
+  if [[ -e "${LOCDIR}/locs_m${MISSING}_Clean.txt" ]];then
+    cp ${LOCDIR}/locs_m${MISSING}_Clean.txt ${OUTFOLDER}/loci.txt
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/loci.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
+  else
+    echo === locs_m${MISSING}_Clean.txt not found in ${LOCDIR}. Running changeMissing... ===
     changeMissing
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/locs_m${MISSING}_Clean.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
+    cp ${LOCDIR}/locs_m${MISSING}_Clean.txt ${OUTFOLDER}/loci.txt
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/gfr/get_seq.py" '{}/contigs.fa' "${OUTFOLDER}/loci.txt" '{}/ref_genes.fa'  ::: "${FOLDERLISTA[@]}"
   fi
 }
 
@@ -557,15 +572,22 @@ gfr_getAlignments(){
 
     for F in "${FOLDERLISTA[@]}"; do mv "${OUTFOLDER}"/loci/$(basename ${F}).fa "${OUTFOLDER}"/loci/$(basename ${F}).fasta; done   # move species fasta files so not aligned
 
-    find "${OUTFOLDER}"/loci/ -type f -name '*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
-
+    find "${OUTFOLDER}"/loci/ -maxdepth 1 -type f -name 'SISRS*fa' | parallel -j "${PROCESSORS}" "mafft {} > {.}_align.fa"      #align
 }
 
 gfr_trimLoci(){
+    #Create alignments with no empty taxa included (all Ns or gaps) for downstream RAxML
+    mkdir "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa  #Directory to store raw loci alignments prior to removing empty taxa
+    mkdir "${OUTFOLDER}"/loci/lostLoci #Directory to dump loci where empty taxa > ${MISSING}
 
-    find "${OUTFOLDER}"/loci/ -type f -name '*align.fa' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
+    find "${OUTFOLDER}"/loci/ -type f -maxdepth 1 -name "SISRS*_align.fa" | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/remove_empty_seqs_from_alignments.py {} ${MISSING}"
+    find "${OUTFOLDER}"/loci/ -maxdepth 1 -type f -name "SISRS*align.fa" | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
 
-    find "${OUTFOLDER}"/loci/ -type f -name '*_align.phylip-relaxed' | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/trim_post_alignment.py {} ${#FOLDERLISTA[@]}"    #trim ends
+    mv "${OUTFOLDER}"/loci.txt "${OUTFOLDER}"/loci_original.txt #Create backup of original loci.txt file
+
+    find "${OUTFOLDER}"/loci/ -maxdepth 1 -type f -name "SISRS*.phylip-relaxed" -printf "%f\n" | sed 's/\.[^.]*$//' | sed 's/_align//' > "${OUTFOLDER}"/loci.txt #Create new loci.txt file to only reference loci where <= missing taxa were removed
+    find "${OUTFOLDER}"/loci/lostLoci/ -maxdepth 1 -type f -name "SISRS*_align.fa" -printf "%f\n" | sed 's/\.[^.]*$//'| sed 's/_align//' > "${OUTFOLDER}"/loci/lostLoci/lociLostWithEmptyTaxa.txt #Create list of loci lost due to empty taxa > missing
+    find "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa -maxdepth 1 -type f -name "SISRS*RawWithEmptySeqs.fa" -printf "%f\n" | sed 's/\.[^.]*$//' | sed 's/_align_RawWithEmptySeqs//' > "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa/lociWithEmptyTaxaRemoved.txt #Create list of loci where empty taxa (< missing) were removed 
 }
 
 gfr_selectLoci_MV(){

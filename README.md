@@ -100,8 +100,11 @@ Running SISRS
  * -o : the length of the final loci dataset for dating  
  * -l : the number of alleles  
  * -a : assembler [velvet, minia, abyss, or premade; *Default: velvet*]
-      - If using a premade composite genome, it must be in a folder named 'premadeoutput' in the same directory as the folders of read data, and must be called 'contigs.fa'  
- * -c : continous command mode for calling subcommands [1,0]  
+      - If using a premade composite genome, it must be in a folder named 'premadeoutput' in the same directory as the folders of read data, and must be called 'contigs.fa' 
+ * -s : Include singletons in alignment when running 'loci' [1,0]
+      - 1 [Default]: Include singletons when considering variable loci for 'loci' command
+      - 0: Remove singleton mutations (sites where only one taxon has a substitution at a position) from alignment file prior to running 'loci'
+ * -c : continuous command mode for calling subcommands [1,0]  
       - 1 [Default]: calling a subcommand runs that subcommand **and all subsequent steps in the pipeline**
       - 0: calling a subcommand runs **only** that subcommand
 
