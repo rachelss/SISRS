@@ -241,13 +241,13 @@ def write_alignment(fi,alignment,numbi):
         ALIGNMENT.write(species+"\t"+"".join(alignment.species_data[species])+"\n")
 
 
-    bi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if (alignment.flag[i] == 2 and alignment.single[i] == 0)]
-    bi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if (alignment.flag[i] == 2 and alignment.single[i] == 0)]
+    bi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
+    bi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
     bi_sp_data={}
     for species in spp:
-        bi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if (alignment.flag[i] == 2 and alignment.single[i] == 0)]
+        bi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
     if len(alignment.ref) > 0:
-        bi_sp_data['reference'] = [alignment.ref[i] for i in range(len(alignment.locations)) if (alignment.flag[i] == 2 and alignment.single[i] == 0)]
+        bi_sp_data['reference'] = [alignment.ref[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
 
     pi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
     pi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
