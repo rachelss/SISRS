@@ -492,13 +492,13 @@ runSISRS(){
 ####################LOCI#######################
 
 copyRefContigs(){
-  if [[ ${SINGLETON} == 0 ]]; then
+  if [[ ${SITES} == 0 ]]; then
     LOCDIR=${OUTFOLDER}
     echo "=== Using data from alignment.nex (Including Singletons) ==="
-  elif  [[ ${SINGLETON} == 1 ]]; then
+  elif  [[ ${SITES} == 1 ]]; then
     LOCDIR=${OUTFOLDER}/alignmentDataWithoutSingletons
     echo "=== Using data from alignment_pi.nex (Excluding Singletons) ==="
-  elif  [[ ${SINGLETON} == 2 ]]; then
+  elif  [[ ${SITES} == 2 ]]; then
     LOCDIR=${OUTFOLDER}/alignmentDataWithOnlyBiallelic
     echo "=== Using data from alignment_bi.nex (Only Biallelic Sites) ==="
   fi
