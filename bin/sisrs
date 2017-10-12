@@ -81,12 +81,14 @@ Option Flags:
       -If using a premade composite genome, it must be in a folder named
       'premadeoutput' in the same directory as the folders of read data,
       and must be called 'contigs.fa'
- -s : Include singleton sites in alingment for 'loci' [1,0]
-      Default=1, singleton substitutions are considered; 0, singlton sites
-      are removed from the alignment prior to running 'loci'
+ -s : Sites to analyze when running 'loci' [0,1,2]
+      Default=0, all variable sites, including singletons
+      1, variable sites excluding singletons
+      2, only biallelic variable sites
  -c : continous command mode for calling subcommands [1,0]
       Default=1, calling a subcommand runs that subcommand and all subsequent
-      steps in the pipeline; 0, calling a subcommand runs only that subcommand
+      steps in the pipeline
+      0, calling a subcommand runs only that subcommand
 
 Note Regarding Subcommands: If calling a subcommand of sisrs, the folder
                             specified by -f (or pwd) must contain a previous
@@ -112,7 +114,7 @@ ALLELES=1
 DEBUG=0
 ASSEMBLER=velvet
 OUTLENGTH=500000
-SINGLETON=1
+SITES=0
 CMD=$1
 SUBCOMMAND=1
 
@@ -140,7 +142,7 @@ do
 	t) THRESHOLD=${OPTARG};;
   o) OUTLENGTH=${OPTARG};;
   l) ALLELES=${OPTARG};;
-  s) SINGLETON=${OPTARG};;
+  s) SITES=${OPTARG};;
   c) SUBCOMMAND=${OPTARG};;
 	d) DEBUG=1;;
 	h) help; exit;;
@@ -449,6 +451,20 @@ changeMissing(){
     fi
     #Clean locs_m*.txt file
     grep -oe "SISRS_[^/]*" ${OUTFOLDER}/alignmentDataWithoutSingletons/locs_m${MISSING}.txt | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/alignmentDataWithoutSingletons/locs_m${MISSING}_Clean.txt"
+
+    #Parallel processing of alignment_bi.nex for comparison
+    if [[ ! -d ${OUTFOLDER}/alignmentDataWithOnlyBiallelic ]]; then
+        mkdir ${OUTFOLDER}/alignmentDataWithOnlyBiallelic
+        mv ${OUTFOLDER}/alignment_bi.nex ${OUTFOLDER}/alignmentDataWithOnlyBiallelic
+    fi
+
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithOnlyBiallelic/alignment_bi.nex ${MISSING}       #alignment w specified number missing from alignment.nex
+    if [[ $? != 0 ]]; then
+        echo "filtering for missing failed"
+        exit 1
+    fi
+    #Clean locs_m*.txt file
+    grep -oe "SISRS_[^/]*" ${OUTFOLDER}/alignmentDataWithOnlyBiallelic/locs_m${MISSING}.txt | uniq -c | sort -k1 -nr | awk '{print $2}' > "${OUTFOLDER}/alignmentDataWithOnlyBiallelic/locs_m${MISSING}_Clean.txt"
 }
 
 runSISRS(){
@@ -476,12 +492,15 @@ runSISRS(){
 ####################LOCI#######################
 
 copyRefContigs(){
-  if [[ ${SINGLETON} == 1 ]]; then
+  if [[ ${SINGLETON} == 0 ]]; then
     LOCDIR=${OUTFOLDER}
     echo "=== Using data from alignment.nex (Including Singletons) ==="
-  else
+  elif  [[ ${SINGLETON} == 1 ]]; then
     LOCDIR=${OUTFOLDER}/alignmentDataWithoutSingletons
     echo "=== Using data from alignment_pi.nex (Excluding Singletons) ==="
+  elif  [[ ${SINGLETON} == 2 ]]; then
+    LOCDIR=${OUTFOLDER}/alignmentDataWithOnlyBiallelic
+    echo "=== Using data from alignment_bi.nex (Only Biallelic Sites) ==="
   fi
 
   if [[ -e "${LOCDIR}/locs_m${MISSING}_Clean.txt" ]];then
@@ -587,7 +606,7 @@ gfr_trimLoci(){
 
     find "${OUTFOLDER}"/loci/ -maxdepth 1 -type f -name "SISRS*.phylip-relaxed" -printf "%f\n" | sed 's/\.[^.]*$//' | sed 's/_align//' > "${OUTFOLDER}"/loci.txt #Create new loci.txt file to only reference loci where <= missing taxa were removed
     find "${OUTFOLDER}"/loci/lostLoci/ -maxdepth 1 -type f -name "SISRS*_align.fa" -printf "%f\n" | sed 's/\.[^.]*$//'| sed 's/_align//' > "${OUTFOLDER}"/loci/lostLoci/lociLostWithEmptyTaxa.txt #Create list of loci lost due to empty taxa > missing
-    find "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa -maxdepth 1 -type f -name "SISRS*RawWithEmptySeqs.fa" -printf "%f\n" | sed 's/\.[^.]*$//' | sed 's/_align_RawWithEmptySeqs//' > "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa/lociWithEmptyTaxaRemoved.txt #Create list of loci where empty taxa (< missing) were removed 
+    find "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa -maxdepth 1 -type f -name "SISRS*RawWithEmptySeqs.fa" -printf "%f\n" | sed 's/\.[^.]*$//' | sed 's/_align_RawWithEmptySeqs//' > "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa/lociWithEmptyTaxaRemoved.txt #Create list of loci where empty taxa (< missing) were removed
 }
 
 gfr_selectLoci_MV(){
