@@ -82,11 +82,11 @@ Option Flags:
       'premadeoutput' in the same directory as the folders of read data,
       and must be called 'contigs.fa'
  -s : Sites to analyze when running 'loci' [0,1,2]
-      Default=0, all variable sites, including singletons
+      0 [Default], all variable sites, including singletons
       1, variable sites excluding singletons
       2, only biallelic variable sites
  -c : continous command mode for calling subcommands [1,0]
-      Default=1, calling a subcommand runs that subcommand and all subsequent
+      1 [Default], calling a subcommand runs that subcommand and all subsequent
       steps in the pipeline
       0, calling a subcommand runs only that subcommand
 
