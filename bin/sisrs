@@ -599,7 +599,7 @@ gfr_trimLoci(){
     mkdir "${OUTFOLDER}"/loci/rawAlignmentsWithEmptyTaxa  #Directory to store raw loci alignments prior to removing empty taxa
     mkdir "${OUTFOLDER}"/loci/lostLoci #Directory to dump loci where empty taxa > ${MISSING}
 
-    find "${OUTFOLDER}"/loci/ -type f -maxdepth 1 -name "SISRS*_align.fa" | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/remove_empty_seqs_from_alignments.py {} ${MISSING}"
+    find "${OUTFOLDER}"/loci/ -maxdepth 1 -type f -name "SISRS*_align.fa" | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/remove_empty_seqs_from_alignments.py {} ${MISSING}"
     find "${OUTFOLDER}"/loci/ -maxdepth 1 -type f -name "SISRS*align.fa" | parallel -j "${PROCESSORS}" "${DIR}/libexec/gfr/convert_formats.py {} fasta phylip-relaxed"     #convert to phy
 
     mv "${OUTFOLDER}"/loci.txt "${OUTFOLDER}"/loci_original.txt #Create backup of original loci.txt file
