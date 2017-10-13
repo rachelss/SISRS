@@ -18,6 +18,7 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna, IUPAC, Gapped
 from Bio.Align import MultipleSeqAlignment, AlignInfo
 from Bio import AlignIO, SeqIO
+from __future__ import division
 
 ######################
 bases = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't','-']
@@ -51,10 +52,5 @@ SeqIO.write(datalist, path.dirname(sys.argv[1])+'/'+path.basename(sys.argv[1]).s
 locfile = open(path.dirname(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt', 'w')
 locfile.write("\n".join(newlocs))
 locfile.close()
-origLength = int(len(locs))
-newLength = int(len(newlocs))
-print 'origLength'+str(origLength)
-print 'newLength'+str(newLength)
-loss = float((origLength-newLength)/origLength)
-print loss
+loss = ((len(locs)-len(newlocs))/len(locs))*100
 print 'With '+str(missing)+' taxa allowed to be missing, '+str(len(locs))+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str('%.2f' % loss)+'% of sites lost)'
