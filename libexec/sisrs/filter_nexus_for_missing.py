@@ -52,4 +52,4 @@ locfile = open(path.dirname(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt', 'w')
 locfile.write("\n".join(newlocs))
 locfile.close()
 loss = "%.2f" % ((len(locs)-len(newlocs))/(len(locs)))
-print 'With '+str(missing)+' taxa allowed to be missing, '+str(len(locs))+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+loss+'% of sites lost)'
+print 'With '+str(missing)+' taxa allowed to be missing, '+str(len(locs))+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str(loss)+'% of sites lost)'
