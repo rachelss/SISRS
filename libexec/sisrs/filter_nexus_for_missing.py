@@ -53,5 +53,8 @@ locfile.write("\n".join(newlocs))
 locfile.close()
 origLength = int(len(locs))
 newLength = int(len(newlocs))
+print 'origLength'+str(origLength)
+print 'newLength'+str(newLength)
 loss = float((origLength-newLength)/origLength)
+print loss
 print 'With '+str(missing)+' taxa allowed to be missing, '+str(len(locs))+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str('%.2f' % loss)+'% of sites lost)'
