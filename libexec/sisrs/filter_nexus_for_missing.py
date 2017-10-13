@@ -54,4 +54,4 @@ locfile.write("\n".join(newlocs))
 locfile.close()
 origLength = len(data[species[0]])
 newLength = len(newlocs)
-print 'With '+str(missing)+' taxa allowed to be missing, '+str(origLength)+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str(origLength-newLength)+' sites or '+str('%.2f' % ((origLength-newLength/origLength)*100))+'% lost)'
+print 'With '+str(missing)+' taxa allowed to be missing, '+str(origLength)+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str(origLength-newLength)+' sites or '+str('%.2f' % (((origLength-newLength)/origLength)*100))+'% lost)'
