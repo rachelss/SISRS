@@ -51,4 +51,4 @@ SeqIO.write(datalist, path.dirname(sys.argv[1])+'/'+path.basename(sys.argv[1]).s
 locfile = open(path.dirname(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt', 'w')
 locfile.write("\n".join(newlocs))
 locfile.close()
-print 'With '+str(missing)+' taxa allowed to be missing, sites from '+path.basename(sys.argv[1]).split('.')[0]+' '+len(locs)+'  are reduced to '+len(newlocs)
+print 'With '+str(missing)+' taxa allowed to be missing, sites from '+path.basename(sys.argv[1]).split('.')[0]+' '+str(len(locs))+'  are reduced to '+str(len(newlocs))
