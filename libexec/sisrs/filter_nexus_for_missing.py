@@ -10,6 +10,7 @@
     phylip formatted file ending with _mX.phylip-relaxed where X is the number missing
     """
 
+from __future__ import division
 import sys
 from os import path
 import linecache
@@ -18,7 +19,6 @@ from Bio.SeqRecord import SeqRecord
 from Bio.Alphabet import generic_dna, IUPAC, Gapped
 from Bio.Align import MultipleSeqAlignment, AlignInfo
 from Bio import AlignIO, SeqIO
-from __future__ import division
 
 ######################
 bases = ['A', 'C', 'G', 'T', 'a', 'c', 'g', 't','-']
