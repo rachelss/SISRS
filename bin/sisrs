@@ -83,8 +83,8 @@ Option Flags:
       and must be called 'contigs.fa'
  -s : Sites to analyze when running 'loci' [0,1,2]
       0 [Default], all variable sites, including singletons
-      1, variable sites excluding singletons
-      2, only biallelic variable sites
+      1, variable sites, excluding singletons
+      2, only biallelic variable sites, excluding singletons
  -c : continous command mode for calling subcommands [1,0]
       1 [Default], calling a subcommand runs that subcommand and all subsequent
       steps in the pipeline
@@ -478,6 +478,7 @@ runSISRS(){
         i=0
     fi
     if [[ ${SUBCOMMAND} == 1 ]]; then
+      echo ===Running Subcommand $(echo ${cmds[$i]}) and Subsequent Subcommands===
       for (( i = $i; i < ${#cmds[@]}; i++ )); do      #run from selected opt to end
         ${cmds[$i]}
       done
