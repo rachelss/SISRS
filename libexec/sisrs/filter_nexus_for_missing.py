@@ -51,5 +51,7 @@ SeqIO.write(datalist, path.dirname(sys.argv[1])+'/'+path.basename(sys.argv[1]).s
 locfile = open(path.dirname(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt', 'w')
 locfile.write("\n".join(newlocs))
 locfile.close()
-loss = (((len(locs)-len(newlocs))/(len(locs)))*100)
+origLength = int(len(locs))
+newLength = int(len(newlocs))
+loss = float((origLength-newLength)/origLength)
 print 'With '+str(missing)+' taxa allowed to be missing, '+str(len(locs))+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str('%.2f' % loss)+'% of sites lost)'
