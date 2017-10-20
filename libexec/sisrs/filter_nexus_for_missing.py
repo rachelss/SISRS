@@ -10,6 +10,7 @@
     phylip formatted file ending with _mX.phylip-relaxed where X is the number missing
     """
 
+from __future__ import division
 import sys
 from os import path
 import linecache
@@ -51,3 +52,6 @@ SeqIO.write(datalist, path.dirname(sys.argv[1])+'/'+path.basename(sys.argv[1]).s
 locfile = open(path.dirname(sys.argv[1])+'/locs_m'+sys.argv[2]+'.txt', 'w')
 locfile.write("\n".join(newlocs))
 locfile.close()
+origLength = len(data[species[0]])
+newLength = len(newlocs)
+print 'With '+str(missing)+' taxa allowed to be missing, '+str(origLength)+' sites from '+path.basename(sys.argv[1])+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str(origLength-newLength)+' sites or '+str('%.2f' % (((origLength-newLength)/origLength)*100))+'% lost)'

@@ -52,7 +52,7 @@ class Alignment:
         self.single = single
 
     def numsnps(self):
-        print str(len(self.locations))+' variable sites'
+        print str(len(self.locations))+' total variable sites (alignment.nex)'
         for i in range(len(self.locations)):
             bases = [self.species_data[sp][i] for sp in self.species_data if self.species_data[sp][i] in ['A','C','G','T','-']]     #bases for that site
             c = Counter(bases).most_common(5)
@@ -62,8 +62,7 @@ class Alignment:
                 self.single.append(0)
             self.flag.append(len(c))
 
-        print str(self.flag.count(2))+' biallelic sites'
-        print str(self.single.count(1))+' singletons'
+        print str(self.single.count(1))+' variable sites are singletons'
 
         return self.flag.count(2)       # number of biallelic sites
 
@@ -232,22 +231,26 @@ def write_alignment(fi,alignment,numbi):
     ALIGNMENTPI=open(fi.replace('.nex','_pi.nex'),'w')
 
     ALIGNMENT.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(alignment.locations))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
-    ALIGNMENTBI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(numbi)+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
-    ALIGNMENTPI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(alignment.single.count(0))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
-
     ALIGNMENT.write('[ '+ " ".join(alignment.ref_loc)+' ]'+"\n")
     ALIGNMENT.write('[ '+ " ".join(alignment.locations)+' ]'+"\n")
     for species in spp: #write sequences for each species
         ALIGNMENT.write(species+"\t"+"".join(alignment.species_data[species])+"\n")
 
 
-    bi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
-    bi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
+    bi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2 and alignment.single[i] == 0]
+    bi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2 and alignment.single[i] == 0]
     bi_sp_data={}
     for species in spp:
-        bi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
+        bi_sp_data[species] = [alignment.species_data[species][i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2 and alignment.single[i] == 0]
     if len(alignment.ref) > 0:
-        bi_sp_data['reference'] = [alignment.ref[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2]
+        bi_sp_data['reference'] = [alignment.ref[i] for i in range(len(alignment.locations)) if alignment.flag[i] == 2 and alignment.single[i] == 0]
+
+    ALIGNMENTBI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(bi_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
+    ALIGNMENTBI.write('[ '+ " ".join(bi_ref_loc)+' ]'+"\n")
+    ALIGNMENTBI.write('[ '+ " ".join(bi_loc)+' ]'+"\n")
+    for species in spp: #write sequences for each species
+        ALIGNMENTBI.write(species+"\t"+("".join(bi_sp_data[species]))+"\n")
+    print str(len(bi_loc))+' total biallelic sites excluding singletons (alignment_bi.nex)'
 
     pi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
     pi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
@@ -257,15 +260,12 @@ def write_alignment(fi,alignment,numbi):
     if len(alignment.ref) > 0:
         pi_sp_data['reference'] = [alignment.ref[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
 
-    ALIGNMENTBI.write('[ '+ " ".join(bi_ref_loc)+' ]'+"\n")
-    ALIGNMENTBI.write('[ '+ " ".join(bi_loc)+' ]'+"\n")
-    for species in spp: #write sequences for each species
-        ALIGNMENTBI.write(species+"\t"+("".join(bi_sp_data[species]))+"\n")
-
+    ALIGNMENTPI.write('#NEXUS\n\nBEGIN DATA;\nDIMENSIONS NTAX='+ntax+' NCHAR='+str(len(pi_loc))+';\nFORMAT MISSING=? GAP=- DATATYPE=DNA;\nMATRIX\n')
     ALIGNMENTPI.write('[ '+ " ".join(pi_ref_loc)+' ]'+"\n")
     ALIGNMENTPI.write('[ '+ " ".join(pi_loc)+' ]'+"\n")
     for species in spp: #write sequences for each species
         ALIGNMENTPI.write(species+"\t"+("".join(pi_sp_data[species]))+"\n")
+    print str(len(pi_loc))+' total variable sites excluding singletons (alignment_pi.nex)'
 
     if len(alignment.ref) > 0:
         ALIGNMENT.write('reference'+"\t"+("".join(alignment.ref))+"\n")
