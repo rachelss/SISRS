@@ -1,0 +1,6 @@
+language: python
+sudo: required
+dist: trusty
+before_install: ci/before_install.sh
+install: true
+script: bin/sisrs --version
