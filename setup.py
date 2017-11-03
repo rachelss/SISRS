@@ -19,4 +19,5 @@ setup(
             'sisrs-python = sisrs:main'
         ],
     },
+    scripts=['bin/sisrs']
 )

@@ -1,2 +1,6 @@
+import subprocess
+import sys
+
 def main():
-    print("Hi there")
+    command = ['sisrs'] +  sys.argv[1:]
+    subprocess.run(command)
