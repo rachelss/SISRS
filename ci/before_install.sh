@@ -11,4 +11,4 @@ tar xzvf BBMap_37.66.tar.gz
 export PATH=$PATH:~/bbmap/
 
 # download test data
-git clone git@github.com:BobLiterman/SISRS_Small_Data
+git clone https://github.com/BobLiterman/SISRS_Small_Data
