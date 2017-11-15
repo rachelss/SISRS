@@ -17,6 +17,7 @@ setup(
     long_description=long_description,
     url='https://cartwrig.ht/software/',
     install_requires=[
+        'biopython',
         'click',
     ],
     # TODO: upgrade to python 3
