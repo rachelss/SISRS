@@ -2,7 +2,10 @@
 
 DIR=$PWD
 
+export PATH="$HOME/miniconda/bin:$PATH"
 export PATH=$PATH:$DIR/bbmap/
+
+source activate sisrs-python-env
 
 bin/sisrs outputAlignment -a premade -c 0 -f $DIR/SISRS_Small_Data/2_identifyFixedSites/ -z $DIR/output/
 cmp $DIR/output/alignment.nex $DIR/SISRS_Small_Data/3_outputAlignment/alignment.nex
