@@ -5,7 +5,27 @@ import click
 import shutil
 from click import echo
 from glob import glob
+from get_alignment import main as get_alignment
+from pprint import pprint
 #import sub_sample_for_velvet_unshuff
+
+class DirectoryLists(object):
+
+    def __init__(self, base_dir):
+
+        self._all_fastq = []
+        
+        for root, dirs, files in os.walk(base_dir):
+            for filename in files:
+                if filename.endswith('.fastq'):
+                    file_path = os.path.join(root, filename)
+                    self._all_fastq.append(file_path)
+
+        self._all_dirs = list(set([ os.path.dirname(x) for x in self._all_fastq ]))
+
+    def get_all_dirs(self):
+        return self._all_dirs
+
 
 def setup_output_directory(data_directory, output_directory, overwrite):
 
@@ -13,6 +33,7 @@ def setup_output_directory(data_directory, output_directory, overwrite):
         output_directory = data_directory
         echo("Note: SISRS writing into data folder")
     elif not os.path.exists(output_directory):
+        print(data_directory)
         recursive_symlinks(data_directory, output_directory)
     else:
         if overwrite:
@@ -64,8 +85,12 @@ def cli(ctx, assembler, data_directory, output_directory, overwrite):
     output_directory = setup_output_directory(
         data_directory, output_directory, overwrite)
 
+    dir_lists = DirectoryLists(output_directory)
+
     ctx.obj['data_dir'] = data_directory
     ctx.obj['out_dir'] = output_directory
+    ctx.obj['assembler'] = assembler
+    ctx.obj['dir_lists'] = dir_lists
 
 @cli.command()
 @click.option('--genome-size', '-g', required=True, type=int, help='Genome size')
@@ -77,7 +102,15 @@ def subsample(ctx, genome_size):
 @cli.command()
 @click.pass_context
 def output_alignment(ctx):
-    pass
+    data_dir = ctx.obj['data_dir']
+    out_dir = ctx.obj['out_dir']
+    assembler = ctx.obj['assembler']
+    dir_lists = ctx.obj['dir_lists']
+
+    all_dirs = dir_lists.get_all_dirs()
+    num_missing = len(all_dirs) - 2
+    get_alignment(num_missing, 'X', out_dir, assembler)
+
 
 def main():
     cli(obj={})
