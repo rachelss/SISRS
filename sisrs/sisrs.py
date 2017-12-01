@@ -1,5 +1,6 @@
 import subprocess
 from subprocess import Popen, PIPE
+from multiprocessing import Pool
 import os
 import sys
 import click
@@ -121,6 +122,16 @@ def output_alignment(ctx):
     num_missing = len(all_dirs) - 2
     get_alignment(num_missing, 'X', out_dir, assembler)
 
+def sam_index_directory(dir_):
+    basename = os.path.basename(dir_)
+    filename = basename + '.bam'
+    file_path = os.path.join(dir_, filename)
+
+    index_command = [
+        'samtools', 'index', file_path
+    ]
+    index_proc = Popen(index_command)
+
 @cli.command()
 @click.pass_context
 def align_contigs(ctx):
@@ -161,6 +172,7 @@ def align_contigs(ctx):
         print("==== Aligning {} as Single-Ended ====".format(basename))
         fastq_filepaths = glob(os.path.join(dir_, '*.fastq'))
 
+        # Generate temp file
         bowtie2_command = [
             'bowtie2',
             '-p', str(num_processors),
@@ -169,11 +181,6 @@ def align_contigs(ctx):
             '-x', contig_prefix,
             '-U', ','.join(fastq_filepaths)
         ]
-
-        #with open('bowtie_out.txt', 'w') as f:
-            #bowtie2_proc = Popen(bowtie2_command, stdout=f)
-            #bowtie2_proc.wait()
-
         bowtie2_proc = Popen(bowtie2_command, stdout=PIPE)
 
         samtools_to_bam_command = [
@@ -184,11 +191,85 @@ def align_contigs(ctx):
         ]
         samtools_to_bam_proc = Popen(
             samtools_to_bam_command, stdin=bowtie2_proc.stdout,
-            )
+            stdout=PIPE)
 
+        output_base_path = os.path.join(dir_, basename)
+        temp_file_path = output_base_path + '_Temp.bam'
+
+        samtools_sort_command = [
+            'samtools', 'sort',
+            '-@', str(num_processors),
+            '-',
+            '-o', temp_file_path,
+        ]
+        samtools_sort_proc = Popen(
+            samtools_sort_command, stdin=samtools_to_bam_proc.stdout)
 
         bowtie2_proc.wait()
         samtools_to_bam_proc.wait()
+        samtools_sort_proc.wait()
+
+
+        # Generate header file
+
+        header_file_path = output_base_path + '_Header.sam'
+
+        samtools_header_command = [
+            'samtools', 'view',
+            '-@', str(num_processors),
+            '-H', temp_file_path,
+            '-o', header_file_path
+        ]
+        samtools_header_proc = Popen(samtools_header_command)
+
+        samtools_header_proc.wait()
+
+
+        # Generate final output file
+
+        samtools_data_command = [
+            'samtools', 'view',
+            '-@', str(num_processors),
+            temp_file_path,
+        ]
+        samtools_data_proc = Popen(samtools_data_command, stdout=PIPE)
+
+        grep_command = [
+            'grep', '-v', 'XS:'
+        ]
+        grep_proc = Popen(
+            grep_command, stdin=samtools_data_proc.stdout, stdout=PIPE)
+
+        cat_command = [
+            'cat', header_file_path, '-'
+        ]
+        cat_proc = Popen(cat_command, stdin=grep_proc.stdout, stdout=PIPE)
+
+        samtools_final_command = [
+            'samtools', 'view',
+            '-@', str(num_processors),
+            '-b',
+            '-',
+            '-o', output_base_path + '.bam'
+        ]
+
+        samtools_final_proc = Popen(
+            samtools_final_command, stdin=cat_proc.stdout)
+
+        samtools_data_proc.wait()
+        grep_proc.wait()
+        cat_proc.wait()
+        samtools_final_proc.wait()
+
+        # Remove temp files
+        #os.remove(temp_file_path)
+        #os.remove(header_file_path)
+
+    print("==== Done Aligning ====")
+    pool = Pool(num_processors)
+    pool.map(sam_index_directory, all_dirs)
+    print("==== Done Indexing Bam Files ====")
+
 
 def main():
     cli(obj={})

@@ -1,65 +1,79 @@
 import os
 import subprocess
 import shutil
+import filecmp
 from filecmp import cmp
 from os.path import join, exists
 
 data_base_dir = 'pipeline_stages'
 out_base_dir = 'output'
 
-print("out:")
-print(out_base_dir)
 if os.path.exists(out_base_dir):
-    print("remove it")
     shutil.rmtree(out_base_dir)
 
 def run(*args, **kwargs):
     return subprocess.check_call(*args, **kwargs)
 
+def bam_match(f1, f2):
+    bam_diff_command = [
+        'bam', 'diff',
+        '--all',
+        '--in1', f1,
+        '--in2', f2
+    ]
+    
+    output = subprocess.check_output(bam_diff_command)
+    print(output)
+    return len(output) == 0
+
+def files_match(f1, f2):
+    return filecmp.cmp(f1, f2, shallow=False)
+
+def dirs_match(d1, d2):
+    match, mismatch, errors = filecmp.cmpfiles(d1, d2, os.listdir(d1),
+        shallow=False)
+
+    print(match)
+    print(mismatch)
+    print(errors)
+    return len(mismatch) == 0 and len(errors) == 0
+
 def test_align_contigs():
 
     data_dir = join(data_base_dir, '0_RawData_PremadeGenome')
-    exp_dir = join(data_base_dir, '1_alignContigs')
-    out_dir = out_base_dir
-    contig_dir = join(out_dir, 'premadeoutput')
+    exp_base_dir = join(data_base_dir, '1_alignContigs')
+    contig_dirname = 'premadeoutput'
+    contig_dir = join(out_base_dir, contig_dirname)
+    dirnames = [
+        'GorGor', 'HomSap', 'HylMol', 'MacFas', 'MacMul', 'PanPan', 'PanTro',
+        'PonPyg'
+    ]
 
     command = [
         'sisrs-python',
-        '-p', '1',
+        '-p', '8',
         '-a', 'premade',
         '-c', '0',
         '-f', data_dir,
-        '-z', out_dir,
+        '-z', out_base_dir,
         'align_contigs'
     ]
     run(command)
 
-    # verify contigs.fa backed up
-    assert(exists(join(contig_dir, 'contigs_OriginalNames.fa')))
+    assert(dirs_match(
+        join(out_base_dir, 'premadeoutput'),
+        join(exp_base_dir, 'premadeoutput')))
 
-    contig_file_path = join(contig_dir, 'contigs.fa')
-    with open(contig_file_path, 'r') as f:
-        first_line = f.next()
+    for taxon_name in dirnames:
+        out_dir = join(out_base_dir, taxon_name)
+        exp_dir = join(exp_base_dir, taxon_name)
 
-    # verify renaming
-    assert(first_line.startswith('>SISRS_'))
+        out_bam_path = join(out_dir, taxon_name + '.bam')
+        exp_bam_path = join(exp_dir, taxon_name + '.bam')
 
-    # index files generated
-    index_filepaths = [
-        join(contig_dir, filename) for filename in [
-            'contigs.1.bt2',
-            'contigs.2.bt2',
-            'contigs.3.bt2',
-            'contigs.4.bt2',
-            'contigs.rev.1.bt2',
-            'contigs.rev.2.bt2',
-        ]
-    ]
-
-    for index_filepath in index_filepaths:
-        assert(exists(index_filepath))
-
-    
+        print("compare:", out_bam_path, exp_bam_path)
+        assert(bam_match(out_bam_path, exp_bam_path))
+        
 
 
 #def test_output_alignment():

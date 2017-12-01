@@ -353,8 +353,8 @@ alignContigs(){
         samtools view -@ "${PROCESSORS}" -H ${FOLDER}/${FOLDERNAME}_Temp.bam > ${FOLDER}/${FOLDERNAME}_Header.sam
         samtools view -@ "${PROCESSORS}" ${FOLDER}/${FOLDERNAME}_Temp.bam | grep -v "XS:" | cat ${FOLDER}/${FOLDERNAME}_Header.sam - | samtools view -@ "${PROCESSORS}" -b - > ${FOLDER}/${FOLDERNAME}.bam
         #Remove temporary files
-        rm ${FOLDER}/${FOLDERNAME}_Temp.bam
-        rm ${FOLDER}/${FOLDERNAME}_Header.sam
+        #rm ${FOLDER}/${FOLDERNAME}_Temp.bam
+        #rm ${FOLDER}/${FOLDERNAME}_Header.sam
     done
     echo ==== Done Aligning ====
     #index bam
