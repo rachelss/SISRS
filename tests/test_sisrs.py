@@ -35,7 +35,7 @@ def dirs_match(d1, d2):
     return len(mismatch) == 0 and len(errors) == 0
 
 def test_sisrs():
-    run(['ls'])
+    run(['pip freeze'])
 
 #def test_align_contigs():
 #
