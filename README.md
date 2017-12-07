@@ -1,4 +1,4 @@
-SISRS
+SISRS_B
 =====
 
 SISRS: Site Identification from Short Read Sequences  
