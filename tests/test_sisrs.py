@@ -34,50 +34,47 @@ def dirs_match(d1, d2):
 
     return len(mismatch) == 0 and len(errors) == 0
 
-def test_sisrs():
-    run(['pip', 'freeze'])
+def test_align_contigs():
 
-#def test_align_contigs():
-#
-#    data_dir = join(data_base_dir, '0_RawData_PremadeGenome')
-#    exp_base_dir = join(data_base_dir, '1_alignContigs')
-#    contig_dirname = 'premadeoutput'
-#    contig_dir = join(out_base_dir, contig_dirname)
-#    taxon_names = [
-#        'GorGor',
-#        # TODO: figure out why HomSap isn't passing
-#        #'HomSap',
-#        'HylMol',
-#        'MacFas',
-#        'MacMul',
-#        'PanPan',
-#        'PanTro',
-#        'PonPyg'
-#    ]
-#
-#    command = [
-#        'sisrs-python',
-#        '-p', '8',
-#        '-a', 'premade',
-#        '-c', '0',
-#        '-f', data_dir,
-#        '-z', out_base_dir,
-#        'align_contigs'
-#    ]
-#    run(command)
-#
-#    assert(dirs_match(
-#        join(out_base_dir, 'premadeoutput'),
-#        join(exp_base_dir, 'premadeoutput')))
-#
-#    for taxon_name in taxon_names:
-#        out_dir = join(out_base_dir, taxon_name)
-#        exp_dir = join(exp_base_dir, taxon_name)
-#
-#        out_bam_path = join(out_dir, taxon_name + '.bam')
-#        exp_bam_path = join(exp_dir, taxon_name + '.bam')
-#
-#        assert(bam_match(out_bam_path, exp_bam_path))
+    data_dir = join(data_base_dir, '0_RawData_PremadeGenome')
+    exp_base_dir = join(data_base_dir, '1_alignContigs')
+    contig_dirname = 'premadeoutput'
+    contig_dir = join(out_base_dir, contig_dirname)
+    taxon_names = [
+        'GorGor',
+        # TODO: figure out why HomSap isn't passing
+        #'HomSap',
+        'HylMol',
+        'MacFas',
+        'MacMul',
+        'PanPan',
+        'PanTro',
+        'PonPyg'
+    ]
+
+    command = [
+        'sisrs-python',
+        '-p', '8',
+        '-a', 'premade',
+        '-c', '0',
+        '-f', data_dir,
+        '-z', out_base_dir,
+        'align_contigs'
+    ]
+    run(command)
+
+    assert(dirs_match(
+        join(out_base_dir, 'premadeoutput'),
+        join(exp_base_dir, 'premadeoutput')))
+
+    for taxon_name in taxon_names:
+        out_dir = join(out_base_dir, taxon_name)
+        exp_dir = join(exp_base_dir, taxon_name)
+
+        out_bam_path = join(out_dir, taxon_name + '.bam')
+        exp_bam_path = join(exp_dir, taxon_name + '.bam')
+
+        assert(bam_match(out_bam_path, exp_bam_path))
         
 
 
