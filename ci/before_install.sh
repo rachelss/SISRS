@@ -30,3 +30,5 @@ source activate sisrs-python-env
 pip install Biopython
 
 pip install pytest
+
+pip install -e .
