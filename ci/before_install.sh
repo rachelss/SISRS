@@ -24,9 +24,9 @@ conda update -q conda
 conda info -a
 
 conda create -q -n sisrs-python-env python=2.7
+source activate sisrs-python-env
 
 # install Biopython
-source activate sisrs-python-env
 pip install Biopython
 
 pip install pytest
