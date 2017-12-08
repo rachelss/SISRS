@@ -11,7 +11,7 @@ tar xzvf BBMap_37.66.tar.gz
 
 # download test data
 #git clone https://github.com/BobLiterman/SISRS_Small_Data
-git clone https://github.com/anderspitman/SISRS_ci_data pipeline_stages
+git clone --depth 1 https://github.com/anderspitman/SISRS_ci_data pipeline_stages
 
 # install custom python using Miniconda
 wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;

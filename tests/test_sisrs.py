@@ -54,7 +54,7 @@ def test_align_contigs():
 
     command = [
         'sisrs-python',
-        '-p', '8',
+        '-p', '1',
         '-a', 'premade',
         '-c', '0',
         '-f', data_dir,
