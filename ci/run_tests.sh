@@ -4,6 +4,7 @@ DIR=$PWD
 
 export PATH="$HOME/miniconda/bin:$PATH"
 export PATH=$PATH:$DIR/bbmap/
+export PATH=$PATH:$DIR/bamUtil_binary
 
 source activate sisrs-python-env
 pytest -s
