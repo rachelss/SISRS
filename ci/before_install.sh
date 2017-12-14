@@ -9,6 +9,10 @@ sudo apt-get install -qq samtools bowtie2 parallel mafft
 wget https://sourceforge.net/projects/bbmap/files/BBMap_37.66.tar.gz
 tar xzvf BBMap_37.66.tar.gz
 
+# get bamUtil (for diffing bams)
+wget https://github.com:anderspitman/bamUtil_binary
+export PATH="$PWD/bamUtil_binary:$PATH"
+
 # download test data
 #git clone https://github.com/BobLiterman/SISRS_Small_Data
 git clone --depth 1 https://github.com/anderspitman/SISRS_ci_data pipeline_stages
