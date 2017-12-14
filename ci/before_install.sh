@@ -10,7 +10,7 @@ wget https://sourceforge.net/projects/bbmap/files/BBMap_37.66.tar.gz
 tar xzvf BBMap_37.66.tar.gz
 
 # get bamUtil (for diffing bams)
-wget https://github.com:anderspitman/bamUtil_binary
+wget https://github.com/anderspitman/bamUtil_binary
 export PATH="$PWD/bamUtil_binary:$PATH"
 
 # download test data
