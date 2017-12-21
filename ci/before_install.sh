@@ -1,13 +1,28 @@
 #!/bin/bash
 
+SAMTOOLS_VERSION=1.3.1
+BBMAP_VERSION=37.66
+SISRS_DIR=$PWD
+
 # install dependencies available as Ubuntu packages
 apt-get update -y
-apt-get install -y git-core wget bzip2 \
-    samtools bowtie2 parallel mafft default-jre
+apt-get install -y wget build-essential bzip2 \
+    bowtie2 parallel mafft default-jre
+
+# build and install samtools
+cd $HOME
+apt-get install liblzma-dev libbz2-dev zlib1g-dev libncurses5-dev 
+wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2
+tar xf samtools-${SAMTOOLS_VERSION}.tar.bz2
+cd samtools-${SAMTOOLS_VERSION}
+./configure
+make install
+cd ..
+cd $SISRS_DIR
 
 # install BBMap
-wget https://sourceforge.net/projects/bbmap/files/BBMap_37.66.tar.gz
-tar xzvf BBMap_37.66.tar.gz
+wget https://sourceforge.net/projects/bbmap/files/BBMap_${BBMAP_VERSION}.tar.gz
+tar xzvf BBMap_${BBMAP_VERSION}.tar.gz
 
 # get bamUtil (for diffing bams)
 git clone --depth 1 https://github.com/anderspitman/bamUtil_binary
