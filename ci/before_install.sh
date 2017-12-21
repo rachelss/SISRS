@@ -2,7 +2,7 @@
 
 # install dependencies available as Ubuntu packages
 apt-get update -y
-apt-get install -y git-core wget bzip2 software-properties-common \
+apt-get install -y git-core wget bzip2 \
     samtools bowtie2 parallel mafft default-jre
 
 # install BBMap
