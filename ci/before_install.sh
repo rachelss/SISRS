@@ -10,6 +10,8 @@ apt-get update -y
 apt-get install -y wget build-essential bzip2 \
     parallel mafft default-jre
 
+touch $SISRS_DIR/ci/set_env.sh
+
 # build and install samtools
 cd $HOME
 apt-get install -y liblzma-dev libbz2-dev zlib1g-dev libncurses5-dev 
@@ -25,7 +27,7 @@ cd $SISRS_DIR
 cd $HOME
 wget https://github.com/BenLangmead/bowtie2/releases/download/v${BOWTIE2_VERSION}/bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
 unzip bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
-echo export PATH='$PATH':$PWD/bowtie2-${BOWTIE2_VERSION}-linux-x86_64 >> $HOME/.bashrc
+echo export PATH='$PATH':$PWD/bowtie2-${BOWTIE2_VERSION}-linux-x86_64 >> $SISRS_DIR/ci/set_env.sh
 cd $SISRS_DIR
 
 # install BBMap

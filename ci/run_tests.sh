@@ -1,9 +1,8 @@
 #!/bin/bash
 
-source $HOME/.bashrc
-
 DIR=$PWD
 
+source ci/set_env.sh
 export PATH="$HOME/miniconda/bin:$PATH"
 export PATH=$PATH:$DIR/bbmap/
 export PATH=$PATH:$DIR/bamUtil_binary
