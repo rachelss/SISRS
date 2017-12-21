@@ -1,5 +1,7 @@
 #!/bin/bash
 
+source $HOME/.bashrc
+
 DIR=$PWD
 
 export PATH="$HOME/miniconda/bin:$PATH"
