@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # install dependencies available as Ubuntu packages
-add-apt-repository --yes ppa:debian-med/ppa
-apt-get update -qq
-apt-get install -qq samtools bowtie2 parallel mafft default-jre
+apt-get update -y
+apt-get install -y git-core wget bzip2 software-properties-common \
+    samtools bowtie2 parallel mafft default-jre
 
 # install BBMap
 wget https://sourceforge.net/projects/bbmap/files/BBMap_37.66.tar.gz
