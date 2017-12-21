@@ -1,13 +1,14 @@
 #!/bin/bash
 
 SAMTOOLS_VERSION=1.3.1
+BOWTIE2_VERSION=2.3.3.1
 BBMAP_VERSION=37.66
 SISRS_DIR=$PWD
 
 # install dependencies available as Ubuntu packages
 apt-get update -y
 apt-get install -y wget build-essential bzip2 \
-    bowtie2 parallel mafft default-jre
+    parallel mafft default-jre
 
 # build and install samtools
 cd $HOME
@@ -18,6 +19,15 @@ cd samtools-${SAMTOOLS_VERSION}
 ./configure
 make install
 cd ..
+cd $SISRS_DIR
+
+# install bowtie2
+cd $HOME
+wget https://github.com/BenLangmead/bowtie2/releases/download/v${BOWTIE2_VERSION}/bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
+unzip bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
+
+echo "export PATH=$PATH:bowtie2-${BOWTIE2_VERSION}-linux-x86_64" >> $HOME/.bashrc
+source $HOME/.bashrc
 cd $SISRS_DIR
 
 # install BBMap
