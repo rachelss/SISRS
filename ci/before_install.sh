@@ -25,9 +25,7 @@ cd $SISRS_DIR
 cd $HOME
 wget https://github.com/BenLangmead/bowtie2/releases/download/v${BOWTIE2_VERSION}/bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
 unzip bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
-
-echo "export PATH=$PATH:$PWD/bowtie2-${BOWTIE2_VERSION}-linux-x86_64" >> $HOME/.bashrc
-source $HOME/.bashrc
+echo export PATH='$PATH':$PWD/bowtie2-${BOWTIE2_VERSION}-linux-x86_64 >> $HOME/.bashrc
 cd $SISRS_DIR
 
 # install BBMap
