@@ -12,7 +12,7 @@ apt-get install -y wget build-essential bzip2 \
 
 # build and install samtools
 cd $HOME
-apt-get install liblzma-dev libbz2-dev zlib1g-dev libncurses5-dev 
+apt-get install -y liblzma-dev libbz2-dev zlib1g-dev libncurses5-dev 
 wget https://github.com/samtools/samtools/releases/download/${SAMTOOLS_VERSION}/samtools-${SAMTOOLS_VERSION}.tar.bz2
 tar xf samtools-${SAMTOOLS_VERSION}.tar.bz2
 cd samtools-${SAMTOOLS_VERSION}
