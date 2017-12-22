@@ -1,5 +1,5 @@
 import subprocess
-from subprocess import Popen, PIPE
+from subprocess import Popen, PIPE 
 from multiprocessing import Pool
 import os
 import sys
@@ -10,6 +10,22 @@ from glob import glob
 from get_alignment import main as get_alignment
 from pprint import pprint
 #import sub_sample_for_velvet_unshuff
+
+class Process(object):
+
+    def __init__(self, command, stdin=None, stdout=None):
+        try:
+            self.proc = Popen(command, stdin=stdin, stdout=stdout)
+        except Exception as e:
+            print("Error calling: {}".format(command[0]))
+            raise e 
+
+    def wait(self):
+        return self.proc.wait()
+
+    def pipe(self):
+        return self.proc.stdout
+
 
 class DirectoryLists(object):
 
@@ -130,7 +146,7 @@ def sam_index_directory(dir_):
     index_command = [
         'samtools', 'index', file_path
     ]
-    index_proc = Popen(index_command)
+    index_proc = Process(index_command)
 
 @cli.command()
 @click.pass_context
@@ -164,7 +180,7 @@ def align_contigs(ctx):
 
     # Build index
     build_command = [ 'bowtie2-build', contig_file_path, contig_prefix ]
-    subprocess.check_call(build_command)
+    Process(build_command).wait()
 
     for dir_ in all_dirs:
 
@@ -181,7 +197,7 @@ def align_contigs(ctx):
             '-x', contig_prefix,
             '-U', ','.join(fastq_filepaths)
         ]
-        bowtie2_proc = Popen(bowtie2_command, stdout=PIPE)
+        bowtie2_proc = Process(bowtie2_command, stdout=PIPE)
 
         samtools_to_bam_command = [
             'samtools', 'view', '-Su',
@@ -189,8 +205,8 @@ def align_contigs(ctx):
             '-F' , '4',
             '-',
         ]
-        samtools_to_bam_proc = Popen(
-            samtools_to_bam_command, stdin=bowtie2_proc.stdout,
+        samtools_to_bam_proc = Process(
+            samtools_to_bam_command, stdin=bowtie2_proc.pipe(),
             stdout=PIPE)
 
         output_base_path = os.path.join(dir_, basename)
@@ -202,8 +218,8 @@ def align_contigs(ctx):
             '-',
             '-o', temp_file_path,
         ]
-        samtools_sort_proc = Popen(
-            samtools_sort_command, stdin=samtools_to_bam_proc.stdout)
+        samtools_sort_proc = Process(
+            samtools_sort_command, stdin=samtools_to_bam_proc.pipe())
 
         bowtie2_proc.wait()
         samtools_to_bam_proc.wait()
@@ -220,7 +236,7 @@ def align_contigs(ctx):
             '-H', temp_file_path,
             '-o', header_file_path
         ]
-        samtools_header_proc = Popen(samtools_header_command)
+        samtools_header_proc = Process(samtools_header_command)
 
         samtools_header_proc.wait()
 
@@ -232,18 +248,18 @@ def align_contigs(ctx):
             '-@', str(num_processors),
             temp_file_path,
         ]
-        samtools_data_proc = Popen(samtools_data_command, stdout=PIPE)
+        samtools_data_proc = Process(samtools_data_command, stdout=PIPE)
 
         grep_command = [
             'grep', '-v', 'XS:'
         ]
-        grep_proc = Popen(
-            grep_command, stdin=samtools_data_proc.stdout, stdout=PIPE)
+        grep_proc = Process(
+            grep_command, stdin=samtools_data_proc.pipe(), stdout=PIPE)
 
         cat_command = [
             'cat', header_file_path, '-'
         ]
-        cat_proc = Popen(cat_command, stdin=grep_proc.stdout, stdout=PIPE)
+        cat_proc = Process(cat_command, stdin=grep_proc.pipe(), stdout=PIPE)
 
         samtools_final_command = [
             'samtools', 'view',
@@ -253,8 +269,8 @@ def align_contigs(ctx):
             '-o', output_base_path + '.bam'
         ]
 
-        samtools_final_proc = Popen(
-            samtools_final_command, stdin=cat_proc.stdout)
+        samtools_final_proc = Process(
+            samtools_final_command, stdin=cat_proc.pipe())
 
         samtools_data_proc.wait()
         grep_proc.wait()
