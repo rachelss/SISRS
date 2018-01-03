@@ -11,6 +11,7 @@ ENV BAMUTIL_VERSION 1.0.13
 RUN apt-get update && apt-get install -y \
     build-essential \
     bzip2 \
+    default-jre \
     wget \
     \
     liblzma-dev \
@@ -58,5 +59,8 @@ RUN hash -r \
     && conda config --set always_yes yes --set changeps1 no \
     && conda update -q conda \
     && conda info -a \
-    && conda create -q -n sisrs-python-env python=2.7 \
     && rm miniconda.sh
+
+RUN pip install \
+    pytest \
+    Biopython
