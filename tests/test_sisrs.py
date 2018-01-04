@@ -42,8 +42,7 @@ def test_align_contigs():
     contig_dir = join(out_base_dir, contig_dirname)
     taxon_names = [
         'GorGor',
-        # TODO: figure out why HomSap isn't passing
-        #'HomSap',
+        'HomSap',
         'HylMol',
         'MacFas',
         'MacMul',
