@@ -73,3 +73,18 @@ RUN hash -r \
 RUN pip install \
     pytest \
     Biopython
+
+# TODO: move to top for next full rebuild
+RUN apt-get update && apt-get install -y \
+    parallel \
+    libssl-dev \
+    git \
+  && rm -rf /var/lib/apt/lists/*
+
+# TODO: move up for next full rebuild
+RUN git clone https://github.com/DecodeGenetics/BamHash \
+    && cd BamHash \
+    && make \
+    && cp bamhash_checksum_bam /usr/local/bin \
+    && cd .. \
+    && rm -rf BamHash

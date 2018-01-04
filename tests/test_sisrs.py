@@ -14,16 +14,38 @@ if os.path.exists(out_base_dir):
 def run(*args, **kwargs):
     return subprocess.check_call(*args, **kwargs)
 
+#def bam_match(f1, f2):
+#    bam_diff_command = [
+#        'bam', 'diff',
+#        '--all',
+#        '--in1', f1,
+#        '--in2', f2
+#    ]
+#    
+#    output = subprocess.check_output(bam_diff_command)
+#    return len(output) == 0
+
 def bam_match(f1, f2):
-    bam_diff_command = [
-        'bam', 'diff',
-        '--all',
-        '--in1', f1,
-        '--in2', f2
+    bamhash_command_f1 = [
+        'bamhash_checksum_bam',
+        '--no-paired',
+        f1,
+    ]
+
+    bamhash_command_f2 = [
+        'bamhash_checksum_bam',
+        '--no-paired',
+        f2,
     ]
     
-    output = subprocess.check_output(bam_diff_command)
-    return len(output) == 0
+    output_f1 = subprocess.check_output(bamhash_command_f1)
+    output_f2 = subprocess.check_output(bamhash_command_f2)
+
+    print("comparing {} and {}".format(f1, f2))
+    print(output_f1)
+    print(output_f2)
+
+    return output_f1 == output_f2
 
 def files_match(f1, f2):
     return filecmp.cmp(f1, f2, shallow=False)
