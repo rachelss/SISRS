@@ -88,3 +88,5 @@ RUN git clone https://github.com/DecodeGenetics/BamHash \
     && cp bamhash_checksum_bam /usr/local/bin \
     && cd .. \
     && rm -rf BamHash
+
+COPY run_tests.sh /
