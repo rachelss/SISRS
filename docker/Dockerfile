@@ -51,6 +51,15 @@ RUN cd bamUtil_${BAMUTIL_VERSION} \
     && make install \
     && rm -rf BamUtilLibStatGen.${BAMUTIL_VERSION}.tgz bamUtil_${BAMUTIL_VERSION}
 
+ENV VELVET_VERSION 1.2.10
+RUN wget https://www.ebi.ac.uk/~zerbino/velvet/velvet_${VELVET_VERSION}.tgz \
+    && tar xf velvet_${VELVET_VERSION}.tgz \
+    && cd velvet_${VELVET_VERSION} \
+    && make \
+    && cp velvet* /usr/local/bin \
+    && cd .. \
+    && rm -rf velvet_${VELVET_VERSION} velvet_${VELVET_VERSION}.tgz
+
 # install custom python using Miniconda
 RUN wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
 RUN bash miniconda.sh -b -p miniconda
