@@ -38,9 +38,10 @@ def getallbases(path,minread,thresh):
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
                 if finalBase != 'N':    #Do not pass Ns to pruned_dictionary, but do pass - as deletion
                     allbases[loc]=finalBase
-    printList = open(path+'LocList', 'w')
+    printList = open(path+'/LocList', 'w')
     for item in siteList:
         print>>printList, item
+    printList.close()
     return allbases
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
