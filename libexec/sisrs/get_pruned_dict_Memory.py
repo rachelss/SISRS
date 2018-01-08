@@ -25,17 +25,22 @@ from specific_genome import getCleanList
 def getallbases(path,minread,thresh):
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
     allbases=dict()
+    siteList = []
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in filein:
             splitline=line.split()
             if len(splitline)>4:
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
+                siteList.append(loc)
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
                 assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
                 if finalBase != 'N':    #Do not pass Ns to pruned_dictionary, but do pass - as deletion
                     allbases[loc]=finalBase
+    printList = open(path+'LocList', 'w')
+    for item in siteList:
+        print>>printList, item
     return allbases
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
