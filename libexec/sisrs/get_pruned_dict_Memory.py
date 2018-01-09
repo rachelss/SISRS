@@ -30,14 +30,14 @@ def getallbases(posList,minread,thresh):
                 pos=posList.index(loc)
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
-                speciesList.insert(pos,finalBase)
+                speciesList[pos] = finalBase
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
     for item in speciesList:
         print>>printSpecies, item
     printSpecies.close()
     nCount = speciesList.count("N")
-    siteCount = len(posList) - nCount
-    sys.stdout.write("Of "+ str(len(posList)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites. There were " + str(nCount) + " N calls.\n")
+    siteCount = len(speciesList) - nCount
+    sys.stdout.write("Of "+ str(len(speciesList)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites. There were " + str(nCount) + " N calls.\n")
     return siteCount
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
