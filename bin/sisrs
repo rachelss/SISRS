@@ -421,9 +421,9 @@ identifyFixedSites(){
 
 outputAlignment(){
     if [ -n "${REFFILE}" ]; then
-        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) ${REFFILE} ${OUTFOLDER} ${ASSEMBLER}
+        ${DIR}/libexec/sisrs/get_alignment_Memory.py $((${#FOLDERLISTA[@]} - 2)) ${REFFILE} ${OUTFOLDER} ${ASSEMBLER}
     else
-        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) X ${OUTFOLDER} ${ASSEMBLER}       #alignment with up to all but 2 missing
+        ${DIR}/libexec/sisrs/get_alignment_Memory.py $((${#FOLDERLISTA[@]} - 2)) X ${OUTFOLDER} ${ASSEMBLER}       #alignment with up to all but 2 missing
     fi
     if [[ $? != 0 ]]; then
         echo "get_alignment.py failed"
