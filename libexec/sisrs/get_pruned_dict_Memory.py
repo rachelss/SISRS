@@ -27,11 +27,11 @@ def getallbases(posList,minread,thresh):
             if len(splitline)>4:
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
-                pos=siteList.index(loc)
+                pos=posList.index(loc)
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
                 speciesList.insert(pos,finalBase)
-    printSpecies = open(path+"/"+os.basename(path)+'_LocList', 'w')
+    printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
     for item in speciesList:
         print>>printSpecies, item
     printSpecies.close()
