@@ -4,16 +4,12 @@
 
     arguments:
         path: folder containing mpileup files ending in pileups
+        assembler: Assembler used for SISRS or 'premade'
         minread: number of reads at a position required to call a base
         thresh: proportion of reads that must be one base for calling to occur
-
-    output:
-        path/pruned_dict.pkl : contains pickled dictionary of position:base
-
 """
 
 import sys
-import cPickle
 from collections import Counter
 import glob
 import string
@@ -22,27 +18,27 @@ import os
 from specific_genome import getCleanList
 
 #get combined pileup info
-def getallbases(path,minread,thresh):
+def getallbases(posList,minread,thresh):
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
-    allbases=dict()
-    siteList = []
+    speciesList = ['N'] * len(siteList)
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in filein:
             splitline=line.split()
             if len(splitline)>4:
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
-                siteList.append(loc)
+                pos=siteList.index(loc)
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
-                assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
-                if finalBase != 'N':    #Do not pass Ns to pruned_dictionary, but do pass - as deletion
-                    allbases[loc]=finalBase
-    printList = open(path+'/LocList', 'w')
-    for item in siteList:
-        print>>printList, item
-    printList.close()
-    return allbases
+                speciesList.insert(pos,finalBase)
+    printSpecies = open(path+"/"+os.basename(path)+'_LocList', 'w')
+    for item in speciesList:
+        print>>printSpecies, item
+    printSpecies.close()
+    nCount = len(posList) - speciesList.count("N")
+    siteCount = len(posList) - nCount
+    print "Of "+ len(posList) + "positions, " + os.basename(path) + "has non-N sites for " + str(siteCount) + "sites."
+    return nCount
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
     singleBase=(Counter(cleanBases).most_common()[0][0])
@@ -58,15 +54,20 @@ def getFinalBase_Pruned(cleanBases,minread,thresh):
     return finalBase
 ###############################################
 if __name__ == "__main__":
+
+    #Read in arguments
     path=sys.argv[1]
-    minread=int(sys.argv[2])
-    thresh=float(sys.argv[3])
+    basePath=os.path.dirname(path)
+    assembler=sys.argv[2]
+    minread=int(sys.argv[3])
+    thresh=float(sys.argv[4])
 
-    allbases=getallbases(path,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
-    if len(allbases)==0:
+    #Read in PosList
+    with open(basePath+"/contigs_PosList") as f:
+        posList = f.read().splitlines()
+
+    #Generate species-specific posList
+    allbases=getallbases(posList,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
+    if allbases == 0:
         print 'No data for '+path
-        sys.exit(1)      #dictionary of combined pileups - locus/pos:bases(as list)
-
-    output = open(path+'/pruned_dict.pkl', 'wb')
-    cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
-    output.close()
+        sys.exit(1)      
