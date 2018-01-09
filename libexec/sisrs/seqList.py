@@ -6,7 +6,8 @@ import pandas as pd
 
 def createPosList(path,assembler):
     #Read in sequence lengths from SISRS output in <PATH>/<assembler>output/contigs_SeqLength.tsv; Sort by contig ID
-    df = pd.read_csv(path+"/"+assembler+"output/contigs_SeqLength.tsv",sep="\t",header=None)    df.sort_values([0],inplace=True)
+    df = pd.read_csv(path+"/"+assembler+"output/contigs_SeqLength.tsv",sep="\t",header=None)
+    df.sort_values([0],inplace=True)
     df=df.reset_index(drop=True)
 
     #Fill in list
