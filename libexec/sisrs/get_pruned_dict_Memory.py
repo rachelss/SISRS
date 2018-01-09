@@ -63,11 +63,11 @@ if __name__ == "__main__":
     thresh=float(sys.argv[4])
 
     #Read in PosList
-    with open(basePath+"/contigs_PosList") as f:
+    with open(basePath+"/"+assembler+"output/contigs_PosList") as f:
         posList = f.read().splitlines()
 
     #Generate species-specific posList
     allbases=getallbases(posList,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
     if allbases == 0:
         print 'No data for '+path
-        sys.exit(1)      
+        sys.exit(1)
