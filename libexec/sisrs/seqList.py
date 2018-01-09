@@ -9,7 +9,7 @@ def createPosList(path,assembler):
     df = pd.read_csv(path+"/"+assembler+"output/contigs_SeqLength.tsv",sep="\t",header=None)    df.sort_values([0],inplace=True)
     df=df.reset_index(drop=True)
 
-    #Fill in list 
+    #Fill in list
     j=0
     posList = []
     for row in df.iterrows():
@@ -28,7 +28,7 @@ def createPosList(path,assembler):
     print "Site list created: " + str(len(posList)) + " total sites"
 
 if __name__ == "__main__":
-    
+
     #Read in arguments
     path = sys.argv[1]
     assembler = sys.argv[2]
