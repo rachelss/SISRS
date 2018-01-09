@@ -20,7 +20,7 @@ from specific_genome import getCleanList
 #get combined pileup info
 def getallbases(posList,minread,thresh):
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
-    speciesList = ['N'] * len(siteList)
+    speciesList = ['N'] * len(posList)
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in filein:
             splitline=line.split()
