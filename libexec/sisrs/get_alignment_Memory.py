@@ -239,15 +239,14 @@ def get_phy_sites(mainfolder,assembler,num_missing):
 
     return alignment
 
-if __name__ == "__main__":
-    num_missing=int(sys.argv[1])
-    reference = sys.argv[2]
-    mainfolder = sys.argv[3]
-    assembler = sys.argv[4]
-    basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c','-':'-'}
+num_missing=int(sys.argv[1])
+reference = sys.argv[2]
+mainfolder = sys.argv[3]
+assembler = sys.argv[4]
+basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c','-':'-'}
 
-    alignment=get_phy_sites(mainfolder,assembler,num_missing)
-    numbi=alignment.numsnps()
-    nodedict,ref = get_ref_info(alignment,reference,mainfolder,assembler)
-    alignment = add_ref_info(alignment,ref,nodedict)
-    alignment = write_alignment(mainfolder+'/alignment.nex',alignment,numbi)
+alignment=get_phy_sites(mainfolder,assembler,num_missing)
+numbi=alignment.numsnps()
+nodedict,ref = get_ref_info(alignment,reference,mainfolder,assembler)
+alignment = add_ref_info(alignment,ref,nodedict)
+alignment = write_alignment(mainfolder+'/alignment.nex',alignment,numbi)
