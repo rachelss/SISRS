@@ -37,7 +37,8 @@ def getallbases(posList,minread,thresh):
     printSpecies.close()
     nCount = speciesList.count("N")
     siteCount = len(speciesList) - nCount
-    sys.stdout.write("Of "+ str(len(speciesList)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites. There were " + str(nCount) + " N calls.\n")
+    nPercent = format((nCount/len(speciesList)), '.2f')
+    sys.stdout.write("Of "+ str(len(speciesList)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites. There were " + str(nCount) + " N calls ("+ nPercent + ")\n")
     return siteCount
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
