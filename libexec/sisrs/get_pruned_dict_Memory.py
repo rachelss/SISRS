@@ -35,9 +35,10 @@ def getallbases(posList,minread,thresh):
     for item in speciesList:
         print>>printSpecies, item
     printSpecies.close()
-    siteCount = len(posList) - speciesList.count("N")
-    sys.stdout.write("Of "+ str(len(posList)) + " positions, " + os.path.basename(path) + " has non-N calls for " + str(siteCount) + " sites. There were " + str(speciesList.count("N") + " N calls.\n")
-    return nCount
+    nCount = speciesList.count("N")
+    siteCount = len(posList) - nCount
+    sys.stdout.write("Of "+ str(len(posList)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites. There were " + str(nCount) + " N calls.\n")
+    return siteCount
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
     singleBase=(Counter(cleanBases).most_common()[0][0])
@@ -66,7 +67,7 @@ if __name__ == "__main__":
         posList = f.read().splitlines()
 
     #Generate species-specific posList
-    allbases=getallbases(posList,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
-    if allbases == 0:
+    siteCount=getallbases(posList,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
+    if siteCount == 0:
         print 'No data for '+path
         sys.exit(1)
