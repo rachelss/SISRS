@@ -37,7 +37,7 @@ def getallbases(posList,minread,thresh):
     printSpecies.close()
     nCount = len(posList) - speciesList.count("N")
     siteCount = len(posList) - nCount
-    sys.stdout.write("Of "+ str(len(posList)) + " positions, " + os.path.basename(path) + " has non-N calls for " + str(siteCount) + "sites.\n")
+    sys.stdout.write("Of "+ str(len(posList)) + " positions, " + os.path.basename(path) + " has non-N calls for " + str(siteCount) + " sites.\n")
     return nCount
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
