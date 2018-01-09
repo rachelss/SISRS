@@ -411,7 +411,7 @@ identifyFixedSites(){
     #put base for each site in a dictionary (allows no variation when calling sites)
     parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict_Memory.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     if [[ $? != 0 ]]; then
-        echo "get_pruned_dict.py failed"
+        echo "get_pruned_dict_Memory.py failed"
         exit 1
     fi
     echo ==== Done Identifying Fixed Sites Without Error ====
