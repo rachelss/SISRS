@@ -22,7 +22,7 @@ def createPosList(path,assembler):
             j+=1
 
     #Write file to <PATH>/<assembler>output/contigs_PosList
-    printList = open(path+"/"+assembler+"output/contigs_PosList", 'w')
+    printList = open(path+"/"+assembler+"output/contigs_LocList", 'w')
     for item in posList:
         print>>printList, item
     printList.close()
