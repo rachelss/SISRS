@@ -26,8 +26,7 @@ def createPosList(path,assembler):
     for item in posList:
         print>>printList, item
     printList.close()
-    print "Site list created: " + str(len(posList)) + " total sites"
-    sys.stdout.flush()
+    sys.stdout.write("Site list created: " + str(len(posList)) + " total sites")
 
 
 if __name__ == "__main__":
