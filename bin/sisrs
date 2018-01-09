@@ -340,6 +340,8 @@ alignContigs(){
     ${DIR}/libexec/sisrs/seq_length.py ${OUTFOLDER}/${CONTIGS} #Create TSV with scaffold lengths
     bowtie2-build ${OUTFOLDER}/"${CONTIGS}"/contigs.fa ${OUTFOLDER}/"${CONTIGS}"/contigs      #index contigs
     ${DIR}/libexec/sisrs/siteList.py ${OUTFOLDER} ${ASSEMBLER} #Create site list from contigs files
+    echo ==== Site List Generated ====
+
 
     #Find all FASTQ files in each species folder
     for FOLDER in "${FOLDERLISTA[@]}";do
