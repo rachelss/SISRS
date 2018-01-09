@@ -65,7 +65,7 @@ if __name__ == "__main__":
     thresh=float(sys.argv[4])
 
     #Read in PosList
-    with open(basePath+"/"+assembler+"output/contigs_PosList") as f:
+    with open(basePath+"/"+assembler+"output/contigs_LocList") as f:
         posList = f.read().splitlines()
 
     #Generate species-specific posList
