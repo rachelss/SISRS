@@ -339,7 +339,7 @@ alignContigs(){
     echo ==== Scafolds Renamed ====
     ${DIR}/libexec/sisrs/seq_length.py ${OUTFOLDER}/${CONTIGS} #Create TSV with scaffold lengths
     bowtie2-build ${OUTFOLDER}/"${CONTIGS}"/contigs.fa ${OUTFOLDER}/"${CONTIGS}"/contigs      #index contigs
-    ${DIR}/libexec/sisrs/siteList.py ${OUTFOLDER} ${ASSEMBLER} #Create site list from contigs files
+    ${DIR}/libexec/sisrs/seqList.py ${OUTFOLDER} ${ASSEMBLER} #Create site list from contigs files
     echo ==== Site List Generated ====
 
 
