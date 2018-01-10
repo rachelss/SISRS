@@ -231,7 +231,7 @@ def get_phy_sites(mainfolder,assembler,num_missing):
     files = [open(i, "r") for i in allLists]
     for rows in izip(*files):
         tempSite = ['N'] * (speciesCount+1)
-        for i in range(0,speciesCount):
+        for i in range(0,(speciesCount+1)):
             tempVar=str(rows[i])
             tempSite[i]=tempVar.rstrip()
 
