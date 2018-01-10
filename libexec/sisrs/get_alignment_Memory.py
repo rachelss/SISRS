@@ -8,7 +8,6 @@ from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
 from itertools import izip
-import pandas as pd
 
 class Scaffold:
     def __init__(self,chr,start,end,length=None,flag=None,cigar=None):
@@ -224,10 +223,6 @@ def get_phy_sites(mainfolder,assembler,num_missing):
     alignment = Alignment()
     alignment.species_data = {species: [] for species in splist}
 
-    columns = ['Loc','GorGor', 'HomSap', 'HylMol','MacFas','MacMul','PanPan','PanTro','PonPyg','NCount','Var']
-    goodDF = pd.DataFrame(columns=columns)
-    badDF = pd.DataFrame(columns=columns)
-
     files = [open(i, "r") for i in allLists]
     for rows in izip(*files):
         tempSite = ['N'] * (speciesCount+1)
@@ -242,16 +237,7 @@ def get_phy_sites(mainfolder,assembler,num_missing):
             for j in range(0,(speciesCount)):
                 species2=splist[(j)]
                 alignment.species_data[species2].append(speciesData[j])
-            tempList=[tempSite[0]]+speciesData+[speciesData.count("N")]+[len(set(filter(lambda a: a != "N", speciesData)))]
-            tempDF = pd.DataFrame([tempList],columns=columns)
-            goodDF=goodDF.append(tempDF)
-        else:
-            tempList=[tempSite[0]]+speciesData+[speciesData.count("N")]+[len(set(filter(lambda a: a != "N", speciesData)))]
-            tempDF = pd.DataFrame([tempList],columns=columns)
-            badDF=badDF.append(tempDF)
 
-    goodDF.to_csv(mainfolder+'/goodSites.csv')
-    badDF.to_csv(mainfolder+'/badSites.csv')
     return alignment
 
 num_missing=int(sys.argv[1])
