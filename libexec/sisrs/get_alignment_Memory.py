@@ -225,18 +225,15 @@ def get_phy_sites(mainfolder,assembler,num_missing):
 
     files = [open(i, "r") for i in allLists]
     for rows in izip(*files):
-        tempSite = ['N'] * (speciesCount+1)
-        for i in range(0,(speciesCount+1)):
-            tempVar=str(rows[i])
-            tempSite[i]=tempVar.rstrip()
+        rowList=list(rows)
+        rowList = map(lambda foo: foo.replace('\n', ''), rowList)
 
-        speciesData = tempSite[1:(speciesCount+1)]
+        speciesData = rowList[1:(speciesCount+1)]
 
-        if speciesData.count("N")<=num_missing and len(set(filter(lambda a: a != "N", speciesData)))>1:
-            alignment.locations.append(tempSite[0])
-            for j in range(0,(speciesCount)):
-                species2=splist[(j)]
-                alignment.species_data[species2].append(speciesData[j])
+        if rowList[1:(speciesCount+1)].count("N")<=num_missing and len(set(filter(lambda a: a != "N", rowList[1:(speciesCount+1)])))>1:
+            alignment.locations.append(rowList[0])
+            for j in range(0,(speciesCount-1)):
+                alignment.species_data[splist[j]].append(rowList[1:(speciesCount+1)][j])
 
     return alignment
 
