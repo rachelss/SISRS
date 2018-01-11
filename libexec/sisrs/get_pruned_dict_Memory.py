@@ -28,7 +28,7 @@ def getallbases(posList,minread,thresh):
     speciesDict = dict(zip(keys, values))
 
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
-        line = filein.readline()
+        for line in iter(filein):
         splitline=line.split()
         if len(splitline)>4:
             node,pos,ref,num,bases,qual=line.split()
