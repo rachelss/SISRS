@@ -41,7 +41,11 @@ def getallbases(posList,minread,thresh):
     for item in posList:
         print>>printSpecies, speciesDict[item]
     printSpecies.close()
-    nCount = speciesList.count("N")
+
+    valueList=[]
+    for key,value in speciesDict.iteritems():
+        valueList.append(value)
+    nCount = valueList.count("N")
     siteCount = len(speciesDict) - nCount
     sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
     nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
