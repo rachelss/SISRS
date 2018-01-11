@@ -229,10 +229,8 @@ def get_phy_sites(mainfolder,assembler,num_missing):
         speciesData = rowList[1:(speciesCount+1)]
         if speciesData.count("N")<=num_missing and len(set(filter(lambda a: a != "N", speciesData)))>1:
             alignment.locations.append(rowList[0])
-            for j in range(0,(speciesCount-1)):
+            for j in range(0,(speciesCount)):
                 alignment.species_data[splist[j]].append(speciesData[j])
-            print alignment.species_data
-
     return alignment
 
 num_missing=int(sys.argv[1])
