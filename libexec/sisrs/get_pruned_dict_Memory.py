@@ -42,10 +42,10 @@ def getallbases(posList,minread,thresh):
         print>>printSpecies, speciesDict[item]
     printSpecies.close()
     nCount = speciesList.count("N")
-    siteCount = len(speciesList) - nCount
-    sitePercent = format((float(siteCount)/len(speciesList))*100,'.2f')
-    nPercent = format((float(nCount)/len(speciesList))*100,'.2f')
-    sys.stdout.write("Of "+ str(len(speciesList)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%)\n")
+    siteCount = len(speciesDict) - nCount
+    sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
+    nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
+    sys.stdout.write("Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%)\n")
     return siteCount
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
