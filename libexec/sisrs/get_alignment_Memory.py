@@ -227,12 +227,11 @@ def get_phy_sites(mainfolder,assembler,num_missing):
     for rows in izip(*files):
         rowList = map(lambda foo: foo.replace('\n', ''), list(rows))
         speciesData = rowList[1:(speciesCount+1)]
-        print speciesData
-
         if speciesData.count("N")<=num_missing and len(set(filter(lambda a: a != "N", speciesData)))>1:
             alignment.locations.append(rowList[0])
             for j in range(0,(speciesCount-1)):
                 alignment.species_data[splist[j]].append(speciesData[j])
+            print alignment.species_data
 
     return alignment
 
