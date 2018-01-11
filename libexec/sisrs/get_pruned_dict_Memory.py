@@ -29,14 +29,13 @@ def getallbases(posList,minread,thresh):
 
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
-        splitline=line.split()
-        if len(splitline)>4:
-            node,pos,ref,num,bases,qual=line.split()
-            loc=node+'/'+pos
-            cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
-            finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
-            speciesDict[loc] = finalBase
-
+            splitline=line.split()
+            if len(splitline)>4:
+                node,pos,ref,num,bases,qual=line.split()
+                loc=node+'/'+pos
+                cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
+                finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
+                speciesDict[loc] = finalBase
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
     for item in posList:
         print>>printSpecies, speciesDict[item]
