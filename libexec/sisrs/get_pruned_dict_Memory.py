@@ -35,7 +35,7 @@ def getallbases(posList,minread,thresh):
             loc=node+'/'+pos
             cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
             finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
-            speciesDict[pos] = finalBase
+            speciesDict[loc] = finalBase
 
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
     for item in posList:
