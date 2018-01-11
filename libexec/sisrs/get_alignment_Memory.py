@@ -226,6 +226,7 @@ def get_phy_sites(mainfolder,assembler,num_missing):
     files = [open(i, "r") for i in allLists]
     for rows in izip(*files):
         rowList = map(lambda foo: foo.replace('\n', ''), list(rows))
+        print rowList
         speciesData = rowList[1:(speciesCount+1)]
 
         if speciesData.count("N")<=num_missing and len(set(filter(lambda a: a != "N", speciesData)))>1:
