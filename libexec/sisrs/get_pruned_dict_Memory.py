@@ -44,6 +44,7 @@ def getallbases(posList,minread,thresh):
 
     valueList=[]
     for key,value in speciesDict.iteritems():
+        print value
         valueList.append(value)
     nCount = valueList.count("N")
     siteCount = len(speciesDict) - nCount
