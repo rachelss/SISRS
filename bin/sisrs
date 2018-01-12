@@ -347,7 +347,6 @@ alignContigs(){
         FOLDERNAME=( $(echo $(basename ${FOLDER} ) ) )
         echo ==== Aligning ${FOLDERNAME} as Single-Ended ====
         #Align all species reads against composite genome. N=1 allows a mismatch #x The basename of the index for the reference genome
-        echo ${FASTQLIST}
         bowtie2 -p "${PROCESSORS}" -N 1 --local -x ${OUTFOLDER}/"${CONTIGS}"/contigs -U ${FASTQLIST} | samtools view -Su -@ "${PROCESSORS}" -F 4 - | samtools sort -@ "${PROCESSORS}" - -o ${FOLDER}/${FOLDERNAME}_Temp.bam
         #Extract uniquely mapping reads
         samtools view -@ "${PROCESSORS}" -H ${FOLDER}/${FOLDERNAME}_Temp.bam > ${FOLDER}/${FOLDERNAME}_Header.sam
