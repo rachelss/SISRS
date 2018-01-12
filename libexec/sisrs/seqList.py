@@ -11,7 +11,7 @@ def createPosList(path,assembler):
             lengthList=range(1,(int(splitline[1])+1))
             for x in lengthList:
                 posList.append(splitline[0] +'/'+str(x))
-    printList = open(path+'/'+assembler+'output/contigs_LocList2','w')
+    printList = open(path+'/'+assembler+'output/contigs_LocList','w')
     for item in posList:
         print>>printList,item
     printList.close()
