@@ -14,17 +14,6 @@ if os.path.exists(out_base_dir):
 def run(*args, **kwargs):
     return subprocess.check_call(*args, **kwargs)
 
-#def bam_match(f1, f2):
-#    bam_diff_command = [
-#        'bam', 'diff',
-#        '--all',
-#        '--in1', f1,
-#        '--in2', f2
-#    ]
-#    
-#    output = subprocess.check_output(bam_diff_command)
-#    return len(output) == 0
-
 def bam_match(f1, f2):
     bamhash_command_f1 = [
         'bamhash_checksum_bam',

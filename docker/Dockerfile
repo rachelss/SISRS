@@ -80,3 +80,14 @@ RUN pip install \
     Biopython
 
 COPY run_tests.sh /
+
+# TODO move mafft stuff up top
+ENV MAFFT_VERSION 7.313
+
+RUN wget https://mafft.cbrc.jp/alignment/software/mafft-${MAFFT_VERSION}-without-extensions-src.tgz
+RUN tar xf mafft-${MAFFT_VERSION}-without-extensions-src.tgz \
+    && cd mafft-${MAFFT_VERSION}-without-extensions/core \
+    && make install \
+    && cd ../../ \
+    && rm -rf mafft-${MAFFT_VERSION}-without-extensions-src.tgz \
+    && rm -rf mafft-${MAFFT_VERSION}-without-extensions
