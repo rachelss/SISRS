@@ -7,6 +7,18 @@ from os.path import join, exists
 
 data_base_dir = 'pipeline_stages'
 out_base_dir = 'output'
+num_proc = '20'
+
+taxon_names = [
+    'GorGor',
+    'HomSap',
+    'HylMol',
+    'MacFas',
+    'MacMul',
+    'PanPan',
+    'PanTro',
+    'PonPyg'
+]
 
 if os.path.exists(out_base_dir):
     shutil.rmtree(out_base_dir)
@@ -36,6 +48,10 @@ def bam_match(f1, f2):
 
     return output_f1 == output_f2
 
+def pileups_match(f1, f2):
+
+    return files_match(f1, f2)
+
 def files_match(f1, f2):
     return filecmp.cmp(f1, f2, shallow=False)
 
@@ -51,20 +67,10 @@ def test_align_contigs():
     exp_base_dir = join(data_base_dir, '1_alignContigs')
     contig_dirname = 'premadeoutput'
     contig_dir = join(out_base_dir, contig_dirname)
-    taxon_names = [
-        'GorGor',
-        'HomSap',
-        'HylMol',
-        'MacFas',
-        'MacMul',
-        'PanPan',
-        'PanTro',
-        'PonPyg'
-    ]
 
     command = [
         'sisrs-python',
-        '-p', '1',
+        '-p', num_proc,
         '-a', 'premade',
         '-c', '0',
         '-f', data_dir,
@@ -87,6 +93,37 @@ def test_align_contigs():
         assert(bam_match(out_bam_path, exp_bam_path))
         
 
+def test_identify_fixed_sites():
+
+    data_dir = join(data_base_dir, '1_alignContigs')
+    exp_base_dir = join(data_base_dir, '2_identifyFixedSites')
+    contig_dirname = 'premadeoutput'
+    contig_dir = join(out_base_dir, contig_dirname)
+
+    command = [
+        'sisrs-python',
+        '-p', num_proc,
+        '-a', 'premade',
+        '-c', '0',
+        '-f', data_dir,
+        '-z', out_base_dir,
+        'identify_fixed_sites',
+    ]
+    run(command)
+
+    assert(dirs_match(
+        join(out_base_dir, 'premadeoutput'),
+        join(exp_base_dir, 'premadeoutput')))
+
+    # TODO: see if we can figure out a way to compare pileup files
+    #for taxon_name in taxon_names:
+    #    out_dir = join(out_base_dir, taxon_name)
+    #    exp_dir = join(exp_base_dir, taxon_name)
+
+    #    out_pileup_path = join(out_dir, taxon_name + '.pileups')
+    #    exp_pileup_path = join(exp_dir, taxon_name + '.pileups')
+
+    #    assert(pileups_match(out_pileup_path, exp_pileup_path))
 
 #def test_output_alignment():
 #

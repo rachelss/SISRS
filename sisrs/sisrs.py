@@ -9,22 +9,9 @@ from click import echo
 from glob import glob
 from get_alignment import main as get_alignment
 from pprint import pprint
+from identify_fixed_sites import IdentifyFixedSitesCommand
+from process import Process
 #import sub_sample_for_velvet_unshuff
-
-class Process(object):
-
-    def __init__(self, command, stdin=None, stdout=None):
-        try:
-            self.proc = Popen(command, stdin=stdin, stdout=stdout)
-        except Exception as e:
-            print("Error calling: {}".format(command[0]))
-            raise e 
-
-    def wait(self):
-        return self.proc.wait()
-
-    def pipe(self):
-        return self.proc.stdout
 
 
 class DirectoryLists(object):
@@ -147,6 +134,8 @@ def sam_index_directory(dir_):
         'samtools', 'index', file_path
     ]
     index_proc = Process(index_command)
+
+    # TODO: should maybe be calling index_proc.wait() here...
 
 @cli.command()
 @click.pass_context
@@ -286,6 +275,13 @@ def align_contigs(ctx):
     pool.map(sam_index_directory, all_dirs)
     print("==== Done Indexing Bam Files ====")
 
+
+@cli.command()
+@click.pass_context
+def identify_fixed_sites(ctx):
+
+    command = IdentifyFixedSitesCommand(ctx.obj)
+    command.run()
 
 def main():
     cli(obj={})
