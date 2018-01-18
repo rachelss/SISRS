@@ -54,11 +54,11 @@ class AlignContigsCommand(object):
 
         # Build index
         build_command = [ 'bowtie2-build', contig_file_path, contig_prefix ]
-        Process(build_command)
+        Process(build_command).wait()
 
         for dir_ in all_dirs:
 
-            AlignmentProcess(dir_, contig_prefix, num_processors).wait()
+            AlignmentProcess(dir_, contig_prefix, num_processors)
 
         print("==== Done Aligning ====")
         pool = Pool(num_processors)
