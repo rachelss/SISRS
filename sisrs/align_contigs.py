@@ -14,8 +14,7 @@ def sam_index_directory(dir_):
         'samtools', 'index', file_path
     ]
     index_proc = Process(index_command)
-
-    # TODO: should maybe be calling index_proc.wait() here...
+    index_proc.wait()
 
 
 class AlignContigsCommand(object):
