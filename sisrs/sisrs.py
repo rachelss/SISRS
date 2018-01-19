@@ -132,8 +132,15 @@ def align_contigs(ctx):
 
 
 @cli.command()
+@click.option('--min-read', '-n', required=False, type=int, default=3,
+              help='Min read')
+@click.option('--threshold', '-t', required=False, type=int, default=1,
+              help="Threshold for calling the site")
 @click.pass_context
-def identify_fixed_sites(ctx):
+def identify_fixed_sites(ctx, min_read, threshold):
+
+    ctx.obj['min_read'] = min_read
+    ctx.obj['threshold'] = threshold 
 
     command = IdentifyFixedSitesCommand(ctx.obj)
     command.run()

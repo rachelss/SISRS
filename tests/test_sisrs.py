@@ -7,7 +7,7 @@ from os.path import join, exists
 
 data_base_dir = 'pipeline_stages'
 out_base_dir = 'output'
-num_proc = '1'
+num_proc = '8'
 
 taxon_names = [
     'GorGor',
@@ -53,6 +53,7 @@ def pileups_match(f1, f2):
     return files_match(f1, f2)
 
 def files_match(f1, f2):
+    print("comparing {} and {}".format(f1, f2))
     return filecmp.cmp(f1, f2, shallow=False)
 
 def dirs_match(d1, d2):
@@ -60,6 +61,10 @@ def dirs_match(d1, d2):
         shallow=False)
 
     return len(mismatch) == 0 and len(errors) == 0
+
+def exists(f1):
+    print("Checking if {} exists".format(f1))
+    return os.path.exists(f1)
 
 def test_align_contigs():
 
@@ -115,6 +120,33 @@ def test_identify_fixed_sites():
         join(out_base_dir, 'premadeoutput'),
         join(exp_base_dir, 'premadeoutput')))
 
+    for taxon_name in taxon_names:
+        out_dir = join(out_base_dir, taxon_name)
+        exp_dir = join(exp_base_dir, taxon_name)
+
+        out_bam_path = join(out_dir, taxon_name + '.bam')
+        exp_bam_path = join(exp_dir, taxon_name + '.bam')
+
+        assert(bam_match(out_bam_path, exp_bam_path))
+
+
+        assert(files_match(
+            join(out_dir, 'pruned_dict.pkl'),
+            join(exp_dir, 'pruned_dict.pkl')))
+
+        filenames = [
+            'contigs.1.bt2',
+            'contigs.2.bt2',
+            'contigs.3.bt2',
+            'contigs.4.bt2',
+            'contigs.fa',
+            'contigs.fa.fai',
+            taxon_name + '.pileups',
+            taxon_name + '.bam.bai'
+        ]
+        for filename in filenames:
+            assert exists(join(out_dir, filename))
+
     # TODO: see if we can figure out a way to compare pileup files
     #for taxon_name in taxon_names:
     #    out_dir = join(out_base_dir, taxon_name)
@@ -124,6 +156,7 @@ def test_identify_fixed_sites():
     #    exp_pileup_path = join(exp_dir, taxon_name + '.pileups')
 
     #    assert(pileups_match(out_pileup_path, exp_pileup_path))
+
 
 #def test_output_alignment():
 #

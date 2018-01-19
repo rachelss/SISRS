@@ -123,3 +123,20 @@ class AlignmentProcess(object):
         os.remove(header_file_path)
 
 
+class MpileupProcess(object):
+
+    def __init__(self, dir_, contig_file_path, num_processors):
+
+        taxon_name = os.path.basename(dir_)
+        bam_path = os.path.join(dir_, '{}.bam'.format(taxon_name))
+        pileups_path  = os.path.join(dir_, '{}.pileups'.format(taxon_name))
+
+        command = [
+            'samtools',
+            '-f', contig_file_path,
+            bam_path,
+            '-o', pileups_path
+        ]
+        Process(command).wait()
+
+    #parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa '"$( echo {}/$(basename {} ) )".bam' '> "$( echo {}/$(basename {} ) )".pileups' ::: "${FOLDERLISTA[@]}"
