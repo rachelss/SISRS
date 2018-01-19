@@ -7,7 +7,7 @@ from os.path import join, exists
 
 data_base_dir = 'pipeline_stages'
 out_base_dir = 'output'
-num_proc = '8'
+num_proc = '1'
 
 taxon_names = [
     'GorGor',
