@@ -78,6 +78,8 @@ if __name__ == "__main__":
     with open(basePath+"/"+assembler+"output/contigs_LocList") as f:
         for line in iter(f):
             posList.append(line.strip())
+    sys.stdout.write(str(sys.getsizeof(posList)))
+
 
     #Generate species-specific posList
     siteCount=getallbases(posList,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
