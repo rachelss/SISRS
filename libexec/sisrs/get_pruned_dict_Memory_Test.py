@@ -16,17 +16,11 @@ import string
 import re
 import os
 from specific_genome import getCleanList
-import itertools
-from itertools import izip_longest
+from collections import defaultdict
 
 #get combined pileup info
-def getallbases(posList,minread,thresh):
+def getallbases(path,speciesDict,minread,thresh):
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
-
-    keys = posList
-    values = ['N'] * len(posList)
-    speciesDict = dict(zip(keys, values))
-    print "Created empty speciesDict\n"
 
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
@@ -38,14 +32,12 @@ def getallbases(posList,minread,thresh):
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
                 speciesDict[loc] = finalBase
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
-    for item in posList:
-        print>>printSpecies, speciesDict[item]
+    for key,value in speciesDict:
+        print>>printSpecies, speciesDict[key]
     printSpecies.close()
 
-    valueList=[]
-    for key,value in speciesDict.iteritems():
-        valueList.append(value)
-    nCount = valueList.count("N")
+    c = Counter(speciesDict.values())
+    nCount = c("N")
     siteCount = len(speciesDict) - nCount
     sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
     nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
@@ -68,22 +60,22 @@ def getFinalBase_Pruned(cleanBases,minread,thresh):
 if __name__ == "__main__":
 
     #Read in arguments
-    path=sys.argv[1]
+    path='/home/ralubuntu/Work/test_SISRS2/GorGor'
     basePath=os.path.dirname(path)
     assembler=sys.argv[2]
     minread=int(sys.argv[3])
     thresh=float(sys.argv[4])
 
-    #Read in PosList
-    posList=[]
-    with open("/data3/schwartzlab/bob/Mammal_SISRS/SISRS_Runs/A/premadeoutput/contigs_LocList") as f:
+    #Read in PosDict
+    posDict=defaultdict(lambda: 'N')
+    with open(basePath+"/"+assembler+"output/contigs_LocList") as f:
         for line in f:
-            posList.append(line.strip())
+            posDict[(line.strip())]
     f.close()
-    print 'List read. Size: '+str(sys.getsizeof(posList))
+    print 'List read."
 
-    #Generate species-specific posList
-    siteCount=getallbases(posList,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
+    #Generate species-specific posDict
+    siteCount=getallbases(path,posDict,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
     if siteCount == 0:
         print 'No data for '+path
         sys.exit(1)
