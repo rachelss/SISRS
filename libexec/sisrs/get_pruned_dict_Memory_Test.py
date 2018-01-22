@@ -60,7 +60,7 @@ def getFinalBase_Pruned(cleanBases,minread,thresh):
 if __name__ == "__main__":
 
     #Read in arguments
-    path='/home/ralubuntu/Work/test_SISRS2/GorGor'
+    path=sys.argv[1]
     basePath=os.path.dirname(path)
     assembler=sys.argv[2]
     minread=int(sys.argv[3])
