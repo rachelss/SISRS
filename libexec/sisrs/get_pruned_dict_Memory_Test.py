@@ -32,8 +32,8 @@ def getallbases(path,speciesDict,minread,thresh):
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
                 speciesDict[loc] = finalBase
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
-    for key,value in speciesDict:
-        print>>printSpecies, speciesDict[key]
+    for keyvalue in speciesDict:
+        print>>printSpecies, speciesDict[keyvalue[0]]
     printSpecies.close()
 
     c = Counter(speciesDict.values())
