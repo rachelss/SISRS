@@ -17,6 +17,7 @@ import re
 import os
 from specific_genome import getCleanList
 from collections import defaultdict
+from natsort import natsorted, ns
 
 #get combined pileup info
 def getallbases(path,speciesDict,minread,thresh):
@@ -32,8 +33,8 @@ def getallbases(path,speciesDict,minread,thresh):
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
                 speciesDict[loc] = finalBase
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
-    for keyvalue in speciesDict:
-        print>>printSpecies, speciesDict[keyvalue[0]]
+    for keyvalue in natsorted(speciesDict):
+        print>>printSpecies, speciesDict[keyvalue]
     printSpecies.close()
 
     c = Counter(speciesDict.values())
