@@ -411,7 +411,7 @@ identifyFixedSites(){
     parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' {}/contigs.fa '"$( echo {}/$(basename {} ) )".bam' '> "$( echo {}/$(basename {} ) )".pileups' ::: "${FOLDERLISTA[@]}"
 
     #put base for each site in a dictionary (allows no variation when calling sites)
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict_Memory.py {} ${ASSEMBLER} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict_Memory_Test.py {} ${ASSEMBLER} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     if [[ $? != 0 ]]; then
         echo "get_pruned_dict_Memory.py failed"
         exit 1
