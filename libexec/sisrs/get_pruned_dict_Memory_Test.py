@@ -72,7 +72,7 @@ if __name__ == "__main__":
         for line in f:
             posDict[(line.strip())]
     f.close()
-    print 'List read."
+    print 'List read.'
 
     #Generate species-specific posDict
     siteCount=getallbases(path,posDict,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
