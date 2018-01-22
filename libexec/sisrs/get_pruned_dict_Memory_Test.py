@@ -79,6 +79,7 @@ if __name__ == "__main__":
     with open("/data3/schwartzlab/bob/Mammal_SISRS/SISRS_Runs/A/premadeoutput/contigs_LocList") as f:
         for line in f:
             posList.append(line.strip())
+    f.close()
     print 'List read. Size: '+str(sys.getsizeof(posList))
 
     #Generate species-specific posList
