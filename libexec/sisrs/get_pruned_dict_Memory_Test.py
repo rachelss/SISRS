@@ -26,7 +26,7 @@ def getallbases(posList,minread,thresh):
     keys = posList
     values = ['N'] * len(posList)
     speciesDict = dict(zip(keys, values))
-    sys.stdout.write("Created empty speciesDict\n")
+    print "Created empty speciesDict\n"
 
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
@@ -49,7 +49,7 @@ def getallbases(posList,minread,thresh):
     siteCount = len(speciesDict) - nCount
     sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
     nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
-    sys.stdout.write("Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%)\n")
+    print "Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%)\n"
     return siteCount
 
 def getFinalBase_Pruned(cleanBases,minread,thresh):
