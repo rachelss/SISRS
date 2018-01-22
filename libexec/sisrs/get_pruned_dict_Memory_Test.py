@@ -26,6 +26,7 @@ def getallbases(posList,minread,thresh):
     keys = posList
     values = ['N'] * len(posList)
     speciesDict = dict(zip(keys, values))
+    sys.stdout.write("Created empty speciesDict\n")
 
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
