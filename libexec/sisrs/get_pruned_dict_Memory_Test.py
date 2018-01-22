@@ -38,7 +38,7 @@ def getallbases(path,speciesDict,minread,thresh):
     printSpecies.close()
 
     c = Counter(speciesDict.values())
-    nCount = c("N")
+    nCount = c['N']
     siteCount = len(speciesDict) - nCount
     sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
     nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
