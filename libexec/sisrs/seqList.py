@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 import os
 import sys
+from natsort import natsorted, ns
 ##############
 
 def createPosList(path,assembler):
@@ -12,7 +13,7 @@ def createPosList(path,assembler):
             for x in lengthList:
                 posList.append(splitline[0] +'/'+str(x))
     printList = open(path+'/'+assembler+'output/contigs_LocList','w')
-    for item in posList:
+    for item in natsorted(posList):
         print>>printList,item
     printList.close()
     sys.stdout.write("Site list created: " + str(len(posList)) + " total sites\n")
