@@ -17,12 +17,12 @@ import re
 import os
 from specific_genome import getCleanList
 from collections import defaultdict
-from natsort import natsorted, ns
 
 #get combined pileup info
-def getallbases(path,speciesDict,minread,thresh):
+def getallbases(path,minread,thresh):
+    basePath=os.path.dirname(path)
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
-
+    speciesDict=defaultdict(lambda: 'N')
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
             splitline=line.split()
@@ -32,9 +32,12 @@ def getallbases(path,speciesDict,minread,thresh):
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
                 finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
                 speciesDict[loc] = finalBase
+
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
-    for keyvalue in natsorted(speciesDict):
-        print>>printSpecies, speciesDict[keyvalue]
+    with open(basePath+"/"+assembler+"output/contigs_LocList") as f:
+        for line in f:
+            print>>printSpecies, speciesDict[line.strip()]
+    f.close()
     printSpecies.close()
 
     c = Counter(speciesDict.values())
@@ -62,21 +65,12 @@ if __name__ == "__main__":
 
     #Read in arguments
     path=sys.argv[1]
-    basePath=os.path.dirname(path)
     assembler=sys.argv[2]
     minread=int(sys.argv[3])
     thresh=float(sys.argv[4])
 
-    #Read in PosDict
-    posDict=defaultdict(lambda: 'N')
-    with open(basePath+"/"+assembler+"output/contigs_LocList") as f:
-        for line in f:
-            posDict[(line.strip())]
-    f.close()
-    print 'List read.'
-
     #Generate species-specific posDict
-    siteCount=getallbases(path,posDict,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
+    siteCount=getallbases(path,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
     if siteCount == 0:
         print 'No data for '+path
         sys.exit(1)
