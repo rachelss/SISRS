@@ -25,7 +25,7 @@ Requirements
   * Minia (tested with v.2.0.7) (http://minia.genouest.org/)
   * AbySS (tested with v.2.0.2) (http://www.bcgsc.ca/platform/bioinfo/software/abyss)
 * Bowtie2 (http://bowtie-bio.sourceforge.net/bowtie2/index.shtml)
-* Python 2.7, Biopython, PySAM, and natsort
+* Python 2.7, Biopython, and PySAM
 * Samtools v1.3.1 (http://www.htslib.org/)
 * GNU Parallel (http://www.gnu.org/software/parallel/)
 * MAFFT (http://mafft.cbrc.jp/alignment/software/)
