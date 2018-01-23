@@ -9,8 +9,7 @@ def createPosList(path,assembler):
     with open(path+"/"+assembler+"output/contigs_SeqLength.tsv","r") as filein:
         for line in iter(filein):
             splitline=line.split()
-            lengthList=range(1,(int(splitline[1])+1))
-            for x in lengthList:
+            for x in range(1,(int(splitline[1])+1)):
                 print>>printList,splitline[0] +'/'+str(x)
                 siteCount+=1
     printList.close()
