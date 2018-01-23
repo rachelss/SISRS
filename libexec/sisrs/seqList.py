@@ -12,7 +12,7 @@ def createPosList(path,assembler):
             lengthList=range(1,(int(splitline[1])+1))
             for x in lengthList:
                 print>>printList,splitline[0] +'/'+str(x)
-                sitCount+=1
+                siteCount+=1
     printList.close()
     sys.stdout.write("Site list created: " + str(siteCount) + " total sites\n")
 
