@@ -5,16 +5,16 @@ import sys
 
 def createPosList(path,assembler):
     printList = open(path+'/'+assembler+'output/contigs_LocList','w')
-    idx=0
+    siteCount=0
     with open(path+"/"+assembler+"output/contigs_SeqLength.tsv","r") as filein:
         for line in iter(filein):
-            idx+=idx
             splitline=line.split()
             lengthList=range(1,(int(splitline[1])+1))
             for idx,x in enumerate(lengthList):
                 print>>printList,splitline[0] +'/'+str(x)
+            siteCount+=idx
     printList.close()
-    sys.stdout.write("Site list created: " + str(idx) + " total sites\n")
+    sys.stdout.write("Site list created: " + str(siteCount) + " total sites\n")
 
 ######################################################
 
