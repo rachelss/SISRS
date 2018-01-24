@@ -27,6 +27,18 @@ def run(*args, **kwargs):
     return subprocess.check_call(*args, **kwargs)
 
 def bam_match(f1, f2):
+
+    bamdiff_command = [
+        'bamdiff',
+        f1,
+        f2
+    ]
+    
+    print("comparing {} and {}".format(f1, f2))
+    result = subprocess.check_output(bamdiff_command)
+    return result == ''
+
+def bam_match_old(f1, f2):
     bamhash_command_f1 = [
         'bamhash_checksum_bam',
         '--no-paired',
@@ -158,20 +170,28 @@ def test_identify_fixed_sites():
     #    assert(pileups_match(out_pileup_path, exp_pileup_path))
 
 
-#def test_output_alignment():
-#
-#    data_dir = join(data_base_dir, '2_identifyFixedSites')
-#    exp_dir = join(data_base_dir, '3_outputAlignment')
-#    out_dir = out_base_dir
-#
-#    command = [
-#        'sisrs-python',
-#        '-f', data_dir,
-#        '-z', out_dir,
-#        'output_alignment'
-#    ]
-#    run(command)
-#
-#    assert cmp(
-#        join(out_dir, 'alignment.nex'),
-#        join(exp_dir, 'alignment.nex'))
+def test_output_alignment():
+
+    data_dir = join(data_base_dir, '2_identifyFixedSites')
+    exp_dir = join(data_base_dir, '3_outputAlignment')
+    out_dir = out_base_dir
+
+    command = [
+        'sisrs-python',
+        '-f', data_dir,
+        '-z', out_dir,
+        'output_alignment'
+    ]
+    run(command)
+
+    assert cmp(
+        join(out_dir, 'alignment.nex'),
+        join(exp_dir, 'alignment.nex'))
+
+    assert cmp(
+        join(out_dir, 'alignment_bi.nex'),
+        join(exp_dir, 'alignment_bi.nex'))
+
+    assert cmp(
+        join(out_dir, 'alignment_pi.nex'),
+        join(exp_dir, 'alignment_pi.nex'))

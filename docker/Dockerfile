@@ -90,3 +90,4 @@ RUN pip install \
     Biopython
 
 COPY run_tests.sh /
+COPY bamdiff /usr/local/bin/
