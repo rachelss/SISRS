@@ -195,3 +195,29 @@ def test_output_alignment():
     assert cmp(
         join(out_dir, 'alignment_pi.nex'),
         join(exp_dir, 'alignment_pi.nex'))
+
+def test_change_missing():
+
+    data_dir = join(data_base_dir, '3_outputAlignment')
+    exp_dir = join(data_base_dir, '4_changeMissing')
+    out_dir = out_base_dir
+
+    command = [
+        'sisrs-python',
+        '-f', data_dir,
+        '-z', out_dir,
+        'change_missing',
+    ]
+    run(command)
+
+    assert cmp(
+        join(out_dir, 'alignment_m6.phylip-relaxed'),
+        join(exp_dir, 'alignment_m6.phylip-relaxed'))
+
+    assert cmp(
+        join(out_dir, 'locs_m6.txt'),
+        join(exp_dir, 'locs_m6.txt'))
+
+    #assert cmp(
+    #    join(out_dir, 'locs_m6_Clean.txt'),
+    #    join(exp_dir, 'locs_m6_Clean.txt'))

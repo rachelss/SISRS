@@ -4,10 +4,11 @@ import sys
 import click
 from click import echo
 from glob import glob
-from get_alignment import main as get_alignment
 from pprint import pprint
-from identify_fixed_sites import IdentifyFixedSitesCommand
 from align_contigs import AlignContigsCommand 
+from identify_fixed_sites import IdentifyFixedSitesCommand
+from get_alignment import main as get_alignment
+from change_missing import ChangeMissingCommand
 from process import Process
 
 
@@ -112,24 +113,10 @@ def subsample(ctx, genome_size):
 
 @cli.command()
 @click.pass_context
-def output_alignment(ctx):
-    data_dir = ctx.obj['data_dir']
-    out_dir = ctx.obj['out_dir']
-    assembler = ctx.obj['assembler']
-    dir_lists = ctx.obj['dir_lists']
-
-    all_dirs = dir_lists.get_all_dirs()
-    num_missing = len(all_dirs) - 2
-    get_alignment(num_missing, 'X', out_dir, assembler)
-
-
-@cli.command()
-@click.pass_context
 def align_contigs(ctx):
 
     command = AlignContigsCommand(ctx.obj)
     command.run()
-
 
 @cli.command()
 @click.option('--min-read', '-n', required=False, type=int, default=3,
@@ -143,6 +130,27 @@ def identify_fixed_sites(ctx, min_read, threshold):
     ctx.obj['threshold'] = threshold 
 
     command = IdentifyFixedSitesCommand(ctx.obj)
+    command.run()
+
+@cli.command()
+@click.pass_context
+def output_alignment(ctx):
+    data_dir = ctx.obj['data_dir']
+    out_dir = ctx.obj['out_dir']
+    assembler = ctx.obj['assembler']
+    dir_lists = ctx.obj['dir_lists']
+
+    all_dirs = dir_lists.get_all_dirs()
+    num_missing = len(all_dirs) - 2
+    get_alignment(num_missing, 'X', out_dir, assembler)
+
+@cli.command()
+@click.pass_context
+@click.option('--missing', '-m', required=False, type=int, 
+              help="Num missing")
+def change_missing(ctx, missing):
+
+    command = ChangeMissingCommand(ctx.obj, missing)
     command.run()
 
 def main():
