@@ -218,6 +218,6 @@ def test_change_missing():
         join(out_dir, 'locs_m6.txt'),
         join(exp_dir, 'locs_m6.txt'))
 
-    #assert cmp(
-    #    join(out_dir, 'locs_m6_Clean.txt'),
-    #    join(exp_dir, 'locs_m6_Clean.txt'))
+    assert cmp(
+        join(out_dir, 'locs_m6_Clean.txt'),
+        join(exp_dir, 'locs_m6_Clean.txt'))
