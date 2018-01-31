@@ -1,4 +1,5 @@
 import os
+import shutil
 
 from filter_nexus_for_missing import main as filter_nexus_for_missing
 from process import Process 
@@ -61,6 +62,29 @@ def clean_file(in_path, out_path):
     #    for count in sorted_counts:
     #        f_out.write("{}\n".format(count[0]))
 
+def run_comparison(data, str_missing, locs_filename, locs_clean_filename,
+        dirname, filename):
+
+    dir_ = os.path.join(
+            data['out_dir'],
+            dirname)
+
+    alignment_file_path = os.path.join(dir_, filename)
+
+    # TODO: should we really be checking if the directory exists first?
+    if not os.path.exists(dir_):
+        os.makedirs(dir_)
+        src_path = os.path.join(data['out_dir'], filename)
+        shutil.move(src_path, alignment_file_path)
+
+    filter_nexus_for_missing(alignment_file_path, str_missing)
+
+    locs_file_path = os.path.join(dir_, locs_filename)
+    locs_clean_file_path = os.path.join(dir_, locs_clean_filename)
+    
+    clean_file(locs_file_path, locs_clean_file_path)
+
+
 
 class ChangeMissingCommand(object):
 
@@ -75,7 +99,6 @@ class ChangeMissingCommand(object):
         missing = self._missing
 
         alignment_file_path = os.path.join(data['out_dir'], 'alignment.nex')
-
 
         if missing is None:
             dir_lists = data['dir_lists']
@@ -94,3 +117,20 @@ class ChangeMissingCommand(object):
             data['out_dir'], locs_clean_filename)
 
         clean_file(locs_file_path, locs_clean_file_path)
+
+        run_comparison(
+                data,
+                str_missing,
+                locs_filename,
+                locs_clean_filename,
+                'alignmentDataWithoutSingletons',
+                'alignment_pi.nex')
+
+        run_comparison(
+                data,
+                str_missing,
+                locs_filename,
+                locs_clean_filename,
+                'alignmentDataWithOnlyBiallelic',
+                'alignment_bi.nex')
+

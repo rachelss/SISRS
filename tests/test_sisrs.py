@@ -78,6 +78,7 @@ def exists(f1):
     print("Checking if {} exists".format(f1))
     return os.path.exists(f1)
 
+
 def test_align_contigs():
 
     data_dir = join(data_base_dir, '0_RawData_PremadeGenome')
@@ -141,7 +142,6 @@ def test_identify_fixed_sites():
 
         assert(bam_match(out_bam_path, exp_bam_path))
 
-
         assert(files_match(
             join(out_dir, 'pruned_dict.pkl'),
             join(exp_dir, 'pruned_dict.pkl')))
@@ -196,6 +196,7 @@ def test_output_alignment():
         join(out_dir, 'alignment_pi.nex'),
         join(exp_dir, 'alignment_pi.nex'))
 
+
 def test_change_missing():
 
     data_dir = join(data_base_dir, '3_outputAlignment')
@@ -217,7 +218,36 @@ def test_change_missing():
     assert cmp(
         join(out_dir, 'locs_m6.txt'),
         join(exp_dir, 'locs_m6.txt'))
-
     assert cmp(
         join(out_dir, 'locs_m6_Clean.txt'),
         join(exp_dir, 'locs_m6_Clean.txt'))
+
+
+    assert exists(join(out_dir, 'alignmentDataWithoutSingletons'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithoutSingletons', 'alignment_pi.nex'),
+        join(exp_dir, 'alignmentDataWithoutSingletons', 'alignment_pi.nex'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithoutSingletons', 'alignment_pi_m6.phylip-relaxed'),
+        join(exp_dir, 'alignmentDataWithoutSingletons', 'alignment_pi_m6.phylip-relaxed'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithoutSingletons', 'locs_m6.txt'),
+        join(exp_dir, 'alignmentDataWithoutSingletons', 'locs_m6.txt'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithoutSingletons', 'locs_m6_Clean.txt'),
+        join(exp_dir, 'alignmentDataWithoutSingletons', 'locs_m6_Clean.txt'))
+
+
+    assert exists(join(out_dir, 'alignmentDataWithOnlyBiallelic'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi.nex'),
+        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi.nex'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi_m6.phylip-relaxed'),
+        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi_m6.phylip-relaxed'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m6.txt'),
+        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m6.txt'))
+    assert cmp(
+        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m6_Clean.txt'),
+        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m6_Clean.txt'))
