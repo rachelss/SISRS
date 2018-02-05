@@ -23,6 +23,9 @@ def getallbases(path,minread,thresh):
     basePath=os.path.dirname(path)
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
     speciesDict=defaultdict(lambda: 'N')
+    minPenalty=0
+    threshPenalty=0
+    bothPenalty=0
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
             splitline=line.split()
@@ -30,7 +33,7 @@ def getallbases(path,minread,thresh):
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
-                finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
+                finalBase,minPenalty,threshPenalty,bothPenalty=getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty)
                 speciesDict[loc] = finalBase
 
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
@@ -46,9 +49,11 @@ def getallbases(path,minread,thresh):
     sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
     nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
     print "Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%)\n"
+    print "Of " + str(nCount) + " Ns, " + os.path.basename(path) + " lost " + str(threshPenalty) + " via homozygosity threshold, " + str(minPenalty)  +" from low coverage, and " + str(bothPenalty) + " from both.\n"
+
     return siteCount
 
-def getFinalBase_Pruned(cleanBases,minread,thresh):
+def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty):
     singleBase=(Counter(cleanBases).most_common()[0][0])
     if singleBase == '*':
         singleBase = '-'
@@ -58,8 +63,14 @@ def getFinalBase_Pruned(cleanBases,minread,thresh):
         finalBase=singleBase
     else:
         finalBase='N'
+        if count < minread and counts/float(len(cleanBases)) < thresh:
+            bothPenalty+=1
+        elif counts < minread:
+                minPenalty+=1
+        elif counts/float(len(cleanBases)) < thresh:
+                threshPenalty+=1
 
-    return finalBase
+    return finalBase,minPenalty,threshPenalty,bothPenalty
 ###############################################
 if __name__ == "__main__":
 
