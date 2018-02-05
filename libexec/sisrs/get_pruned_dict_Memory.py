@@ -63,7 +63,7 @@ def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothP
         finalBase=singleBase
     else:
         finalBase='N'
-        if count < minread and counts/float(len(cleanBases)) < thresh:
+        if counts < minread and counts/float(len(cleanBases)) < thresh:
             bothPenalty+=1
         elif counts < minread:
                 minPenalty+=1
