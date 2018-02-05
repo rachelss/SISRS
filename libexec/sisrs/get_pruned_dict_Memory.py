@@ -26,7 +26,6 @@ def getallbases(path,minread,thresh):
     minPenalty=0
     threshPenalty=0
     bothPenalty=0
-    naturalN=0
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
             splitline=line.split()
