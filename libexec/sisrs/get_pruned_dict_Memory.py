@@ -26,6 +26,7 @@ def getallbases(path,minread,thresh):
     minPenalty=0
     threshPenalty=0
     bothPenalty=0
+    naturalN=0
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
         for line in iter(filein):
             splitline=line.split()
@@ -33,7 +34,7 @@ def getallbases(path,minread,thresh):
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
-                finalBase,minPenalty,threshPenalty,bothPenalty=getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty)
+                finalBase,minPenalty,threshPenalty,bothPenalty,naturalN=getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty,naturalN)
                 speciesDict[loc] = finalBase
 
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
@@ -49,11 +50,11 @@ def getallbases(path,minread,thresh):
     sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
     nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
     print "Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%)\n"
-    print "Of " + str(nCount) + " Ns, " + os.path.basename(path) + " lost " + str(threshPenalty) + " via homozygosity threshold, " + str(minPenalty)  +" from low coverage, and " + str(bothPenalty) + " from both.\n"
+    print "Of " + str(nCount) + " Ns, " + os.path.basename(path) + " lost " + str(threshPenalty) + " via homozygosity threshold, " + str(minPenalty)  +" from low coverage, and " + str(bothPenalty) + " from both. "+ str(naturalN) + " were inferred directly from reads.\n"
 
     return siteCount
 
-def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty):
+def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty,naturalN):
     singleBase=(Counter(cleanBases).most_common()[0][0])
     if singleBase == '*':
         singleBase = '-'
@@ -61,6 +62,8 @@ def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothP
 
     if counts >= minread and counts/float(len(cleanBases)) >= thresh:
         finalBase=singleBase
+        if finalBase == 'N':
+            naturalN+=1
     else:
         finalBase='N'
         if counts < minread and counts/float(len(cleanBases)) < thresh:
@@ -70,7 +73,7 @@ def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothP
         elif counts/float(len(cleanBases)) < thresh:
                 threshPenalty+=1
 
-    return finalBase,minPenalty,threshPenalty,bothPenalty
+    return finalBase,minPenalty,threshPenalty,bothPenalty,naturalN
 ###############################################
 if __name__ == "__main__":
 
