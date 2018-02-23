@@ -30,7 +30,7 @@ def main(alignment_filename, missing_str):
     data = SeqIO.to_dict(SeqIO.parse(alignment_filename, fformat))
     locline = linecache.getline(alignment_filename, 8)
     locs = locline.split()
-    species = data.keys()
+    species = list(data.keys())
     minsp = len(species)-missing
     newlocs = list()
 
@@ -46,7 +46,7 @@ def main(alignment_filename, missing_str):
             newlocs.append(locs[i+1])
 
     datalist = []
-    for k,v in newdata.iteritems():
+    for k,v in sorted(newdata.items()):
         seq = SeqRecord(Seq(''.join(v)), id=k)
         datalist.append(seq)
 
@@ -56,4 +56,11 @@ def main(alignment_filename, missing_str):
     locfile.close()
     origLength = len(data[species[0]])
     newLength = len(newlocs)
-    print 'With '+str(missing)+' taxa allowed to be missing, '+str(origLength)+' sites from '+path.basename(alignment_filename)+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str(origLength-newLength)+' sites or '+str('%.2f' % (((origLength-newLength)/origLength)*100))+'% lost)'
+    print('With '+str(missing)+' taxa allowed to be missing, '+str(origLength)+' sites from '+path.basename(alignment_filename)+' ('+str(len(species)-2)+' allowed missing) are reduced to '+str(len(newlocs))+' sites ('+str(origLength-newLength)+' sites or '+str('%.2f' % (((origLength-newLength)/origLength)*100))+'% lost)')
+
+
+if __name__ == '__main__':
+    alignment_filename = sys.argv[1]
+    missing_str = sys.argv[2]
+
+    main(alignment_filename, missing_str)
