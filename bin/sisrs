@@ -4,13 +4,13 @@
 
 #run with non-defaults: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
 
-VERSION=1.6
+VERSION=1.6.2
 
 help() {
     cat <<ENDLINE
 
  SISRS: Site Identification from Short Read Sequences
- Version 1.6
+ Version 1.6.2
  Copyright (c) 2013-2015 Rachel Schwartz <Rachel.Schwartz@asu.edu>
  https://github.com/rachelss/SISRS
 
