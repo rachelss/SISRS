@@ -1,2 +1,4 @@
+from sisrs import main as sisrs_main
+
 def main():
-    print("Hi there")
+    sisrs_main()
