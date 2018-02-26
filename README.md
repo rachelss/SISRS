@@ -1,8 +1,8 @@
-SISRS_B
+SISRS
 =====
 
 SISRS: Site Identification from Short Read Sequences  
-Version 1.6  
+Version 1.6.2  
 Copyright (c) 2013-2016 Rachel Schwartz <Rachel.Schwartz@asu.edu>  
 https://github.com/rachelss/SISRS  
 More information: Schwartz, R.S., K.M Harkins, A.C. Stone, and R.A. Cartwright. 2015. A composite genome approach to identify phylogenetically informative data from next-generation sequencing. BMC Bioinformatics. 16:193.
@@ -75,7 +75,7 @@ Running SISRS
 
 **buildContigs**: given subsampled reads, run sisrs composite genome assembly with user-specified assembler  
 
-**alignContigs**: align reads to composite genome as single-ended, uniqely mapped  
+**alignContigs**: align reads to composite genome as single-ended, uniquely mapped  
 
 **mapContigs**: align composite genome reads to a reference genome (optional)  
 
