@@ -5,11 +5,11 @@ import click
 from click import echo
 from glob import glob
 from pprint import pprint
-from align_contigs import AlignContigsCommand 
-from identify_fixed_sites import IdentifyFixedSitesCommand
-from get_alignment import main as get_alignment
-from change_missing import ChangeMissingCommand
-from process import Process
+from .align_contigs import AlignContigsCommand 
+from .identify_fixed_sites import IdentifyFixedSitesCommand
+from .get_alignment import main as get_alignment
+from .change_missing import ChangeMissingCommand
+from .process import Process
 
 
 class DirectoryLists(object):

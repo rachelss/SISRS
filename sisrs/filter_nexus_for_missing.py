@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """Take a nex or phy or fa file, outputs phylip-relaxed with X missing data
 

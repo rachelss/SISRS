@@ -1,9 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 #This script assumes a single pileup file per taxon
 #Add an assert statement to test this
 import os
 import sys
-import cPickle
 from collections import Counter
 from Bio import SeqIO
 import glob
@@ -39,24 +38,25 @@ def getCleanList(ref,bases):
         if b in okbases:
             new_base_list.append(b)         #Get base
         elif b in indels:                   #skip indels
-            i = int(ibase_list.next())
-            j = str(ibase_list.next())
+            i = int(next(ibase_list))
+            j = str(next(ibase_list))
             if str.isdigit(j):
                 skip=int(str(i)+j)
                 while skip>0:
-                    z=ibase_list.next()
+                    z=next(ibase_list)
                     skip=skip-1
             else:
                 while i>1:
-                    z=ibase_list.next()
+                    z=next(ibase_list)
                     i = i-1
         elif b=='^':                        #skip read qual noted at end of read
-            z=ibase_list.next()
+            z=next(ibase_list)
 
     return new_base_list
 
 def getFinalBase_Specific(cleanBases):
-    finalBase=(Counter(cleanBases).most_common()[0][0])
+    most_common = sorted(Counter(cleanBases).most_common())
+    finalBase=(most_common[0][0])
     if finalBase == '*':
         finalBase = 'N'
     return finalBase
@@ -70,7 +70,7 @@ def main(path, contig_file):
 
     allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
     if len(allbases)==0:
-        print 'No data for '+path
+        print('No data for '+path)
         sys.exit(1)
 
     # Read contig fasta file into dictionary with sequence ID as the key
@@ -79,11 +79,18 @@ def main(path, contig_file):
     fasta_dict = {read.id:list(str(read.seq)) for read in fasta_seq}
     contig_handle.close()
 
-    for locus_pos,base in allbases.iteritems():
+    for locus_pos,base in sorted(allbases.items()):
         locus,pos = locus_pos.split('/')
         fasta_dict[locus][int(pos)-1] = base
 
-    output = open(path+'/contigs.fa', 'wb')
-    for l,seq in fasta_dict.iteritems():
+    #output = open(path+'/contigs.fa', 'wb')
+    output = open(path+'/contigs.fa', 'w')
+    for l,seq in sorted(fasta_dict.items()):
         output.write('>'+str(l)+"\n"+"".join(seq)+"\n")
     output.close()
+
+
+if __name__ == '__main__':
+    path = sys.argv[1]
+    contig_file = sys.argv[2]
+    main(path, contig_file)

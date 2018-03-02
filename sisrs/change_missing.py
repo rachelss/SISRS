@@ -1,8 +1,8 @@
 import os
 import shutil
 
-from filter_nexus_for_missing import main as filter_nexus_for_missing
-from process import Process 
+from .filter_nexus_for_missing import main as filter_nexus_for_missing
+from .process import Process 
 from subprocess import PIPE 
 
 def clean_file(in_path, out_path):

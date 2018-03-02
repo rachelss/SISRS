@@ -1,9 +1,9 @@
 import os
 import sys
-from process import Process, AlignmentProcess
+from .process import Process, AlignmentProcess
 from multiprocessing import Pool
-from specific_genome import main as specific_genome
-from get_pruned_dict import main as get_pruned_dict
+from .specific_genome import main as specific_genome
+from .get_pruned_dict import main as get_pruned_dict
 
 def run_mpileup(args):
 
@@ -85,11 +85,7 @@ class IdentifyFixedSitesCommand(object):
 
         contig_file_path = os.path.join(contig_dir, 'contigs.fa')
 
-        samtools_faidx_command = [
-            'samtools', 'faidx', contig_file_path
-        ]
         Process(['samtools', 'faidx', contig_file_path]).wait()
-
 
         pool = Pool(num_processors)
         args = [ (dir_, contig_file_path) for dir_ in all_dirs ]
@@ -98,8 +94,9 @@ class IdentifyFixedSitesCommand(object):
 
         try:
             pool.map(run_specific_genome, args)
-        except Exception:
+        except Exception as e:
             print("specific_genome.py failed")
+            print(e)
             sys.exit(1)
 
         pool.map(run_faidx, all_dirs)
@@ -122,6 +119,7 @@ class IdentifyFixedSitesCommand(object):
             args.append([dir_, contig_file_path])
 
         pool.map(run_index, all_dirs)
+
         pool.map(run_mpileup, args)
  
         # put base for each site in a dictionary (allows no variation when
@@ -129,7 +127,8 @@ class IdentifyFixedSitesCommand(object):
         args = [ (dir_, min_read, threshold) for dir_ in all_dirs ]
         try:
             pool.map(run_get_pruned_dict, args)
-        except Exception:
+        except Exception as e:
             print("get_pruned_dict.py failed")
+            print(e)
             sys.exit(1)
         print("==== Done Identifying Fixed Sites Without Error ====")

@@ -1,6 +1,6 @@
 import os
 import shutil
-from process import Process, AlignmentProcess
+from .process import Process, AlignmentProcess
 from multiprocessing import Pool
 from subprocess import check_call
 
