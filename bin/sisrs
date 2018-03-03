@@ -430,7 +430,7 @@ outputAlignment(){
 }
 
 changeMissing(){
-    ${DIR}/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing from alignment.nex
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignment.nex ${MISSING}       #alignment w specified number missing from alignment.nex
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
@@ -444,7 +444,7 @@ changeMissing(){
         mv ${OUTFOLDER}/alignment_pi.nex ${OUTFOLDER}/alignmentDataWithoutSingletons
     fi
 
-    ${DIR}/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithoutSingletons/alignment_pi.nex ${MISSING}       #alignment w specified number missing from alignment.nex
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithoutSingletons/alignment_pi.nex ${MISSING}       #alignment w specified number missing from alignment.nex
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
@@ -458,7 +458,7 @@ changeMissing(){
         mv ${OUTFOLDER}/alignment_bi.nex ${OUTFOLDER}/alignmentDataWithOnlyBiallelic
     fi
 
-    ${DIR}/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithOnlyBiallelic/alignment_bi.nex ${MISSING}       #alignment w specified number missing from alignment.nex
+    ${DIR}/libexec/sisrs/filter_nexus_for_missing.py ${OUTFOLDER}/alignmentDataWithOnlyBiallelic/alignment_bi.nex ${MISSING}       #alignment w specified number missing from alignment.nex
     if [[ $? != 0 ]]; then
         echo "filtering for missing failed"
         exit 1
