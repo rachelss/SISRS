@@ -44,7 +44,7 @@ for i in range(len(data[species[0]])):
         newlocs.append(locs[i+1])
 
 datalist = []
-for k,v in newdata.iteritems():
+for k,v in sorted(newdata.iteritems()):
     seq = SeqRecord(Seq(''.join(v)), id=k)
     datalist.append(seq)
 

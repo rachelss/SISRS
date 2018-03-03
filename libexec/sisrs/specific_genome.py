@@ -56,7 +56,8 @@ def getCleanList(ref,bases):
     return new_base_list
 
 def getFinalBase_Specific(cleanBases):
-    finalBase=(Counter(cleanBases).most_common()[0][0])
+    most_common = sorted(Counter(cleanBases).most_common())
+    finalBase=(most_common[0][0])
     if finalBase == '*':
         finalBase = 'N'
     return finalBase
@@ -77,11 +78,11 @@ if __name__ == "__main__":
     fasta_dict = {read.id:list(str(read.seq)) for read in fasta_seq}
     contig_handle.close()
 
-    for locus_pos,base in allbases.iteritems():
+    for locus_pos,base in sorted(allbases.iteritems()):
         locus,pos = locus_pos.split('/')
         fasta_dict[locus][int(pos)-1] = base
 
     output = open(path+'/contigs.fa', 'wb')
-    for l,seq in fasta_dict.iteritems():
+    for l,seq in sorted(fasta_dict.iteritems()):
         output.write('>'+str(l)+"\n"+"".join(seq)+"\n")
     output.close()
