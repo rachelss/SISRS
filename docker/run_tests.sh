@@ -2,4 +2,4 @@
 
 cd /SISRS
 pip install -e .
-pytest -s
+pytest -s tests/
