@@ -1,33 +1,14 @@
 #!/usr/bin/env python2
-
-"""
-    output alignment of sites useful for phylogenetics (nexus format)
-    can specify max number of species missing for each site
-
-    arguments:
-        num_missing -- the number of species allowed to be missing at a site so that site will show in output alignment
-        reference genome -- if 'X' then output will only show results with reference to composite-reference; otherwise will also show position given alignment of composite-reference to an assembled genome
-        mainfolder -- folder that includes folders containing data
-        assembler -- assembler used to get composite reference
-
-    output:
-        alignment.nex : nexus formatted alignment including position in composite reference genome (and absolute ref if available); each site as up to num_missing missing data
-        alignment_bi.nex : above but only biallelic sites
-        alignment_pi.nex : above but only phylogenetically informative sites (no singletons)
-
-"""
-
 import os
 import re
 import glob
-import cPickle
 from collections import Counter,defaultdict
 import sys
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
+from itertools import izip
 
-#########################
 class Scaffold:
     def __init__(self,chr,start,end,length=None,flag=None,cigar=None):
         self.chr = chr
@@ -77,59 +58,6 @@ def makerefdict(reffasta):
         refdict[k]=list(str(refdict[k].seq))
 
     return refdict      #name:sequence_as_list
-
-def read_pkls(path):
-    '''     read python dicts back from the files
-            get species:{loc:base}
-                list of locs
-                list of species folders     '''
-
-    filelist = glob.glob(path+'/*/pruned_dict.pkl')
-    assert len(filelist) > 0, 'No species had data from the pileup'
-
-    allbases=dict()
-    alllocs,pathlist=[],[]
-
-    for fi in filelist:
-        d = os.path.dirname(fi)     #sp relative path
-        pathlist.append(d)
-        species = os.path.basename(d)
-        print 'Reading data: '+ species     #print sp name
-
-        pkl_file = open(fi, 'rb')
-        sp_bases = cPickle.load(pkl_file)       #sp_bases is loc:base for species
-        pkl_file.close()
-
-        for l in sp_bases:
-            alllocs.append(l)
-        allbases[species]=sp_bases
-
-    alllocs=list(set(alllocs))
-    pathlist.sort()
-    alllocs.sort()
-
-    return allbases,alllocs,pathlist
-
-def get_phy_sites(pathlist,allbases,alllocs,num_missing):
-    ''' gets the alignment i.e. the list of bases for each species, where all sites are variable among species  '''
-
-    splist = [os.path.basename(path) for path in pathlist]
-    alignment = Alignment()
-    alignment.species_data = {species: [] for species in splist}
-
-    for loc in alllocs: #go through each location
-        snp = [allbases[species][loc] for species in splist if loc in allbases[species]]      #list of the base for each species at a given loc
-        snp = [b for b in snp if b in ['A','G','C','T','-']]        #filter for real bases and deletions
-
-        if (len(pathlist)-len(snp)) <= num_missing and len(set(snp)) > 1:     #not too many missing and there is variation
-            alignment.locations.append(loc)
-            for species in splist: #add base to the list for that species (or add 'N')
-                if loc in allbases[species]:
-                    alignment.species_data[species].append(allbases[species][loc])
-                else:
-                    alignment.species_data[species].append('N')
-
-    return alignment
 
 def sep_cigar(cigar):
     sepcigar = re.findall('[A-Z]+|[0-9]+',cigar)
@@ -278,20 +206,41 @@ def write_alignment(fi,alignment,numbi):
     ALIGNMENTBI.close()
     ALIGNMENTPI.close()
 
-#########################
-num_missing = int(sys.argv[1])
+def get_phy_sites(mainfolder,assembler,num_missing):
+
+    #Fetch contig data
+    contigList=glob.glob(mainfolder+'/' + assembler +'output/contigs_LocList')
+    assert len(contigList) > 0, 'Total site list not found in assembly folder'
+
+    #Fetch sorted species data
+    dataLists = sorted(glob.glob(mainfolder+'/[!(assembler+output]*/*LocList'))
+    splist=[os.path.basename(os.path.dirname(path)) for path in dataLists]
+    speciesCount=len(dataLists)
+    assert len(dataLists) > 0, 'No species had data from the pileup'
+
+    allLists = contigList+dataLists
+
+    alignment = Alignment()
+    alignment.species_data = {species: [] for species in splist}
+
+    files = [open(i, "r") for i in allLists]
+    for rows in izip(*files):
+        rowList = map(lambda foo: foo.replace('\n', ''), list(rows))
+        speciesData = rowList[1:(speciesCount+1)]
+        if speciesData.count("N")<=num_missing and len(set(filter(lambda a: a != "N", speciesData)))>1:
+            alignment.locations.append(rowList[0])
+            for j in range(0,(speciesCount)):
+                alignment.species_data[splist[j]].append(speciesData[j])
+    return alignment
+
+num_missing=int(sys.argv[1])
 reference = sys.argv[2]
 mainfolder = sys.argv[3]
 assembler = sys.argv[4]
 basecomplement = {'a':'t', 'c':'g', 't':'a', 'g':'c', 'A':'t', 'C':'g', 'T':'a', 'G':'c','-':'-'}
 
-allbases,alllocs,pathlist = read_pkls(mainfolder)      #dict of species:(loc:base), sorted list of unique position names
-num_species = len(pathlist)
-
-alignment=get_phy_sites(pathlist,allbases,alllocs,num_missing)       #return Alignment object of informative sites
-numbi = alignment.numsnps()     #prints numbers of snps, biallelic snps, and singletons
-
+alignment=get_phy_sites(mainfolder,assembler,num_missing)
+numbi=alignment.numsnps()
 nodedict,ref = get_ref_info(alignment,reference,mainfolder,assembler)
-
 alignment = add_ref_info(alignment,ref,nodedict)
 alignment = write_alignment(mainfolder+'/alignment.nex',alignment,numbi)

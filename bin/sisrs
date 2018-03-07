@@ -4,13 +4,13 @@
 
 #run with non-defaults: ./sisrs -r ./reference.fasta -p 40 -f fastq -m 4 -a ./fastq_data/
 
-VERSION=1.6
+VERSION=1.6.2
 
 help() {
     cat <<ENDLINE
 
  SISRS: Site Identification from Short Read Sequences
- Version 1.6
+ Version 1.6.2
  Copyright (c) 2013-2015 Rachel Schwartz <Rachel.Schwartz@asu.edu>
  https://github.com/rachelss/SISRS
 
@@ -337,8 +337,11 @@ alignContigs(){
     mv ${OUTFOLDER}/${CONTIGS}/contigs.fa ${OUTFOLDER}/${CONTIGS}/contigs_OriginalNames.fa
     rename.sh in=${OUTFOLDER}/${CONTIGS}/contigs_OriginalNames.fa out=${OUTFOLDER}/${CONTIGS}/contigs.fa prefix=SISRS addprefix=t
     echo ==== Scafolds Renamed ====
-    ${DIR}/libexec/sisrs/seq_length.py ${OUTFOLDER}/${CONTIGS} #Create TSV with scaffold lengths
     bowtie2-build ${OUTFOLDER}/"${CONTIGS}"/contigs.fa ${OUTFOLDER}/"${CONTIGS}"/contigs      #index contigs
+    ${DIR}/libexec/sisrs/seq_length.py ${OUTFOLDER}/${CONTIGS} #Create TSV with scaffold lengths (Could combine seq_length and seqList)
+    ${DIR}/libexec/sisrs/seqList.py ${OUTFOLDER} ${ASSEMBLER} #Create site list from contigs files
+    echo ==== Site List Generated ====
+
 
     #Find all FASTQ files in each species folder
     for FOLDER in "${FOLDERLISTA[@]}";do
@@ -408,9 +411,9 @@ identifyFixedSites(){
     parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' {}/contigs.fa '"$( echo {}/$(basename {} ) )".bam' '> "$( echo {}/$(basename {} ) )".pileups' ::: "${FOLDERLISTA[@]}"
 
     #put base for each site in a dictionary (allows no variation when calling sites)
-    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict.py {} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
+    parallel --jobs "${PROCESSORS}" "${DIR}/libexec/sisrs/get_pruned_dict_Memory.py {} ${ASSEMBLER} ${MINREAD} ${THRESHOLD}" ::: "${FOLDERLISTA[@]}"
     if [[ $? != 0 ]]; then
-        echo "get_pruned_dict.py failed"
+        echo "get_pruned_dict_Memory.py failed"
         exit 1
     fi
     echo ==== Done Identifying Fixed Sites Without Error ====
@@ -418,9 +421,9 @@ identifyFixedSites(){
 
 outputAlignment(){
     if [ -n "${REFFILE}" ]; then
-        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) ${REFFILE} ${OUTFOLDER} ${ASSEMBLER}
+        ${DIR}/libexec/sisrs/get_alignment_Memory.py $((${#FOLDERLISTA[@]} - 2)) ${REFFILE} ${OUTFOLDER} ${ASSEMBLER}
     else
-        ${DIR}/libexec/sisrs/get_alignment.py $((${#FOLDERLISTA[@]} - 2)) X ${OUTFOLDER} ${ASSEMBLER}       #alignment with up to all but 2 missing
+        ${DIR}/libexec/sisrs/get_alignment_Memory.py $((${#FOLDERLISTA[@]} - 2)) X ${OUTFOLDER} ${ASSEMBLER}       #alignment with up to all but 2 missing
     fi
     if [[ $? != 0 ]]; then
         echo "get_alignment.py failed"
