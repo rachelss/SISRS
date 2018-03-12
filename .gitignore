@@ -8,6 +8,7 @@ libexec/sisrs/sub_sample_to_reduce_cov.py
 build
 dist
 .cache
+.pytest_cache
 sisrs.egg-info
 *.swp
 *.pyc
