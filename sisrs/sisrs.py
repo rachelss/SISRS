@@ -2,6 +2,7 @@ from multiprocessing import Pool
 import os
 import sys
 import click
+import argparse
 from click import echo
 from glob import glob
 from pprint import pprint
@@ -111,11 +112,11 @@ def subsample(ctx, genome_size):
     #print(ctx.obj['data_dir'])
     pass
 
-@cli.command()
-@click.pass_context
-def align_contigs(ctx):
+#@cli.command()
+#@click.pass_context
+def align_contigs(args_dict):
 
-    command = AlignContigsCommand(ctx.obj)
+    command = AlignContigsCommand(args_dict)
     command.run()
 
 @cli.command()
@@ -154,4 +155,50 @@ def change_missing(ctx, missing):
     command.run()
 
 def main():
-    cli(obj={})
+    #cli(obj={})
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers()
+
+    align_contigs_parser = subparsers.add_parser(
+            'alignContigs', help='Align Contigs')
+    align_contigs_parser.add_argument('--data_directory')
+    align_contigs_parser.add_argument('--output_directory')
+    align_contigs_parser.add_argument('--overwrite')
+    align_contigs_parser.add_argument(
+            '-a', '--assembler', type=str, default='velvet')
+    align_contigs_parser.add_argument('--num_processors', type=int, default=1)
+    align_contigs_parser.set_defaults(func=align_contigs)
+
+    change_missing_parser = subparsers.add_parser(
+            'changeMissing', help='Change Missing')
+
+    args = parser.parse_args()
+
+    data_directory = args.data_directory
+    output_directory = args.output_directory
+    overwrite = args.overwrite
+    assembler = args.assembler
+    num_processors = args.num_processors
+
+    if data_directory is None:
+        data_directory = os.getcwd()
+    data_directory = os.path.abspath(data_directory)
+
+    output_directory = setup_output_directory(
+        data_directory, output_directory, overwrite)
+
+    dir_lists = DirectoryLists(output_directory)
+
+    contig_dir = ''
+    if assembler == 'premade':
+        contig_dir = 'premadeoutput'
+
+    args_dict = {}
+    args_dict['data_dir'] = data_directory
+    args_dict['out_dir'] = output_directory
+    args_dict['assembler'] = assembler
+    args_dict['dir_lists'] = dir_lists
+    args_dict['contig_dir'] = os.path.join(output_directory, contig_dir)
+    args_dict['num_processors'] = num_processors
+
+    args.func(args_dict)
