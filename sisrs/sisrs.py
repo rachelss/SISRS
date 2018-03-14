@@ -47,6 +47,7 @@ def setup_output_directory(data_directory, output_directory, overwrite):
         else:
             echo("{} already exists and overwrite flag not set. Aborting...".format(
                 output_directory))
+            sys.exit(1)
 
     return os.path.abspath(output_directory)
 
