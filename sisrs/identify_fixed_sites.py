@@ -74,8 +74,6 @@ class IdentifyFixedSitesCommand(object):
 
     def run(self):
 
-        aligner = create_aligner()
-
         data = self._data
 
         contig_dir = data['contig_dir']
@@ -83,6 +81,8 @@ class IdentifyFixedSitesCommand(object):
         dir_lists = data['dir_lists']
         min_read = data['min_read']
         threshold = data['threshold']
+
+        aligner = create_aligner(num_processors=num_processors)
 
         all_dirs = dir_lists.get_all_dirs()
 
@@ -113,7 +113,7 @@ class IdentifyFixedSitesCommand(object):
             os.remove(os.path.join(dir_, taxon_name + '.pileups'))
 
             contig_prefix = os.path.join(dir_, 'contigs')
-            aligner.align(dir_, contig_prefix, num_processors)
+            aligner.align(dir_, contig_prefix)
 
         args = []
         for dir_ in all_dirs:
