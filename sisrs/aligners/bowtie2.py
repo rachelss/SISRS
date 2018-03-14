@@ -6,8 +6,8 @@ from ..process import Process
 
 class Bowtie2Aligner(Aligner):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
     def index(self, reference_file_path, contig_path_prefix):
         build_command = [
@@ -15,7 +15,7 @@ class Bowtie2Aligner(Aligner):
         ]
         Process(build_command).wait()
 
-    def align(self, directory, contig_prefix, num_processors):
+    def align(self, directory, contig_prefix):
 
         dir_ = directory
 
@@ -27,7 +27,7 @@ class Bowtie2Aligner(Aligner):
         # Generate temp file
         bowtie2_command = [
             'bowtie2',
-            '-p', str(num_processors),
+            '-p', str(self._num_processors),
             '-N', '1',
             '--local',
             '-x', contig_prefix,
@@ -37,7 +37,7 @@ class Bowtie2Aligner(Aligner):
 
         samtools_to_bam_command = [
             'samtools', 'view', '-Su',
-            '-@', str(num_processors),
+            '-@', str(self._num_processors),
             '-F' , '4',
             '-',
         ]
@@ -50,7 +50,7 @@ class Bowtie2Aligner(Aligner):
 
         samtools_sort_command = [
             'samtools', 'sort',
-            '-@', str(num_processors),
+            '-@', str(self._num_processors),
             '-',
             '-o', temp_file_path,
         ]
@@ -68,7 +68,7 @@ class Bowtie2Aligner(Aligner):
 
         samtools_header_command = [
             'samtools', 'view',
-            '-@', str(num_processors),
+            '-@', str(self._num_processors),
             '-H', temp_file_path,
             '-o', header_file_path
         ]
@@ -81,7 +81,7 @@ class Bowtie2Aligner(Aligner):
 
         samtools_data_command = [
             'samtools', 'view',
-            '-@', str(num_processors),
+            '-@', str(self._num_processors),
             temp_file_path,
         ]
         samtools_data_proc = Process(samtools_data_command, stdout=PIPE)
@@ -99,7 +99,7 @@ class Bowtie2Aligner(Aligner):
 
         samtools_final_command = [
             'samtools', 'view',
-            '-@', str(num_processors),
+            '-@', str(self._num_processors),
             '-b',
             '-',
             '-o', output_base_path + '.bam'

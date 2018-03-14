@@ -26,12 +26,12 @@ class AlignContigsCommand(object):
 
     def run(self):
 
-        aligner = create_aligner()
-
         print("==== Renaming Scaffolds for SISRS ====")
         contig_dir = self._data['contig_dir']
         dir_lists = self._data['dir_lists']
         num_processors = self._data['num_processors']
+
+        aligner = create_aligner(num_processors=num_processors)
 
         contig_file_path = os.path.join(contig_dir, 'contigs.fa')
 
@@ -58,7 +58,7 @@ class AlignContigsCommand(object):
 
         for dir_ in all_dirs:
 
-            aligner.align(dir_, contig_prefix, num_processors)
+            aligner.align(dir_, contig_prefix)
 
         print("==== Done Aligning ====")
         pool = Pool(num_processors)
