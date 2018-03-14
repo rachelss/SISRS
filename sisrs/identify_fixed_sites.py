@@ -1,9 +1,10 @@
 import os
 import sys
-from .process import Process, AlignmentProcess
+from .process import Process 
 from multiprocessing import Pool
 from .specific_genome import main as specific_genome
 from .get_pruned_dict import main as get_pruned_dict
+from .aligners import create_aligner
 
 def run_mpileup(args):
 
@@ -40,15 +41,15 @@ def run_faidx(dir_):
     ]
     Process(command).wait()
 
-def run_bowtie2(dir_):
+def run_bowtie2(args):
+
+    aligner = args[0]
+    dir_ = args[1]
 
     contigs_path = os.path.join(dir_, 'contigs.fa')
     contigs_dir = os.path.join(dir_, 'contigs')
 
-    command = [
-        'bowtie2-build', contigs_path, contigs_dir,
-    ]
-    Process(command).wait()
+    aligner.index(contigs_path, contigs_dir)
 
 def run_index(dir_):
 
@@ -72,6 +73,8 @@ class IdentifyFixedSitesCommand(object):
         self._data = data 
 
     def run(self):
+
+        aligner = create_aligner()
 
         data = self._data
 
@@ -100,8 +103,7 @@ class IdentifyFixedSitesCommand(object):
             sys.exit(1)
 
         pool.map(run_faidx, all_dirs)
-        pool.map(run_bowtie2, all_dirs)
-
+        pool.map(run_bowtie2, [(aligner, dir_) for dir_ in all_dirs])
 
         for dir_ in all_dirs:
 
@@ -111,7 +113,7 @@ class IdentifyFixedSitesCommand(object):
             os.remove(os.path.join(dir_, taxon_name + '.pileups'))
 
             contig_prefix = os.path.join(dir_, 'contigs')
-            AlignmentProcess(dir_, contig_prefix, num_processors)
+            aligner.align(dir_, contig_prefix, num_processors)
 
         args = []
         for dir_ in all_dirs:

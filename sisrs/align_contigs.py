@@ -1,8 +1,9 @@
 import os
 import shutil
-from .process import Process, AlignmentProcess
 from multiprocessing import Pool
 from subprocess import check_call
+from .process import Process 
+from .aligners import create_aligner
 
 
 def sam_index_directory(dir_):
@@ -24,6 +25,8 @@ class AlignContigsCommand(object):
         self._data = data 
 
     def run(self):
+
+        aligner = create_aligner()
 
         print("==== Renaming Scaffolds for SISRS ====")
         contig_dir = self._data['contig_dir']
@@ -51,13 +54,11 @@ class AlignContigsCommand(object):
         all_dirs = dir_lists.get_all_dirs()
         contig_prefix = os.path.join(contig_dir, 'contigs')
 
-        # Build index
-        build_command = [ 'bowtie2-build', contig_file_path, contig_prefix ]
-        Process(build_command).wait()
+        aligner.index(contig_file_path, contig_prefix)
 
         for dir_ in all_dirs:
 
-            AlignmentProcess(dir_, contig_prefix, num_processors)
+            aligner.align(dir_, contig_prefix, num_processors)
 
         print("==== Done Aligning ====")
         pool = Pool(num_processors)

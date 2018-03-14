@@ -8,7 +8,7 @@ from os.path import join, exists
 
 data_base_dir = 'pipeline_stages'
 out_base_dir = 'output'
-num_proc = '1'
+num_proc = 1
 
 taxon_names = [
     'GorGor',
@@ -21,8 +21,9 @@ taxon_names = [
     'PonPyg'
 ]
 
-if os.path.exists(out_base_dir):
-    shutil.rmtree(out_base_dir)
+def setup():
+    if os.path.exists(out_base_dir):
+        shutil.rmtree(out_base_dir)
 
 def run(*args, **kwargs):
     return subprocess.check_call(*args, **kwargs)
@@ -89,6 +90,8 @@ def exists(f1):
 
 def test_align_contigs():
 
+    setup()
+
     data_dir = join(data_base_dir, '0_RawData_PremadeGenome')
     exp_base_dir = join(data_base_dir, '1_alignContigs')
     contig_dirname = 'premadeoutput'
@@ -96,7 +99,7 @@ def test_align_contigs():
 
     command = [
         'sisrs-python',
-        '-p', num_proc,
+        '-p', str(num_proc),
         '-a', 'premade',
         '-c', '0',
         '-f', data_dir,
@@ -121,6 +124,8 @@ def test_align_contigs():
 
 def test_identify_fixed_sites():
 
+    setup()
+
     data_dir = join(data_base_dir, '1_alignContigs')
     exp_base_dir = join(data_base_dir, '2_identifyFixedSites')
     contig_dirname = 'premadeoutput'
@@ -128,7 +133,7 @@ def test_identify_fixed_sites():
 
     command = [
         'sisrs-python',
-        '-p', num_proc,
+        '-p', str(num_proc),
         '-a', 'premade',
         '-c', '0',
         '-f', data_dir,
@@ -187,6 +192,8 @@ def test_identify_fixed_sites():
 
 def test_output_alignment():
 
+    setup()
+
     data_dir = join(data_base_dir, '2_identifyFixedSites')
     exp_dir = join(data_base_dir, '3_outputAlignment')
     out_dir = out_base_dir
@@ -213,6 +220,8 @@ def test_output_alignment():
 
 
 def test_change_missing():
+
+    setup()
 
     data_dir = join(data_base_dir, '3_outputAlignment')
     exp_dir = join(data_base_dir, '4_changeMissing')
