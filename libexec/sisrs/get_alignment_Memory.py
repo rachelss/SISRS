@@ -213,7 +213,8 @@ def get_phy_sites(mainfolder,assembler,num_missing):
     assert len(contigList) > 0, 'Total site list not found in assembly folder'
 
     #Fetch sorted species data
-    dataLists = sorted(glob.glob(mainfolder+'/[!(assembler+output]*/*LocList'))
+    dataLists = sorted(glob.glob(mainfolder+'/*/*_LocList'))
+    dataLists.remove(mainfolder+'/' + assembler +'output/contigs_LocList')
     splist=[os.path.basename(os.path.dirname(path)) for path in dataLists]
     speciesCount=len(dataLists)
     assert len(dataLists) > 0, 'No species had data from the pileup'
