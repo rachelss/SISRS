@@ -18,18 +18,11 @@ setup(
     url='https://cartwrig.ht/software/',
     install_requires=[
         'biopython',
-        'click',
     ],
-    # TODO: upgrade to python 3
-    #python_requires='>=3.6',
-    python_requires='>=2.7',
+    python_requires='>=3.6',
     entry_points={
         'console_scripts': [
             'sisrs-python = sisrs:main'
         ],
     },
-    scripts=[
-        'bin/sisrs',
-        'libexec/sisrs/sub_sample_for_velvet_unshuff.py'
-    ]
 )

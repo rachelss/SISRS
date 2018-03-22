@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 """
     output alignment of sites useful for phylogenetics (nexus format)
@@ -20,7 +20,8 @@
 import os
 import re
 import glob
-import cPickle
+# NOTE: Python 3 imports cPickle behind the scenes by default
+import pickle as cPickle
 from collections import Counter,defaultdict
 import sys
 from Bio.Seq import Seq
@@ -52,7 +53,7 @@ class Alignment:
         self.single = single
 
     def numsnps(self):
-        print str(len(self.locations))+' total variable sites (alignment.nex)'
+        print(str(len(self.locations))+' total variable sites (alignment.nex)')
         for i in range(len(self.locations)):
             bases = [self.species_data[sp][i] for sp in self.species_data if self.species_data[sp][i] in ['A','C','G','T','-']]     #bases for that site
             c = Counter(bases).most_common(5)
@@ -62,7 +63,7 @@ class Alignment:
                 self.single.append(0)
             self.flag.append(len(c))
 
-        print str(self.single.count(1))+' variable sites are singletons'
+        print(str(self.single.count(1))+' variable sites are singletons')
 
         return self.flag.count(2)       # number of biallelic sites
 
@@ -94,7 +95,7 @@ def read_pkls(path):
         d = os.path.dirname(fi)     #sp relative path
         pathlist.append(d)
         species = os.path.basename(d)
-        print 'Reading data: '+ species     #print sp name
+        print('Reading data: '+ species)     #print sp name
 
         pkl_file = open(fi, 'rb')
         sp_bases = cPickle.load(pkl_file)       #sp_bases is loc:base for species
@@ -219,7 +220,7 @@ def get_ref_info(alignment,reference,mainfolder,assembler):
     return nodedict,ref
 
 def write_alignment(fi,alignment,numbi):
-    spp = alignment.species_data.keys()
+    spp = sorted(alignment.species_data.keys())
 
     if len(alignment.ref) == 0:
         ntax = str(len(alignment.species_data))
@@ -250,7 +251,7 @@ def write_alignment(fi,alignment,numbi):
     ALIGNMENTBI.write('[ '+ " ".join(bi_loc)+' ]'+"\n")
     for species in spp: #write sequences for each species
         ALIGNMENTBI.write(species+"\t"+("".join(bi_sp_data[species]))+"\n")
-    print str(len(bi_loc))+' total biallelic sites excluding singletons (alignment_bi.nex)'
+    print(str(len(bi_loc))+' total biallelic sites excluding singletons (alignment_bi.nex)')
 
     pi_ref_loc = [alignment.ref_loc[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
     pi_loc = [alignment.locations[i] for i in range(len(alignment.locations)) if alignment.single[i] == 0]
@@ -265,7 +266,7 @@ def write_alignment(fi,alignment,numbi):
     ALIGNMENTPI.write('[ '+ " ".join(pi_loc)+' ]'+"\n")
     for species in spp: #write sequences for each species
         ALIGNMENTPI.write(species+"\t"+("".join(pi_sp_data[species]))+"\n")
-    print str(len(pi_loc))+' total variable sites excluding singletons (alignment_pi.nex)'
+    print(str(len(pi_loc))+' total variable sites excluding singletons (alignment_pi.nex)')
 
     if len(alignment.ref) > 0:
         ALIGNMENT.write('reference'+"\t"+("".join(alignment.ref))+"\n")
@@ -293,3 +294,11 @@ def main(num_missing, reference, mainfolder, assembler):
 
     alignment = add_ref_info(alignment,ref,nodedict)
     alignment = write_alignment(mainfolder+'/alignment.nex',alignment,numbi)
+
+
+if __name__ == '__main__':
+    num_missing = int(sys.argv[1])
+    reference = sys.argv[2]
+    mainfolder = sys.argv[3]
+    assembler = sys.argv[4]
+    main(num_missing, reference, mainfolder, assembler)

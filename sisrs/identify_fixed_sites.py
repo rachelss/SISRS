@@ -1,9 +1,10 @@
 import os
 import sys
-from process import Process, AlignmentProcess
+from .process import Process 
 from multiprocessing import Pool
-from specific_genome import main as specific_genome
-from get_pruned_dict import main as get_pruned_dict
+from .specific_genome import main as specific_genome
+from .get_pruned_dict import main as get_pruned_dict
+from .aligners import create_aligner
 
 def run_mpileup(args):
 
@@ -40,15 +41,15 @@ def run_faidx(dir_):
     ]
     Process(command).wait()
 
-def run_bowtie2(dir_):
+def run_bowtie2(args):
+
+    aligner = args[0]
+    dir_ = args[1]
 
     contigs_path = os.path.join(dir_, 'contigs.fa')
     contigs_dir = os.path.join(dir_, 'contigs')
 
-    command = [
-        'bowtie2-build', contigs_path, contigs_dir,
-    ]
-    Process(command).wait()
+    aligner.index(contigs_path, contigs_dir)
 
 def run_index(dir_):
 
@@ -81,15 +82,13 @@ class IdentifyFixedSitesCommand(object):
         min_read = data['min_read']
         threshold = data['threshold']
 
+        aligner = create_aligner(num_processors=num_processors)
+
         all_dirs = dir_lists.get_all_dirs()
 
         contig_file_path = os.path.join(contig_dir, 'contigs.fa')
 
-        samtools_faidx_command = [
-            'samtools', 'faidx', contig_file_path
-        ]
         Process(['samtools', 'faidx', contig_file_path]).wait()
-
 
         pool = Pool(num_processors)
         args = [ (dir_, contig_file_path) for dir_ in all_dirs ]
@@ -98,13 +97,13 @@ class IdentifyFixedSitesCommand(object):
 
         try:
             pool.map(run_specific_genome, args)
-        except Exception:
+        except Exception as e:
             print("specific_genome.py failed")
+            print(e)
             sys.exit(1)
 
         pool.map(run_faidx, all_dirs)
-        pool.map(run_bowtie2, all_dirs)
-
+        pool.map(run_bowtie2, [(aligner, dir_) for dir_ in all_dirs])
 
         for dir_ in all_dirs:
 
@@ -114,7 +113,7 @@ class IdentifyFixedSitesCommand(object):
             os.remove(os.path.join(dir_, taxon_name + '.pileups'))
 
             contig_prefix = os.path.join(dir_, 'contigs')
-            AlignmentProcess(dir_, contig_prefix, num_processors)
+            aligner.align(dir_, contig_prefix)
 
         args = []
         for dir_ in all_dirs:
@@ -122,6 +121,7 @@ class IdentifyFixedSitesCommand(object):
             args.append([dir_, contig_file_path])
 
         pool.map(run_index, all_dirs)
+
         pool.map(run_mpileup, args)
  
         # put base for each site in a dictionary (allows no variation when
@@ -129,7 +129,8 @@ class IdentifyFixedSitesCommand(object):
         args = [ (dir_, min_read, threshold) for dir_ in all_dirs ]
         try:
             pool.map(run_get_pruned_dict, args)
-        except Exception:
+        except Exception as e:
             print("get_pruned_dict.py failed")
+            print(e)
             sys.exit(1)
         print("==== Done Identifying Fixed Sites Without Error ====")
