@@ -76,7 +76,7 @@ RUN git clone https://github.com/DecodeGenetics/BamHash \
     && rm -rf BamHash
 
 # install custom python using Miniconda
-RUN wget https://repo.continuum.io/miniconda/Miniconda2-latest-Linux-x86_64.sh -O miniconda.sh;
+RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
 RUN bash miniconda.sh -b -p miniconda
 ENV PATH="/miniconda/bin:$PATH"
 RUN hash -r \

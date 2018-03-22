@@ -1,8 +1,8 @@
 import os
 import shutil
 
-from filter_nexus_for_missing import main as filter_nexus_for_missing
-from process import Process 
+from .filter_nexus_for_missing import main as filter_nexus_for_missing
+from .process import Process 
 from subprocess import PIPE 
 
 def clean_file(in_path, out_path):
@@ -88,15 +88,14 @@ def run_comparison(data, str_missing, locs_filename, locs_clean_filename,
 
 class ChangeMissingCommand(object):
 
-    def __init__(self, data, missing):
+    def __init__(self, data):
 
         self._data = data 
-        self._missing = missing
 
     def run(self):
 
         data = self._data
-        missing = self._missing
+        missing = data['missing']
 
         alignment_file_path = os.path.join(data['out_dir'], 'alignment.nex')
 

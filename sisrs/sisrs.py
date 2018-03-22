@@ -1,15 +1,77 @@
 from multiprocessing import Pool
 import os
 import sys
-import click
-from click import echo
+import argparse
 from glob import glob
 from pprint import pprint
-from align_contigs import AlignContigsCommand 
-from identify_fixed_sites import IdentifyFixedSitesCommand
-from get_alignment import main as get_alignment
-from change_missing import ChangeMissingCommand
-from process import Process
+from .align_contigs import AlignContigsCommand 
+from .identify_fixed_sites import IdentifyFixedSitesCommand
+from .get_alignment import main as get_alignment
+from .change_missing import ChangeMissingCommand
+from .process import Process
+
+
+class SISRSPipeline(object):
+    def __init__(self):
+         
+        self._pipeline = [
+            [ 'alignContigs', self._align_contigs ],
+            [ 'identifyFixedSites', self._identify_fixed_sites ],
+            [ 'outputAlignment', self._output_alignment],
+            [ 'changeMissing', self._change_missing],
+        ]
+
+        self._pipeline_lookup = {
+            stage[0]: {
+                'index': i,
+                'func': stage[1]
+            } for i, stage in enumerate(self._pipeline)
+        }
+
+    def get_command_list(self):
+        commands = []
+        for stage in self._pipeline:
+            commands.append(stage[0])
+        return commands
+
+    def run_command(self, command_name, args):
+        self._pipeline_lookup[command_name]['func'](args)
+
+    def run_commands_from(self, first_command_name, args):
+        
+        first_command_index = \
+            self._pipeline_lookup[first_command_name]['index']
+
+        for stage in self._pipeline[first_command_index:]:
+            command_name = stage[0]
+            self.run_command(command_name, args)
+
+    @staticmethod
+    def _align_contigs(args):
+        command = AlignContigsCommand(args)
+        command.run()
+
+    @staticmethod
+    def _identify_fixed_sites(args):
+        command = IdentifyFixedSitesCommand(args)
+        command.run()
+        
+    @staticmethod
+    def _output_alignment(args):
+
+        data_dir = args['data_dir']
+        out_dir = args['out_dir']
+        assembler = args['assembler']
+        dir_lists = args['dir_lists']
+
+        all_dirs = dir_lists.get_all_dirs()
+        num_missing = len(all_dirs) - 2
+        get_alignment(num_missing, 'X', out_dir, assembler)
+
+    @staticmethod
+    def _change_missing(args):
+        command = ChangeMissingCommand(args)
+        command.run()
 
 
 class DirectoryLists(object):
@@ -34,18 +96,19 @@ def setup_output_directory(data_directory, output_directory, overwrite):
 
     if output_directory is None:
         output_directory = data_directory
-        echo("Note: SISRS writing into data folder")
+        print("Note: SISRS writing into data folder")
     elif not os.path.exists(output_directory):
         print(data_directory)
         recursive_symlinks(data_directory, output_directory)
     else:
         if overwrite:
-            echo("{} already exists. Overwriting...".format(
+            print("{} already exists. Overwriting...".format(
                 output_directory))
             recursive_symlinks(data_directory, output_directory)
         else:
-            echo("{} already exists and overwrite flag not set. Aborting...".format(
+            print("{} already exists and overwrite flag not set. Aborting...".format(
                 output_directory))
+            sys.exit(1)
 
     return os.path.abspath(output_directory)
 
@@ -69,20 +132,41 @@ def recursive_symlinks(src, dest):
             os.symlink(src, dest)
 
 
-@click.group()
-@click.option('--overwrite', type=bool, default=False)
-@click.option(
-    '--data-directory', '-f', type=click.Path(file_okay=False),
-    help='Data directory')
-@click.option(
-    '--output-directory', '-z', type=click.Path(file_okay=False),
-    help='Output directory')
-@click.option('--assembler', '-a', default='velvet', help="Assembler")
-@click.option('--continuous', '-c', default=1, help="Coninuous mode")
-@click.option('--num-processors', '-p', default=1, help="Number of processors")
-@click.pass_context
-def cli(ctx, assembler, data_directory, output_directory, overwrite,
-        continuous, num_processors):
+def main():
+
+    pipeline = SISRSPipeline()
+
+    parser = argparse.ArgumentParser()
+    #subparsers = parser.add_subparsers()
+
+    parser.add_argument(
+            'command',
+            choices=pipeline.get_command_list(),
+            help="Command to run")
+    parser.add_argument('-c', '--continuous', default=1)
+    parser.add_argument('-f', '--data-directory')
+    parser.add_argument('-z', '--output-directory')
+    parser.add_argument('--overwrite')
+    parser.add_argument('-a', '--assembler', type=str, default='velvet')
+    parser.add_argument('-p', '--num_processors', type=int, default=1)
+    parser.add_argument('-m', '--missing', type=int, help="Num missing")
+
+    # identifyFixedSites specific
+    parser.add_argument(
+            '-n', '--min-read', required=False, type=int, default=3,
+            help='Min read')
+    parser.add_argument(
+            '-t', '--threshold', required=False, type=int, default=1,
+              help="Threshold for calling the site")
+
+    args = parser.parse_args()
+
+    data_directory = args.data_directory
+    output_directory = args.output_directory
+    overwrite = args.overwrite
+    assembler = args.assembler
+    num_processors = args.num_processors
+    continuous = args.continuous
 
     if data_directory is None:
         data_directory = os.getcwd()
@@ -97,61 +181,22 @@ def cli(ctx, assembler, data_directory, output_directory, overwrite,
     if assembler == 'premade':
         contig_dir = 'premadeoutput'
 
-    ctx.obj['data_dir'] = data_directory
-    ctx.obj['out_dir'] = output_directory
-    ctx.obj['assembler'] = assembler
-    ctx.obj['dir_lists'] = dir_lists
-    ctx.obj['contig_dir'] = os.path.join(output_directory, contig_dir)
-    ctx.obj['num_processors'] = num_processors
+    args_dict = {}
+    args_dict['data_dir'] = data_directory
+    args_dict['out_dir'] = output_directory
+    args_dict['assembler'] = assembler
+    args_dict['dir_lists'] = dir_lists
+    args_dict['contig_dir'] = os.path.join(output_directory, contig_dir)
+    args_dict['num_processors'] = num_processors
+    args_dict['continuous'] = continuous
+    args_dict['min_read'] = args.min_read 
+    args_dict['threshold'] = args.threshold
+    args_dict['missing'] = args.missing
 
-@cli.command()
-@click.option('--genome-size', '-g', required=True, type=int, help='Genome size')
-@click.pass_context
-def subsample(ctx, genome_size):
-    #print(ctx.obj['data_dir'])
-    pass
+    command_name = args.command
 
-@cli.command()
-@click.pass_context
-def align_contigs(ctx):
+    if continuous == 1:
+        pipeline.run_commands_from(command_name, args_dict)
+    else:
+        pipeline.run_command(command_name, args_dict)
 
-    command = AlignContigsCommand(ctx.obj)
-    command.run()
-
-@cli.command()
-@click.option('--min-read', '-n', required=False, type=int, default=3,
-              help='Min read')
-@click.option('--threshold', '-t', required=False, type=int, default=1,
-              help="Threshold for calling the site")
-@click.pass_context
-def identify_fixed_sites(ctx, min_read, threshold):
-
-    ctx.obj['min_read'] = min_read
-    ctx.obj['threshold'] = threshold 
-
-    command = IdentifyFixedSitesCommand(ctx.obj)
-    command.run()
-
-@cli.command()
-@click.pass_context
-def output_alignment(ctx):
-    data_dir = ctx.obj['data_dir']
-    out_dir = ctx.obj['out_dir']
-    assembler = ctx.obj['assembler']
-    dir_lists = ctx.obj['dir_lists']
-
-    all_dirs = dir_lists.get_all_dirs()
-    num_missing = len(all_dirs) - 2
-    get_alignment(num_missing, 'X', out_dir, assembler)
-
-@cli.command()
-@click.pass_context
-@click.option('--missing', '-m', required=False, type=int, 
-              help="Num missing")
-def change_missing(ctx, missing):
-
-    command = ChangeMissingCommand(ctx.obj, missing)
-    command.run()
-
-def main():
-    cli(obj={})
