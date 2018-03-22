@@ -1,9 +1,6 @@
 language: python
 sudo: required
-services: docker
 dist: trusty
-before_install: 
-    - docker pull anderspitman/sisrs
-    - git clone --depth=1 https://github.com/anderspitman/SISRS_ci_data pipeline_stages
+before_install: ci/before_install.sh
 install: true
-script: docker run --mount src=$PWD,dst=/SISRS,type=bind anderspitman/sisrs ./run_tests.sh
+script: ci/run_tests.sh
