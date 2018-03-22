@@ -4,6 +4,7 @@ from multiprocessing import Pool
 from subprocess import check_call
 from .process import Process 
 from .aligners import create_aligner
+from .command import Command
 
 
 def sam_index_directory(dir_):
@@ -18,18 +19,14 @@ def sam_index_directory(dir_):
     index_proc.wait()
 
 
-class AlignContigsCommand(object):
-
-    def __init__(self, data):
-
-        self._data = data 
+class AlignContigsCommand(Command):
 
     def run(self):
 
         print("==== Renaming Scaffolds for SISRS ====")
-        contig_dir = self._data['contig_dir']
-        dir_lists = self._data['dir_lists']
-        num_processors = self._data['num_processors']
+        contig_dir = self._args['contig_dir']
+        dir_lists = self._args['dir_lists']
+        num_processors = self._args['num_processors']
 
         aligner = create_aligner(num_processors=num_processors)
 

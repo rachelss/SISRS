@@ -4,6 +4,7 @@ import shutil
 from .filter_nexus_for_missing import main as filter_nexus_for_missing
 from .process import Process 
 from subprocess import PIPE 
+from .command import Command
 
 def clean_file(in_path, out_path):
 
@@ -62,11 +63,11 @@ def clean_file(in_path, out_path):
     #    for count in sorted_counts:
     #        f_out.write("{}\n".format(count[0]))
 
-def run_comparison(data, str_missing, locs_filename, locs_clean_filename,
+def run_comparison(args, str_missing, locs_filename, locs_clean_filename,
         dirname, filename):
 
     dir_ = os.path.join(
-            data['out_dir'],
+            args['out_dir'],
             dirname)
 
     alignment_file_path = os.path.join(dir_, filename)
@@ -74,7 +75,7 @@ def run_comparison(data, str_missing, locs_filename, locs_clean_filename,
     # TODO: should we really be checking if the directory exists first?
     if not os.path.exists(dir_):
         os.makedirs(dir_)
-        src_path = os.path.join(data['out_dir'], filename)
+        src_path = os.path.join(args['out_dir'], filename)
         shutil.move(src_path, alignment_file_path)
 
     filter_nexus_for_missing(alignment_file_path, str_missing)
@@ -85,22 +86,17 @@ def run_comparison(data, str_missing, locs_filename, locs_clean_filename,
     clean_file(locs_file_path, locs_clean_file_path)
 
 
-
-class ChangeMissingCommand(object):
-
-    def __init__(self, data):
-
-        self._data = data 
+class ChangeMissingCommand(Command):
 
     def run(self):
 
-        data = self._data
-        missing = data['missing']
+        args = self._args
+        missing = args['missing']
 
-        alignment_file_path = os.path.join(data['out_dir'], 'alignment.nex')
+        alignment_file_path = os.path.join(args['out_dir'], 'alignment.nex')
 
         if missing is None:
-            dir_lists = data['dir_lists']
+            dir_lists = args['dir_lists']
             all_dirs = dir_lists.get_all_dirs()
             str_missing = str(len(all_dirs) - 2)
         else:
@@ -109,16 +105,16 @@ class ChangeMissingCommand(object):
         filter_nexus_for_missing(alignment_file_path, str_missing)
 
         locs_filename = 'locs_m{}.txt'.format(str_missing)
-        locs_file_path = os.path.join(data['out_dir'], locs_filename)
+        locs_file_path = os.path.join(args['out_dir'], locs_filename)
 
         locs_clean_filename = 'locs_m{}_Clean.txt'.format(str_missing)
         locs_clean_file_path = os.path.join(
-            data['out_dir'], locs_clean_filename)
+            args['out_dir'], locs_clean_filename)
 
         clean_file(locs_file_path, locs_clean_file_path)
 
         run_comparison(
-                data,
+                args,
                 str_missing,
                 locs_filename,
                 locs_clean_filename,
@@ -126,7 +122,7 @@ class ChangeMissingCommand(object):
                 'alignment_pi.nex')
 
         run_comparison(
-                data,
+                args,
                 str_missing,
                 locs_filename,
                 locs_clean_filename,

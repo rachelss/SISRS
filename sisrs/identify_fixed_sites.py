@@ -5,6 +5,7 @@ from multiprocessing import Pool
 from .specific_genome import main as specific_genome
 from .get_pruned_dict import main as get_pruned_dict
 from .aligners import create_aligner
+from .command import Command
 
 def run_mpileup(args):
 
@@ -66,21 +67,17 @@ def run_get_pruned_dict(args):
     get_pruned_dict(*args)
 
 
-class IdentifyFixedSitesCommand(object):
-
-    def __init__(self, data):
-
-        self._data = data 
+class IdentifyFixedSitesCommand(Command):
 
     def run(self):
 
-        data = self._data
+        args = self._args
 
-        contig_dir = data['contig_dir']
-        num_processors = data['num_processors']
-        dir_lists = data['dir_lists']
-        min_read = data['min_read']
-        threshold = data['threshold']
+        contig_dir = args['contig_dir']
+        num_processors = args['num_processors']
+        dir_lists = args['dir_lists']
+        min_read = args['min_read']
+        threshold = args['threshold']
 
         aligner = create_aligner(num_processors=num_processors)
 
