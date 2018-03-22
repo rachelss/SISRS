@@ -104,7 +104,7 @@ def test_align_contigs():
         '-c', '0',
         '-f', data_dir,
         '-z', out_base_dir,
-        'align_contigs'
+        'alignContigs'
     ]
     run(command)
 
@@ -138,7 +138,7 @@ def test_identify_fixed_sites():
         '-c', '0',
         '-f', data_dir,
         '-z', out_base_dir,
-        'identify_fixed_sites',
+        'identifyFixedSites',
     ]
     run(command)
 
@@ -202,7 +202,8 @@ def test_output_alignment():
         'sisrs-python',
         '-f', data_dir,
         '-z', out_dir,
-        'output_alignment'
+        '-c', '0',
+        'outputAlignment'
     ]
     run(command)
 
@@ -231,8 +232,9 @@ def test_change_missing():
         'sisrs-python',
         '-f', data_dir,
         '-z', out_dir,
-        'change_missing',
+        'changeMissing',
         '-m', '0',
+        '-c', '0',
     ]
     run(command)
 

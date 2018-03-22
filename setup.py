@@ -18,7 +18,6 @@ setup(
     url='https://cartwrig.ht/software/',
     install_requires=[
         'biopython',
-        'click',
     ],
     python_requires='>=3.6',
     entry_points={
