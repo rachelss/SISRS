@@ -66,9 +66,9 @@ Option Flags:
  -p : use this number of processors
  -r : the path to the reference genome in fasta format
  -k : k-mer size (for assembly)
- -f : the folder containing the folders of reads (absolute path)
+ -f : the folder containing the folders of reads
  -z : the folder where SISRS will output data (Default: -f, othewise must be
-      absolute path of empty or non-existent directory)
+      path of empty or non-existent directory)
  -n : the number of reads required to call a base at a site
  -t : the threshold for calling a site; e.g. 0.99 means that >99% of
       bases for that taxon must be one allele; only recommended for
@@ -152,7 +152,7 @@ done
 
 DIRS="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"    #where is the sisrs file?
 DIR=$( dirname ${DIRS} )                                    #go one level up from location of sisrs file
-MAINFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )    #remove trailing / if necessary
+MAINFOLDER=$( readlink -f $( echo "${MAINFOLDER}" | sed -e "s/\/*$//" ) )   #remove trailing / if necessary
 
 FILEID=_R1
 FILEID2=$(echo ${FILEID} | sed 's/1/2/')
@@ -199,11 +199,11 @@ function join_by { local IFS="$1"; shift; echo "$*"; }
 
 if [[ "${MAINFOLDER}" = "${OUTFOLDER}" ]] || [[ -z $OUTFOLDER ]]; then     #Check if data folder and output folder are the same
     echo "Note: SISRS writing into data folder"
-    OUTFOLDER=$( echo "${MAINFOLDER}" | sed -e "s/\/*$//" )
+    OUTFOLDER=$( readlink -f $( echo "${MAINFOLDER}" | sed -e "s/\/*$//" ) )
 
 elif [[ ! -d "${OUTFOLDER}" ]]; then
     cp -as "${MAINFOLDER}" "${OUTFOLDER}" #Create output directory with links to data files if directory does not already exist
-    OUTFOLDER=$( echo "${OUTFOLDER}" | sed -e "s/\/*$//" )
+    OUTFOLDER=$( readlink -f $( echo "${OUTFOLDER}" | sed -e "s/\/*$//" ) )
 
 else
     echo "${OUTFOLDER} already exists. Checking if empty..."
@@ -213,7 +213,7 @@ else
     else
         echo "${OUTFOLDER} exists and is empty. SISRS continuing..."
         cp -as "${MAINFOLDER}/"* "${OUTFOLDER}"   #Populate exisiting empty output directory with links to data files
-        OUTFOLDER=$( echo "${OUTFOLDER}" | sed -e "s/\/*$//" )
+        OUTFOLDER=$( readlink -f $( echo "${OUTFOLDER}" | sed -e "s/\/*$//" ) )
     fi
 fi
 
