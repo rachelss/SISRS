@@ -5,7 +5,7 @@ import argparse
 from glob import glob
 from pprint import pprint
 from .subsample import SubsampleCommand
-from .align_contigs import AlignContigsCommand 
+from .align_contigs import AlignContigsCommand
 from .identify_fixed_sites import IdentifyFixedSitesCommand
 from .output_alignment import OutputAlignmentCommand
 from .change_missing import ChangeMissingCommand
@@ -14,7 +14,7 @@ from .process import Process
 
 class SISRSPipeline(object):
     def __init__(self):
-         
+
         self._pipeline = [
             [ 'subSample', self._subsample ],
             [ 'alignContigs', self._align_contigs ],
@@ -40,7 +40,7 @@ class SISRSPipeline(object):
         self._pipeline_lookup[command_name]['func'](args)
 
     def run_commands_from(self, first_command_name, args):
-        
+
         first_command_index = \
             self._pipeline_lookup[first_command_name]['index']
 
@@ -62,7 +62,7 @@ class SISRSPipeline(object):
     def _identify_fixed_sites(args):
         command = IdentifyFixedSitesCommand(args)
         command.run()
-        
+
     @staticmethod
     def _output_alignment(args):
         command = OutputAlignmentCommand(args)
@@ -81,7 +81,7 @@ class DirectoryLists(object):
         self._all_fastq = []
         self._paired = []
         self._unpaired = []
-        
+
         for root, dirs, files in os.walk(base_dir):
             for filename in files:
 
@@ -199,9 +199,7 @@ def main():
 
     dir_lists = DirectoryLists(output_directory)
 
-    contig_dir = ''
-    if assembler == 'premade':
-        contig_dir = 'premadeoutput'
+    contig_dir = assembler + 'output'
 
     args_dict = {}
     args_dict['data_dir'] = data_directory
@@ -211,7 +209,7 @@ def main():
     args_dict['contig_dir'] = os.path.join(output_directory, contig_dir)
     args_dict['num_processors'] = num_processors
     args_dict['continuous'] = continuous
-    args_dict['min_read'] = args.min_read 
+    args_dict['min_read'] = args.min_read
     args_dict['threshold'] = args.threshold
     args_dict['missing'] = args.missing
     args_dict['genome_size'] = args.genome_size
@@ -222,4 +220,3 @@ def main():
         pipeline.run_commands_from(command_name, args_dict)
     else:
         pipeline.run_command(command_name, args_dict)
-
