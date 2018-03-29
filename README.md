@@ -92,8 +92,8 @@ Running SISRS
  * -p : use this number of processors *[Default: 1]*
  * -r : the path to the reference genome in fasta format *[Optional]*
  * -k : k-mer size (for assembly) *[Default: 21]*  
- * -f : absolute path to the directory containing the folders of reads *[Default: Current Directory]*
- * -z : absolute path to either empty or non-existent directory where SISRS will output data *[Default: Current Directory]*
+ * -f : path to the directory containing the folders of reads *[Default: Current Directory]*
+ * -z : path to either an empty or non-existent directory where SISRS will output data *[Default: Current Directory]*
  * -n : the number of reads required to call a base at a site  *[Default: 3]*
  * -t : the threshold for calling a site; e.g. 0.99 means that >99% of bases for that taxon must be one allele; only recommended for low ploidy with <3 individuals  *[Default: 1 (100%)]*
  * -m : the number of species that are allowed to have missing data at a site
