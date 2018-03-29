@@ -61,14 +61,15 @@ class AlignContigsCommand(Command):
         print("==== Congig Length File Generated ====")
 
         #CREATE FILE WITH EVERY SITE IN ALIGNMENT
-        with open(contig_dir+'/contigs_LocList','w') as printList:
-            siteCount=0
-            with open(contig_dir +"/contigs_SeqLength.tsv","r") as filein:
-                for line in iter(filein):
-                    splitline=line.split()
-                    for x in range(1,(int(splitline[1])+1)):
-                        printList.write((splitline[0] +'/'+str(x))
-                        siteCount+=1
+        siteCount=0
+        printList = open(contig_dir+'/contigs_LocList','a+')
+        with open(contig_dir +"/contigs_SeqLength.tsv","r") as filein:
+            for line in iter(filein):
+                splitline=line.split()
+                for x in range(1,(int(splitline[1])+1)):
+                    printList.write((splitline[0] +'/'+str(x))
+                    siteCount+=1
+        printList.close()
         print("==== Site list created: " + str(siteCount) + " total sites ==== \n")
 
         all_dirs = dir_lists.get_all_dirs()
