@@ -1,6 +1,6 @@
 import os
 import sys
-from .process import Process 
+from .process import Process
 from multiprocessing import Pool
 from .specific_genome import main as specific_genome
 from .get_pruned_dict import main as get_pruned_dict
@@ -11,18 +11,18 @@ def run_mpileup(args):
 
     dir_ = args[0]
     contig_file_path = args[1]
-    
+
     taxon_name = os.path.basename(dir_)
 
     path = os.path.join(dir_, taxon_name)
 
-    print(path)
+    #print(path)
 
     command = [
         'samtools', 'mpileup',
         '-f', contig_file_path,
         '-o', path + '.pileups',
-        path + '.bam', 
+        path + '.bam',
     ]
     Process(command).wait()
 
@@ -120,7 +120,7 @@ class IdentifyFixedSitesCommand(Command):
         pool.map(run_index, all_dirs)
 
         pool.map(run_mpileup, args)
- 
+
         # put base for each site in a dictionary (allows no variation when
         # calling sites)
         args = [ (dir_, min_read, threshold) for dir_ in all_dirs ]
