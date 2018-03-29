@@ -1,8 +1,10 @@
+#!/usr/bin/env python3
 import os
 import shutil
 from multiprocessing import Pool
 from subprocess import check_call
-from .process import Process 
+from Bio import SeqIO
+from .process import Process
 from .aligners import create_aligner
 from .command import Command
 
@@ -23,6 +25,7 @@ class AlignContigsCommand(Command):
 
     def run(self):
 
+        #RENAME SCAFFOLDS FOR ASSEMBLER-INDEPENDENT PARSING
         print("==== Renaming Scaffolds for SISRS ====")
         contig_dir = self._args['contig_dir']
         dir_lists = self._args['dir_lists']
@@ -61,5 +64,3 @@ class AlignContigsCommand(Command):
         pool = Pool(num_processors)
         pool.map(sam_index_directory, all_dirs)
         print("==== Done Indexing Bam Files ====")
-
-
