@@ -54,7 +54,7 @@ class AlignContigsCommand(Command):
         #CREATE FILE OF ALL CONTIG SEQUENCE LENGTHS
         contigFile=(contig_dir+'/contigs.fa')
 
-        file = open(path+'/contigs_SeqLength.tsv', "w")
+        file = open(contig_dir+'/contigs_SeqLength.tsv', "w")
         for seq_record in SeqIO.parse(contigFile,"fasta"):
         	file.write(str(seq_record.id)+"\t"+str(len(seq_record))+"\n")
         file.close()
