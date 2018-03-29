@@ -67,7 +67,7 @@ class AlignContigsCommand(Command):
             for line in iter(filein):
                 splitline=line.split()
                 for x in range(1,(int(splitline[1])+1)):
-                    print>>printList,splitline[0] +'/'+str(x)
+                    print(splitline[0] +'/'+str(x),printList)
                     siteCount+=1
         printList.close()
         print("==== Site list created: " + str(siteCount) + " total sites ==== \n")
