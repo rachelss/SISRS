@@ -51,6 +51,27 @@ class AlignContigsCommand(Command):
         check_call(rename_command)
         print("==== Scaffolds Renamed ====")
 
+        #CREATE FILE OF ALL CONTIG SEQUENCE LENGTHS
+        contigFile=(contig_dir+'/contigs.fa')
+
+        file = open(path+'/contigs_SeqLength.tsv', "w")
+        for seq_record in SeqIO.parse(contigFile,"fasta"):
+        	file.write(str(seq_record.id)+"\t"+str(len(seq_record))+"\n")
+        file.close()
+        print("==== Congig Length File Generated ====")
+
+        #CREATE FILE WITH EVERY SITE IN ALIGNMENT
+        printList = open(contig_dir+'/contigs_LocList','w')
+        siteCount=0
+        with open(contig_dir +"/contigs_SeqLength.tsv","r") as filein:
+            for line in iter(filein):
+                splitline=line.split()
+                for x in range(1,(int(splitline[1])+1)):
+                    print>>printList,splitline[0] +'/'+str(x)
+                    siteCount+=1
+        printList.close()
+        print("==== Site list created: " + str(siteCount) + " total sites ==== \n")
+
         all_dirs = dir_lists.get_all_dirs()
         contig_prefix = os.path.join(contig_dir, 'contigs')
 
