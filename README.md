@@ -1,3 +1,43 @@
+# Running SISRS as a User
+
+## Install Docker
+Follow the instructions [here](https://docs.docker.com/install/) to install
+Docker CE for your operating system.
+
+There's quite a bit going on in those instructions. As an example, if you're
+on Ubuntu you'll follow the specific instructions
+[here](https://docs.docker.com/install/linux/docker-ce/ubuntu/).
+
+Ignore anything that talks about Docker EE. They're just trying to sell you
+stuff.
+
+Note that SISRS currently only runs
+on Linux.
+
+## Getting the Docker image
+
+Download the SISRS docker image which comes with all the dependencies for
+running SISRS.
+
+`docker pull anderspitman/sisrs`
+
+## Running SISRS
+
+First start up a docker container using the image obtained above:
+
+`docker run -it anderspitman/sisrs bash`
+
+Then from within the Docker container:
+
+```
+pip install sisrs
+sisrs-python
+```
+
+
+# Developing SISRS
+
+
 SISRS
 =====
 
