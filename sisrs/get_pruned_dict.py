@@ -80,7 +80,7 @@ def main(path, contig_dir, minread, thresh):
     allbases=getallbases(path,contig_dir,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
     if allbases==0:
         print('No data for '+path,flush=True)
-        sys.exit(1)      #dictionary of combined pileups - locus/pos:bases(as list)
+        sys.exit(1)
 
 if __name__ == '__main__':
     path = sys.argv[1]
