@@ -18,8 +18,6 @@ def run_mpileup(args):
 
     path = os.path.join(dir_, taxon_name)
 
-    print(path,flush=True)
-
     command = [
         'samtools', 'mpileup',
         '-f', contig_file_path,
