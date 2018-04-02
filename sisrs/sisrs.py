@@ -117,18 +117,18 @@ def setup_output_directory(data_directory, output_directory, overwrite):
 
     if output_directory is None:
         output_directory = data_directory
-        print("Note: SISRS writing into data folder")
+        print("Note: SISRS writing into data folder",flush=True)
     elif not os.path.exists(output_directory):
         print(data_directory)
         recursive_symlinks(data_directory, output_directory)
     else:
         if overwrite:
             print("{} already exists. Overwriting...".format(
-                output_directory))
+                output_directory),flush=True)
             recursive_symlinks(data_directory, output_directory)
         else:
             print("{} already exists and overwrite flag not set. Aborting...".format(
-                output_directory))
+                output_directory),flush=True)
             sys.exit(1)
 
     return os.path.abspath(output_directory)
