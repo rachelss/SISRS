@@ -123,7 +123,7 @@ class IdentifyFixedSitesCommand(Command):
 
         # put base for each site in a dictionary (allows no variation when
         # calling sites)
-        args = [ (dir_, min_read, threshold) for dir_ in all_dirs ]
+        args = [ (dir_, contig_dir, min_read, threshold) for dir_ in all_dirs ]
         try:
             pool.map(run_get_pruned_dict, args)
         except Exception as e:
