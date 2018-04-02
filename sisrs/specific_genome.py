@@ -53,10 +53,13 @@ def getCleanList(ref,bases):
     return new_base_list
 
 def getFinalBase_Specific(cleanBases):
-    most_common = Counter(cleanBases).most_common()
-    finalBase=(most_common[0][0])
-    if finalBase == '*':
+    degenDict = {"ACGT":"N","GT":"K","AC":"M","AG":"R","CT":"Y","CG":"S","AT":"W","CGT":"B","AGT":"D","ACT":"H"}
+    counter=Counter(cleanBases)
+    baseList = sorted([key for key, _ in counter.most_common()])
+    if '*' in baseList:
         finalBase = 'N'
+    else:
+        finalBase = degenDict[baseList]
     return finalBase
 
 ###############################################
