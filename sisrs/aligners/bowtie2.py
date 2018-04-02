@@ -1,6 +1,6 @@
 import os
 from glob import glob
-from subprocess import PIPE 
+from subprocess import PIPE
 from .aligner import Aligner
 from ..process import Process
 
@@ -21,7 +21,7 @@ class Bowtie2Aligner(Aligner):
 
         basename = os.path.basename(dir_)
 
-        print("==== Aligning {} as Single-Ended ====".format(basename))
+        print("==== Aligning {} as Single-Ended ====".format(basename),flush=True)
         fastq_filepaths = glob(os.path.join(dir_, '*.fastq'))
 
         # Generate temp file
@@ -116,5 +116,3 @@ class Bowtie2Aligner(Aligner):
         # Remove temp files
         os.remove(temp_file_path)
         os.remove(header_file_path)
-
-
