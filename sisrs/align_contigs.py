@@ -54,22 +54,22 @@ class AlignContigsCommand(Command):
         #CREATE FILE OF ALL CONTIG SEQUENCE LENGTHS
         contigFile=(contig_dir+'/contigs.fa')
 
-        file = open(contig_dir+'/contigs_SeqLength.tsv', "w")
+        seqLengthFile = open(contig_dir+'/contigs_SeqLength.tsv', "w")
         for seq_record in SeqIO.parse(contigFile,"fasta"):
-        	file.write(str(seq_record.id)+"\t"+str(len(seq_record))+"\n")
-        file.close()
+        	seqLengthFile.write(str(seq_record.id)+"\t"+str(len(seq_record))+"\n")
+        seqLengthFile.close()
         print("==== Congig Length File Generated ====",flush=True)
 
         #CREATE FILE WITH EVERY SITE IN ALIGNMENT
         siteCount=0
-        printList = open(contig_dir+'/contigs_LocList','a+')
+        locListFile = open(contig_dir+'/contigs_LocList','a+')
         with open(contig_dir +"/contigs_SeqLength.tsv","r") as filein:
             for line in iter(filein):
                 splitline=line.split()
                 for x in range(1,(int(splitline[1])+1)):
-                    printList.write((splitline[0] +'/'+str(x)+'\n'))
+                    locListFile.write((splitline[0] +'/'+str(x)+'\n'))
                     siteCount+=1
-        printList.close()
+        locListFile.close()
         print("==== Site list created: " + str(siteCount) + " total sites ==== \n",flush=True)
 
         all_dirs = dir_lists.get_all_dirs()
