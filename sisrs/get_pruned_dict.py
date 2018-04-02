@@ -78,7 +78,7 @@ def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothP
 def main(path, contig_dir, minread, thresh):
 
     allbases=getallbases(path,contig_dir,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
-    if len(allbases)==0:
+    if allbases==0:
         print('No data for '+path,flush=True)
         sys.exit(1)      #dictionary of combined pileups - locus/pos:bases(as list)
 
