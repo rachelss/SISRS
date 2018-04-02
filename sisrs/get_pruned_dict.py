@@ -22,7 +22,7 @@ from .specific_genome import getCleanList
 from collections import defaultdict
 
 #get combined pileup info
-def getallbases(path,minread,thresh):
+def getallbases(path,contig_dir,minread,thresh):
     basePath=os.path.dirname(path)
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
     speciesDict=defaultdict(lambda: 'N')
