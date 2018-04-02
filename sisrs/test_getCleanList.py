@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from specific_genome import getCleanList
+from .specific_genome import getCleanList
 
 def test_answer():
     #Test getCleanList (Shared function)

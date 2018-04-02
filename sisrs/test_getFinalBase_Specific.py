@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from specific_genome import getCleanList
-from specific_genome import getFinalBase_Specific
+from .specific_genome import getCleanList
+from .specific_genome import getFinalBase_Specific
 
 def test_answer():
 

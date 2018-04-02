@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-from specific_genome import getCleanList
-from get_pruned_dict import getFinalBase_Pruned
+from .specific_genome import getCleanList
+from .get_pruned_dict import getFinalBase_Pruned
 
 def test_answer():
 
