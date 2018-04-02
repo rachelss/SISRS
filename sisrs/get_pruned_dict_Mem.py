@@ -72,16 +72,16 @@ def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothP
 
     return finalBase,minPenalty,threshPenalty,bothPenalty
 ###############################################
-if __name__ == "__main__":
+def main(path, contig_dir, minread, thresh):
 
-    #Read in arguments
-    path=sys.argv[1]
-    assembler=sys.argv[2]
-    minread=int(sys.argv[3])
-    thresh=float(sys.argv[4])
+    allbases=getallbases(path,contig_dir,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
+    if len(allbases)==0:
+        print('No data for '+path,flush=True)
+        sys.exit(1)      #dictionary of combined pileups - locus/pos:bases(as list)
 
-    #Generate species-specific posDict
-    siteCount=getallbases(path,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
-    if siteCount == 0:
-        print 'No data for '+path
-        sys.exit(1)
+if __name__ == '__main__':
+    path = sys.argv[1]
+    contig_dir = sys.argv[2]
+    minread = int(sys.argv[3])
+    thresh = float(sys.argv[4])
+    main(path, contig_dir, minread, thresh)
