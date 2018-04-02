@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-#This script assumes a single pileup file per taxon
-#Add an assert statement to test this
 import os
 import sys
 from collections import Counter
@@ -62,15 +60,11 @@ def getFinalBase_Specific(cleanBases):
     return finalBase
 
 ###############################################
-#if __name__ == "__main__":
-#    path=sys.argv[1]
-#    contig_file = sys.argv[2]
-
 def main(path, contig_file):
 
     allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
     if len(allbases)==0:
-        print('No data for '+path)
+        print('No data for '+path,flush=True)
         sys.exit(1)
 
     # Read contig fasta file into dictionary with sequence ID as the key
@@ -83,12 +77,10 @@ def main(path, contig_file):
         locus,pos = locus_pos.split('/')
         fasta_dict[locus][int(pos)-1] = base
 
-    #output = open(path+'/contigs.fa', 'wb')
     output = open(path+'/contigs.fa', 'w')
     for l,seq in sorted(fasta_dict.items()):
         output.write('>'+str(l)+"\n"+"".join(seq)+"\n")
     output.close()
-
 
 if __name__ == '__main__':
     path = sys.argv[1]
