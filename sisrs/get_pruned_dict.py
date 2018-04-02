@@ -18,7 +18,7 @@ import glob
 import string
 import re
 import os
-from specific_genome import getCleanList
+from .specific_genome import getCleanList
 from collections import defaultdict
 
 #get combined pileup info
