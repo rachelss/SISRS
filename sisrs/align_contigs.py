@@ -26,7 +26,7 @@ class AlignContigsCommand(Command):
     def run(self):
 
         #RENAME SCAFFOLDS FOR ASSEMBLER-INDEPENDENT PARSING
-        print("==== Renaming Scaffolds for SISRS ====")
+        print("==== Renaming Scaffolds for SISRS ====",flush=True)
         contig_dir = self._args['contig_dir']
         dir_lists = self._args['dir_lists']
         num_processors = self._args['num_processors']
@@ -49,7 +49,7 @@ class AlignContigsCommand(Command):
             'addprefix=t'
         ]
         check_call(rename_command)
-        print("==== Scaffolds Renamed ====")
+        print("==== Scaffolds Renamed ====",flush=True)
 
         #CREATE FILE OF ALL CONTIG SEQUENCE LENGTHS
         contigFile=(contig_dir+'/contigs.fa')
@@ -58,7 +58,7 @@ class AlignContigsCommand(Command):
         for seq_record in SeqIO.parse(contigFile,"fasta"):
         	file.write(str(seq_record.id)+"\t"+str(len(seq_record))+"\n")
         file.close()
-        print("==== Congig Length File Generated ====")
+        print("==== Congig Length File Generated ====",flush=True)
 
         #CREATE FILE WITH EVERY SITE IN ALIGNMENT
         siteCount=0
@@ -70,7 +70,7 @@ class AlignContigsCommand(Command):
                     printList.write((splitline[0] +'/'+str(x)+'\n'))
                     siteCount+=1
         printList.close()
-        print("==== Site list created: " + str(siteCount) + " total sites ==== \n")
+        print("==== Site list created: " + str(siteCount) + " total sites ==== \n",flush=True)
 
         all_dirs = dir_lists.get_all_dirs()
         contig_prefix = os.path.join(contig_dir, 'contigs')
@@ -81,7 +81,7 @@ class AlignContigsCommand(Command):
 
             aligner.align(dir_, contig_prefix)
 
-        print("==== Done Aligning ====")
+        print("==== Done Aligning ====",flush=True)
         pool = Pool(num_processors)
         pool.map(sam_index_directory, all_dirs)
-        print("==== Done Indexing Bam Files ====")
+        print("==== Done Indexing Bam Files ====",flush=True)
