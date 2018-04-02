@@ -4,9 +4,12 @@
 
     arguments:
         path: folder containing mpileup files ending in pileups
-        assembler: Assembler used for SISRS or 'premade'
+        contig_dir: folder containing assembled composite genome
         minread: number of reads at a position required to call a base
         thresh: proportion of reads that must be one base for calling to occur
+
+    output:
+        path/<SP>_LocList: list of bases for each position
 """
 
 import sys
@@ -37,9 +40,9 @@ def getallbases(path,minread,thresh):
                 speciesDict[loc] = finalBase
 
     printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
-    with open(basePath+"/"+assembler+"output/contigs_LocList") as f:
+    with open(contig_dir+"/contigs_LocList") as f:
         for line in f:
-            print>>printSpecies, speciesDict[line.strip()]
+            printSpecies.write(speciesDict[line.strip()]+'\n')
     f.close()
     printSpecies.close()
 
@@ -48,8 +51,8 @@ def getallbases(path,minread,thresh):
     siteCount = len(speciesDict) - nCount
     sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
     nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
-    print "Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%)."
-    print "Of " + str(nCount) + " Ns, " + os.path.basename(path) + " lost " + str(threshPenalty) + " via homozygosity threshold, " + str(minPenalty)  +" from low coverage, and " + str(bothPenalty) + " from both. "+ str(nCount - threshPenalty - minPenalty - bothPenalty) + " sites had no pileup data.\n"
+    print("Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%).",flush=True)
+    print("Of " + str(nCount) + " Ns, " + os.path.basename(path) + " lost " + str(threshPenalty) + " via homozygosity threshold, " + str(minPenalty)  +" from low coverage, and " + str(bothPenalty) + " from both. "+ str(nCount - threshPenalty - minPenalty - bothPenalty) + " sites had no pileup data.\n",flush=True)
 
     return siteCount
 
