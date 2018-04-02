@@ -95,7 +95,7 @@ class IdentifyFixedSitesCommand(Command):
         try:
             pool.map(run_specific_genome, args)
         except Exception as e:
-            print("specific_genome.py failed")
+            print("specific_genome.py failed",flush=True)
             print(e)
             sys.exit(1)
 
@@ -127,7 +127,7 @@ class IdentifyFixedSitesCommand(Command):
         try:
             pool.map(run_get_pruned_dict, args)
         except Exception as e:
-            print("get_pruned_dict.py failed")
+            print("get_pruned_dict.py failed",flush=True)
             print(e)
             sys.exit(1)
-        print("==== Done Identifying Fixed Sites Without Error ====")
+        print("==== Done Identifying Fixed Sites Without Error ====",flush=True)
