@@ -85,10 +85,10 @@ class ChangeMissingCommand(Command):
         for align in alignmentList:
             filter_nexus_for_missing(align, str_missing)
 
-            locs_filename = 'locs_m{}.txt'.format(str_missing)
+            locs_filename = os.path.basename(alignment_filename).replace('.nex','')+'_locs_m{}.txt'.format(str_missing)
             locs_file_path = os.path.join(args['out_dir'], locs_filename)
 
-            locs_clean_filename = 'locs_m{}_Clean.txt'.format(str_missing)
+            locs_clean_filename = os.path.basename(alignment_filename).replace('.nex','')+'_locs_m{}_Clean.txt'.format(str_missing)
             locs_clean_file_path = os.path.join(args['out_dir'], locs_clean_filename)
 
             clean_file(locs_file_path, locs_clean_file_path)
