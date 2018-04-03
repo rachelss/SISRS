@@ -79,7 +79,7 @@ class ChangeMissingCommand(Command):
         else:
             str_missing = str(missing)
 
-        alignmentList = [os.path.join(args['out_dir'], 'alignment.nex'),os.path.join(args['out_dir'], 'alignment_bi.nex'),os.path.join(args['out_dir'], 'alignment_pi.nex')]
+        alignmentList = [os.path.join(args['out_dir'], 'alignment.nex'),os.path.join(args['out_dir'], 'alignment_pi.nex'),os.path.join(args['out_dir'], 'alignment_bi.nex')]
 
         #Process alignment files
         for align in alignmentList:
