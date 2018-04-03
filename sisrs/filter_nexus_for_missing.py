@@ -53,8 +53,8 @@ def main(alignment_filename, missing_str):
         seq = SeqRecord(Seq(''.join(v)), id=k)
         datalist.append(seq)
 
-    SeqIO.write(datalist, path.dirname(alignment_filename)+'/'+path.basename(alignment_filename).split('.')[0]+'_m'+missing_str+'.phylip-relaxed', "phylip-relaxed")
-    locfile = open(path.dirname(alignment_filename)+'/'+os.path.basename(alignment_filename).replace('.nex','')+'_locs_m'+missing_str+'.txt', 'w')
+    SeqIO.write(datalist, path.dirname(alignment_filename) + '/'+ path.basename(alignment_filename).split('.')[0] + '_m'+missing_str+'.phylip-relaxed', "phylip-relaxed")
+    locfile = open(path.dirname(alignment_filename)+'/'+ path.basename(alignment_filename).replace('.nex','') + '_locs_m'+missing_str+'.txt', 'w')
     locfile.write("\n".join(newlocs))
     locfile.close()
     origLength = len(data[species[0]])
