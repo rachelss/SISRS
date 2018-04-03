@@ -55,28 +55,28 @@ def getCleanList(ref,bases):
 def getFinalBase_Specific(cleanBases):
     #Given possible bases from getCleanList, find base with highest read support
     possibleBases = ['A','T','C','G','*']
+    finalBases = []
     baseCount = Counter(cleanBases)
     maxCount=int(baseCount.most_common()[0][1])
 
     #Remove bases that have less support
     for base in possibleBases:
-        if baseCount[base] < maxCount:
-            possibleBases.remove(base)
+        if baseCount[base] == maxCount:
+            finalBases.append(base)
     #If one base remains, return final base
-    if len(possibleBases) == 1:
-        if '*' in possibleBases:
+    if len(finalBases) == 1:
+        if finalBases[0] == '*':
             finalBase = 'N'
         else:
-            finalBase = possibleBases[0]
+            finalBase = finalBases[0]
     #If more than one base remains, return alpha sorted base with maxCount support
-    if len(possibleBases) > 1:
-        if '*' in possibleBases:
-            possibleBases.remove('*') #If * vs. base, return base
-            finalBase = (sorted(possibleBases))[0]
+    if len(finalBases) > 1:
+        if '*' in finalBases:
+            finalBases.remove('*') #If * vs. base, return base
+            finalBase = (sorted(finalBases))[0]
         else:
-            finalBase = (sorted(possibleBases))[0]
+            finalBase = (sorted(finalBases))[0]
     return finalBase
-
 
     #If we can find a mapper to handle degenerate bases...
     #degenDict = {"ACGT":"N","GT":"K","AC":"M","AG":"R","CT":"Y","CG":"S","AT":"W","CGT":"B","AGT":"D","ACT":"H"}
