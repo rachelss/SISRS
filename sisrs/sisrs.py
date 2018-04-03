@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from multiprocessing import Pool
 import os
 import sys
