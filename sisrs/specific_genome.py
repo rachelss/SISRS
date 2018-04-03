@@ -53,28 +53,32 @@ def getCleanList(ref,bases):
     return new_base_list
 
 def getFinalBase_Specific(cleanBases):
-    #Given possible bases from getCleanList, find base with highest read support
-    possibleBases = ['A','T','C','G','*']
-    finalBases = []
     baseCount = Counter(cleanBases)
-    maxCount=int(baseCount.most_common()[0][1])
+    #If the site is homozygous, return the base
+    if len(baseCount) == 1:
+        finalBase = baseCount.most_common()[0][0]
+        if finalBase == '*':
+            finalBase == 'N'
+    else:
+        #Given possible bases from getCleanList, find bases with highest read support
+        possibleBases = ['A','T','C','G','*']
+        finalBases = []
+        maxCount=int(baseCount.most_common()[0][1])
+        for base in possibleBases:
+            if baseCount[base] == maxCount:
+                finalBases.append(base)
 
-    #Remove bases that have less support
-    for base in possibleBases:
-        if baseCount[base] == maxCount:
-            finalBases.append(base)
-    #If one base remains, return final base
-    if len(finalBases) == 1:
-        if finalBases[0] == '*':
-            finalBase = 'N'
-        else:
-            finalBase = finalBases[0]
-    #If more than one base remains, return alpha sorted base with maxCount support
-    if len(finalBases) > 1:
-        if '*' in finalBases:
-            finalBases.remove('*') #If * vs. base, return base
-            finalBase = (sorted(finalBases))[0]
-        else:
+        #If one base remains, return final base
+        if len(finalBases) == 1:
+            if finalBases[0] == '*':
+                finalBase = 'N'
+            else:
+                finalBase = finalBases[0]
+
+        #If more than one base remains, return alpha sorted base with maxCount support
+        if len(finalBases) > 1:
+            if '*' in finalBases:
+                finalBases.remove('*') #If * vs. base, return base
             finalBase = (sorted(finalBases))[0]
     return finalBase
 
