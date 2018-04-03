@@ -46,7 +46,7 @@ def main(alignment_filename, missing_str):
         if len(set(site)) > 1 and len(site) >= minsp:
             for sp in species:
                 newdata[sp].append(data[sp][i])
-            newlocs.append(locs[i+1])
+            newlocs.append(locs[i])
 
     datalist = []
     for k,v in sorted(newdata.items()):
@@ -65,5 +65,4 @@ def main(alignment_filename, missing_str):
 if __name__ == '__main__':
     alignment_filename = sys.argv[1]
     missing_str = sys.argv[2]
-
     main(alignment_filename, missing_str)
