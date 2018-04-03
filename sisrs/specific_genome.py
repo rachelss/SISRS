@@ -56,7 +56,7 @@ def getFinalBase_Specific(cleanBases):
     #Given possible bases from getCleanList, find base with highest read support
     possibleBases = ['A','T','C','G','*']
     baseCount = Counter(cleanBases)
-    maxCount=int(baseCount.most_common()[0][1]))
+    maxCount=int(baseCount.most_common()[0][1])
 
     #Remove bases that have less support
     for base in possibleBases:
