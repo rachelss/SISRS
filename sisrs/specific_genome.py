@@ -58,7 +58,7 @@ def getFinalBase_Specific(cleanBases):
     if len(baseCount) == 1:
         finalBase = baseCount.most_common()[0][0]
         if finalBase == '*':
-            finalBase == 'N'
+            finalBase = 'N'
     else:
         #Given possible bases from getCleanList, find bases with highest read support
         possibleBases = ['A','T','C','G','*']
