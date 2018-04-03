@@ -30,8 +30,8 @@ def main(alignment_filename, missing_str):
     data = SeqIO.to_dict(SeqIO.parse(alignment_filename, fformat))
 
     #Extract loc IDs from nexus
-    locLine = linecache.getline(alignment_filename, 7)
-    locs = locLine.split()[1:-1] #Remove brackets from top and bottom
+    locline = linecache.getline(alignment_filename, 7)
+    locs = locline.split()[1:-1] #Remove brackets from top and bottom
 
     species = list(data.keys())
     minsp = len(species)-missing
