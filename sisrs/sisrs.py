@@ -89,7 +89,7 @@ class DirectoryLists(object):
 
                 file_path = os.path.join(root, filename)
 
-                if filename.endswith('.fastq'):
+                if (filename.endswith('.fastq') or filename.endswith('.fq.gz') or filename.endswith('.fastq.gz')):
                     self._all_fastq.append(file_path)
 
                 if self._is_paired_read_filename(filename):
