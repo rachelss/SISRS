@@ -5,6 +5,7 @@ import argparse
 from glob import glob
 from pprint import pprint
 from .subsample import SubsampleCommand
+from .build_contigs import BuildContigsCommand
 from .align_contigs import AlignContigsCommand 
 from .identify_fixed_sites import IdentifyFixedSitesCommand
 from .output_alignment import OutputAlignmentCommand
@@ -17,10 +18,11 @@ class SISRSPipeline(object):
          
         self._pipeline = [
             [ 'subSample', self._subsample ],
+            [ 'buildContigs', self._build_contigs ],
             [ 'alignContigs', self._align_contigs ],
             [ 'identifyFixedSites', self._identify_fixed_sites ],
-            [ 'outputAlignment', self._output_alignment],
-            [ 'changeMissing', self._change_missing],
+            [ 'outputAlignment', self._output_alignment ],
+            [ 'changeMissing', self._change_missing ],
         ]
 
         self._pipeline_lookup = {
@@ -51,6 +53,11 @@ class SISRSPipeline(object):
     @staticmethod
     def _subsample(args):
         command = SubsampleCommand(args)
+        command.run()
+
+    @staticmethod
+    def _build_contigs(args):
+        command = BuildContigsCommand(args)
         command.run()
 
     @staticmethod
