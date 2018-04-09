@@ -30,6 +30,7 @@ class Bowtie2Aligner(Aligner):
             '-p', str(self._num_processors),
             '-N', '1',
             '--local',
+            '--score-min G,1,10',
             '-x', contig_prefix,
             '-U', ','.join(fastq_filepaths)
         ]
