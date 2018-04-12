@@ -1,12 +1,11 @@
 #!/usr/bin/env python3
 import os
 import shutil
-from multiprocessing import Pool
 from subprocess import check_call
 from Bio import SeqIO
-from .process import Process
-from .aligners import create_aligner
-from .command import Command
+
+contig_dir = sys.argv[1]
+contig_file_path = os.path.join(contig_dir, 'contigs.fa')
 
 # backup contigs.fa
 backup_contig_file_path = os.path.join(
@@ -25,10 +24,9 @@ check_call(rename_command)
 print("==== Scaffolds Renamed ====",flush=True)
 
 #CREATE FILE OF ALL CONTIG SEQUENCE LENGTHS
-contigFile=(contig_dir+'/contigs.fa')
 
 seqLengthFile = open(contig_dir+'/contigs_SeqLength.tsv', "w")
-for seq_record in SeqIO.parse(contigFile,"fasta"):
+for seq_record in SeqIO.parse(contig_file_path,"fasta"):
   seqLengthFile.write(str(seq_record.id)+"\t"+str(len(seq_record))+"\n")
 seqLengthFile.close()
 print("==== Congig Length File Generated ====",flush=True)
