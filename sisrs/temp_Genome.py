@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import os
+import sys
 import shutil
 from subprocess import check_call
 from Bio import SeqIO
