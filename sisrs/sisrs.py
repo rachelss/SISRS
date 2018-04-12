@@ -81,8 +81,6 @@ class DirectoryLists(object):
     def __init__(self, base_dir):
 
         self._all_fastq = []
-        self._paired = []
-        self._unpaired = []
 
         for root, dirs, files in os.walk(base_dir):
             for filename in files:
