@@ -22,7 +22,16 @@ class Bowtie2Aligner(Aligner):
         basename = os.path.basename(dir_)
 
         print("==== Aligning {} as Single-Ended ====".format(basename),flush=True)
-        fastq_filepaths = glob(os.path.join(dir_, '*.fastq'))
+        unzipped_fastq_filepaths = glob(os.path.join(dir_, '*.fastq')) + glob(os.path.join(dir_, '*.fq'))
+        zipped_fastq_filepaths = glob(os.path.join(dir_, '*.fastq.gz')) + glob(os.path.join(dir_, '*.fq.gz'))
+
+        if((len(unzipped_fastq_filepaths) > 0) and (len(zipped_fastq_filepaths) == 0)):
+            fastq_filepaths = unzipped_fastq_filepaths
+        elif((len(unzipped_fastq_filepaths) == 0) and (len(zipped_fastq_filepaths) > 0)):
+            fastq_filepaths = zipped_fastq_filepaths
+        elif((len(unzipped_fastq_filepaths) > 0) and (len(zipped_fastq_filepaths) > 0)):
+            print("Sequence data for {} contains a mix of zipped and unzipped files. All files must be either compressed or uncompressed. Aborting...".format(basename),flush=True)
+            sys.exit(1)
 
         # Generate temp file
         bowtie2_command = [
