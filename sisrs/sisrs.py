@@ -1,20 +1,24 @@
+#!/usr/bin/env python3
+
 from multiprocessing import Pool
 import os
 import sys
 import argparse
 from glob import glob
 from pprint import pprint
-from .align_contigs import AlignContigsCommand 
+from .subsample import SubsampleCommand
+from .align_contigs import AlignContigsCommand
 from .identify_fixed_sites import IdentifyFixedSitesCommand
-from .get_alignment import main as get_alignment
+from .output_alignment import OutputAlignmentCommand
 from .change_missing import ChangeMissingCommand
 from .process import Process
 
 
 class SISRSPipeline(object):
     def __init__(self):
-         
+
         self._pipeline = [
+            [ 'subSample', self._subsample ],
             [ 'alignContigs', self._align_contigs ],
             [ 'identifyFixedSites', self._identify_fixed_sites ],
             [ 'outputAlignment', self._output_alignment],
@@ -38,13 +42,18 @@ class SISRSPipeline(object):
         self._pipeline_lookup[command_name]['func'](args)
 
     def run_commands_from(self, first_command_name, args):
-        
+
         first_command_index = \
             self._pipeline_lookup[first_command_name]['index']
 
         for stage in self._pipeline[first_command_index:]:
             command_name = stage[0]
             self.run_command(command_name, args)
+
+    @staticmethod
+    def _subsample(args):
+        command = SubsampleCommand(args)
+        command.run()
 
     @staticmethod
     def _align_contigs(args):
@@ -55,18 +64,11 @@ class SISRSPipeline(object):
     def _identify_fixed_sites(args):
         command = IdentifyFixedSitesCommand(args)
         command.run()
-        
+
     @staticmethod
     def _output_alignment(args):
-
-        data_dir = args['data_dir']
-        out_dir = args['out_dir']
-        assembler = args['assembler']
-        dir_lists = args['dir_lists']
-
-        all_dirs = dir_lists.get_all_dirs()
-        num_missing = len(all_dirs) - 2
-        get_alignment(num_missing, 'X', out_dir, assembler)
+        command = OutputAlignmentCommand(args)
+        command.run()
 
     @staticmethod
     def _change_missing(args):
@@ -79,11 +81,13 @@ class DirectoryLists(object):
     def __init__(self, base_dir):
 
         self._all_fastq = []
-        
+
         for root, dirs, files in os.walk(base_dir):
             for filename in files:
-                if filename.endswith('.fastq'):
-                    file_path = os.path.join(root, filename)
+
+                file_path = os.path.join(root, filename)
+
+                if (filename.endswith('.fastq') or filename.endswith('.fq') or filename.endswith('.fq.gz') or filename.endswith('.fastq.gz')):
                     self._all_fastq.append(file_path)
 
         self._all_dirs = sorted(list(set([ os.path.dirname(x) for x in self._all_fastq ])))
@@ -91,23 +95,22 @@ class DirectoryLists(object):
     def get_all_dirs(self):
         return self._all_dirs
 
-
 def setup_output_directory(data_directory, output_directory, overwrite):
 
     if output_directory is None:
         output_directory = data_directory
-        print("Note: SISRS writing into data folder")
+        print("Note: SISRS writing into data folder",flush=True)
     elif not os.path.exists(output_directory):
         print(data_directory)
         recursive_symlinks(data_directory, output_directory)
     else:
         if overwrite:
             print("{} already exists. Overwriting...".format(
-                output_directory))
+                output_directory),flush=True)
             recursive_symlinks(data_directory, output_directory)
         else:
             print("{} already exists and overwrite flag not set. Aborting...".format(
-                output_directory))
+                output_directory),flush=True)
             sys.exit(1)
 
     return os.path.abspath(output_directory)
@@ -137,7 +140,6 @@ def main():
     pipeline = SISRSPipeline()
 
     parser = argparse.ArgumentParser()
-    #subparsers = parser.add_subparsers()
 
     parser.add_argument(
             'command',
@@ -150,6 +152,8 @@ def main():
     parser.add_argument('-a', '--assembler', type=str, default='velvet')
     parser.add_argument('-p', '--num_processors', type=int, default=1)
     parser.add_argument('-m', '--missing', type=int, help="Num missing")
+    parser.add_argument('-g', '--genome-size', type=int, help="Genome size",
+            default=None)
 
     # identifyFixedSites specific
     parser.add_argument(
@@ -177,9 +181,7 @@ def main():
 
     dir_lists = DirectoryLists(output_directory)
 
-    contig_dir = ''
-    if assembler == 'premade':
-        contig_dir = 'premadeoutput'
+    contig_dir = assembler + 'output'
 
     args_dict = {}
     args_dict['data_dir'] = data_directory
@@ -189,9 +191,10 @@ def main():
     args_dict['contig_dir'] = os.path.join(output_directory, contig_dir)
     args_dict['num_processors'] = num_processors
     args_dict['continuous'] = continuous
-    args_dict['min_read'] = args.min_read 
+    args_dict['min_read'] = args.min_read
     args_dict['threshold'] = args.threshold
     args_dict['missing'] = args.missing
+    args_dict['genome_size'] = args.genome_size
 
     command_name = args.command
 
@@ -199,4 +202,3 @@ def main():
         pipeline.run_commands_from(command_name, args_dict)
     else:
         pipeline.run_command(command_name, args_dict)
-

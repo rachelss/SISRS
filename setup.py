@@ -3,19 +3,18 @@ from setuptools import setup, find_packages
 
 here = os.path.abspath(os.path.dirname(__file__))
 
-# Get the long description from the README file
-    # TODO: upgrade to python 3
-#with open(os.path.join(here, 'README.md'), encoding='utf-8') as f:
 with open(os.path.join(here, 'README.md')) as f:
     long_description = f.read()
 
 setup(
     name='sisrs',
-    version='0.0.1',
+    version='0.1.0',
     packages=find_packages(),
     description="Site Identification from Short Read Sequences.",
     long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://cartwrig.ht/software/',
+    license='GPLv3',
     install_requires=[
         'biopython',
     ],
@@ -25,4 +24,5 @@ setup(
             'sisrs-python = sisrs:main'
         ],
     },
+    keywords='bioinformatics genetics',
 )

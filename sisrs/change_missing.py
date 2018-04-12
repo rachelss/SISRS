@@ -2,8 +2,9 @@ import os
 import shutil
 
 from .filter_nexus_for_missing import main as filter_nexus_for_missing
-from .process import Process 
-from subprocess import PIPE 
+from .process import Process
+from subprocess import PIPE
+from .command import Command
 
 def clean_file(in_path, out_path):
 
@@ -44,7 +45,7 @@ def clean_file(in_path, out_path):
     # dumps are different
 
     #with open(in_path, 'r') as f_in:
-    #    
+    #
     #    lines = [ line[:line.find('/')] for line in f_in ]
 
     #counts = {}
@@ -62,74 +63,32 @@ def clean_file(in_path, out_path):
     #    for count in sorted_counts:
     #        f_out.write("{}\n".format(count[0]))
 
-def run_comparison(data, str_missing, locs_filename, locs_clean_filename,
-        dirname, filename):
-
-    dir_ = os.path.join(
-            data['out_dir'],
-            dirname)
-
-    alignment_file_path = os.path.join(dir_, filename)
-
-    # TODO: should we really be checking if the directory exists first?
-    if not os.path.exists(dir_):
-        os.makedirs(dir_)
-        src_path = os.path.join(data['out_dir'], filename)
-        shutil.move(src_path, alignment_file_path)
-
-    filter_nexus_for_missing(alignment_file_path, str_missing)
-
-    locs_file_path = os.path.join(dir_, locs_filename)
-    locs_clean_file_path = os.path.join(dir_, locs_clean_filename)
-    
-    clean_file(locs_file_path, locs_clean_file_path)
-
-
-
-class ChangeMissingCommand(object):
-
-    def __init__(self, data):
-
-        self._data = data 
+class ChangeMissingCommand(Command):
 
     def run(self):
 
-        data = self._data
-        missing = data['missing']
+        args = self._args
 
-        alignment_file_path = os.path.join(data['out_dir'], 'alignment.nex')
+        #Set missing to user value or (# species - 2)
+        missing = args['missing']
 
         if missing is None:
-            dir_lists = data['dir_lists']
+            dir_lists = args['dir_lists']
             all_dirs = dir_lists.get_all_dirs()
             str_missing = str(len(all_dirs) - 2)
         else:
             str_missing = str(missing)
 
-        filter_nexus_for_missing(alignment_file_path, str_missing)
+        alignmentList = [os.path.join(args['out_dir'], 'alignment.nex'),os.path.join(args['out_dir'], 'alignment_pi.nex'),os.path.join(args['out_dir'], 'alignment_bi.nex')]
 
-        locs_filename = 'locs_m{}.txt'.format(str_missing)
-        locs_file_path = os.path.join(data['out_dir'], locs_filename)
+        #Process alignment files
+        for align in alignmentList:
+            filter_nexus_for_missing(align, str_missing)
 
-        locs_clean_filename = 'locs_m{}_Clean.txt'.format(str_missing)
-        locs_clean_file_path = os.path.join(
-            data['out_dir'], locs_clean_filename)
+            locs_filename = os.path.basename(align).replace('.nex','')+'_locs_m{}.txt'.format(str_missing)
+            locs_file_path = os.path.join(args['out_dir'], locs_filename)
 
-        clean_file(locs_file_path, locs_clean_file_path)
+            locs_clean_filename = os.path.basename(align).replace('.nex','')+'_locs_m{}_Clean.txt'.format(str_missing)
+            locs_clean_file_path = os.path.join(args['out_dir'], locs_clean_filename)
 
-        run_comparison(
-                data,
-                str_missing,
-                locs_filename,
-                locs_clean_filename,
-                'alignmentDataWithoutSingletons',
-                'alignment_pi.nex')
-
-        run_comparison(
-                data,
-                str_missing,
-                locs_filename,
-                locs_clean_filename,
-                'alignmentDataWithOnlyBiallelic',
-                'alignment_bi.nex')
-
+            clean_file(locs_file_path, locs_clean_file_path)

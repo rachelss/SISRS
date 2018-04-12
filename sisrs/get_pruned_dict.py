@@ -4,42 +4,59 @@
 
     arguments:
         path: folder containing mpileup files ending in pileups
+        contig_dir: folder containing assembled composite genome
         minread: number of reads at a position required to call a base
         thresh: proportion of reads that must be one base for calling to occur
 
     output:
-        path/pruned_dict.pkl : contains pickled dictionary of position:base
-
+        path/<SP>_LocList: list of bases for each position
 """
 
 import sys
-# NOTE: python 3 uses cPickle behind the scenes by default
-import pickle as cPickle
 from collections import Counter
 import glob
 import string
 import re
 import os
 from .specific_genome import getCleanList
+from collections import defaultdict
 
 #get combined pileup info
-def getallbases(path,minread,thresh):
+def getallbases(path,contig_dir,minread,thresh):
+    basePath=os.path.dirname(path)
     assert len(glob.glob1(path,"*.pileups"))==1,'More than one pileup file in'+path
-    allbases=dict()
+    speciesDict=defaultdict(lambda: 'N')
+    minPenalty=0
+    threshPenalty=0
+    bothPenalty=0
     with open (path+'/'+os.path.basename(path)+'.pileups',"r") as filein:
-        for line in filein:
+        for line in iter(filein):
             splitline=line.split()
             if len(splitline)>4:
                 node,pos,ref,num,bases,qual=line.split()
                 loc=node+'/'+pos
                 cleanBases=getCleanList(ref,bases)  #Get clean bases where * replaced with -
-                assert len(cleanBases) == int(num), 'bases are being counted incorrectly: '+ str(bases) + ' should have '+str(num)+' bases, but it is being converted to '+"".join(cleanBases)
-                finalBase=getFinalBase_Pruned(cleanBases,minread,thresh)
-                if finalBase != 'N':    #Do not pass Ns to pruned_dictionary, but do pass - as deletion
-                    allbases[loc]=finalBase
-    return allbases
+                finalBase,minPenalty,threshPenalty,bothPenalty=getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty)
+                speciesDict[loc] = finalBase
 
-def getFinalBase_Pruned(cleanBases,minread,thresh):
+    printSpecies = open(path+"/"+os.path.basename(path)+'_LocList', 'w')
+    with open(contig_dir+"/contigs_LocList") as f:
+        for line in f:
+            printSpecies.write(speciesDict[line.strip()]+'\n')
+    f.close()
+    printSpecies.close()
+
+    c = Counter(speciesDict.values())
+    nCount = c['N']
+    siteCount = len(speciesDict) - nCount
+    sitePercent = format((float(siteCount)/len(speciesDict))*100,'.2f')
+    nPercent = format((float(nCount)/len(speciesDict))*100,'.2f')
+    print("Of "+ str(len(speciesDict)) + " positions, " + os.path.basename(path) + " has good calls for " + str(siteCount) + " sites (" + sitePercent +"%). There were " + str(nCount) + " N calls ("+ nPercent + "%).",flush=True)
+    print("Of " + str(nCount) + " Ns, " + os.path.basename(path) + " lost " + str(threshPenalty) + " via homozygosity threshold, " + str(minPenalty)  +" from low coverage, and " + str(bothPenalty) + " from both. "+ str(nCount - threshPenalty - minPenalty - bothPenalty) + " sites had no pileup data.\n",flush=True)
+
+    return siteCount
+
+def getFinalBase_Pruned(cleanBases,minread,thresh,minPenalty,threshPenalty,bothPenalty):
     singleBase=(Counter(cleanBases).most_common()[0][0])
     if singleBase == '*':
         singleBase = '-'
@@ -49,30 +66,25 @@ def getFinalBase_Pruned(cleanBases,minread,thresh):
         finalBase=singleBase
     else:
         finalBase='N'
+        if counts < minread and counts/float(len(cleanBases)) < thresh:
+            bothPenalty+=1
+        elif counts < minread:
+                minPenalty+=1
+        elif counts/float(len(cleanBases)) < thresh:
+                threshPenalty+=1
 
-    return finalBase
+    return finalBase,minPenalty,threshPenalty,bothPenalty
 ###############################################
-def main(path, minread, thresh):
+def main(path, contig_dir, minread, thresh):
 
-    allbases=getallbases(path,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
-    if len(allbases)==0:
-        print('No data for '+path)
-        sys.exit(1)      #dictionary of combined pileups - locus/pos:bases(as list)
-
-    output = open(path+'/pruned_dict.pkl', 'wb')
-    # Use protocol version 2 in order to match the test data which was
-    # generated using the bash version of SISRS running on Python 2. This
-    # can probably be changed to cPickle.HIGHEST_PROTOCOL but the test data
-    # will need to be updated. This was the best way I could think of to make
-    # minimal changes to bash SISRS in order to create a base set of test
-    # data.
-    cPickle.dump(allbases, output, 2)
-    #cPickle.dump(allbases, output, cPickle.HIGHEST_PROTOCOL)
-    output.close()
-
+    allbases=getallbases(path,contig_dir,minread,thresh)      #dictionary of combined pileups - locus/pos:bases(as list)
+    if allbases==0:
+        print('No data for '+path,flush=True)
+        sys.exit(1)
 
 if __name__ == '__main__':
     path = sys.argv[1]
-    minread = int(sys.argv[2])
-    thresh = float(sys.argv[3])
-    main(path, minread, thresh)
+    contig_dir = sys.argv[2]
+    minread = int(sys.argv[3])
+    thresh = float(sys.argv[4])
+    main(path, contig_dir, minread, thresh)

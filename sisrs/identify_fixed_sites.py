@@ -1,27 +1,28 @@
+#!/usr/bin/env python3
+
 import os
 import sys
-from .process import Process 
+from .process import Process
 from multiprocessing import Pool
 from .specific_genome import main as specific_genome
 from .get_pruned_dict import main as get_pruned_dict
 from .aligners import create_aligner
+from .command import Command
 
 def run_mpileup(args):
 
     dir_ = args[0]
     contig_file_path = args[1]
-    
+
     taxon_name = os.path.basename(dir_)
 
     path = os.path.join(dir_, taxon_name)
-
-    print(path)
 
     command = [
         'samtools', 'mpileup',
         '-f', contig_file_path,
         '-o', path + '.pileups',
-        path + '.bam', 
+        path + '.bam',
     ]
     Process(command).wait()
 
@@ -66,21 +67,17 @@ def run_get_pruned_dict(args):
     get_pruned_dict(*args)
 
 
-class IdentifyFixedSitesCommand(object):
-
-    def __init__(self, data):
-
-        self._data = data 
+class IdentifyFixedSitesCommand(Command):
 
     def run(self):
 
-        data = self._data
+        args = self._args
 
-        contig_dir = data['contig_dir']
-        num_processors = data['num_processors']
-        dir_lists = data['dir_lists']
-        min_read = data['min_read']
-        threshold = data['threshold']
+        contig_dir = args['contig_dir']
+        num_processors = args['num_processors']
+        dir_lists = args['dir_lists']
+        min_read = args['min_read']
+        threshold = args['threshold']
 
         aligner = create_aligner(num_processors=num_processors)
 
@@ -98,7 +95,7 @@ class IdentifyFixedSitesCommand(object):
         try:
             pool.map(run_specific_genome, args)
         except Exception as e:
-            print("specific_genome.py failed")
+            print("specific_genome.py failed",flush=True)
             print(e)
             sys.exit(1)
 
@@ -123,14 +120,14 @@ class IdentifyFixedSitesCommand(object):
         pool.map(run_index, all_dirs)
 
         pool.map(run_mpileup, args)
- 
+
         # put base for each site in a dictionary (allows no variation when
         # calling sites)
-        args = [ (dir_, min_read, threshold) for dir_ in all_dirs ]
+        args = [ (dir_, contig_dir, min_read, threshold) for dir_ in all_dirs ]
         try:
             pool.map(run_get_pruned_dict, args)
         except Exception as e:
-            print("get_pruned_dict.py failed")
+            print("get_pruned_dict.py failed",flush=True)
             print(e)
             sys.exit(1)
-        print("==== Done Identifying Fixed Sites Without Error ====")
+        print("==== Done Identifying Fixed Sites Without Error ====",flush=True)

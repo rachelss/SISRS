@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-#This script assumes a single pileup file per taxon
-#Add an assert statement to test this
 import os
 import sys
 from collections import Counter
@@ -55,22 +53,51 @@ def getCleanList(ref,bases):
     return new_base_list
 
 def getFinalBase_Specific(cleanBases):
-    most_common = sorted(Counter(cleanBases).most_common())
-    finalBase=(most_common[0][0])
-    if finalBase == '*':
-        finalBase = 'N'
+    baseCount = Counter(cleanBases)
+    #If the site is homozygous, return the base
+    if len(baseCount) == 1:
+        finalBase = baseCount.most_common()[0][0]
+        if finalBase == '*':
+            finalBase = 'N'
+    else:
+        #Given possible bases from getCleanList, find bases with highest read support
+        possibleBases = ['A','T','C','G','*']
+        finalBases = []
+        maxCount=int(baseCount.most_common()[0][1])
+        for base in possibleBases:
+            if baseCount[base] == maxCount:
+                finalBases.append(base)
+
+        #If one base remains, return final base
+        if len(finalBases) == 1:
+            if finalBases[0] == '*':
+                finalBase = 'N'
+            else:
+                finalBase = finalBases[0]
+
+        #If more than one base remains, return alpha sorted base with maxCount support
+        if len(finalBases) > 1:
+            if '*' in finalBases:
+                finalBases.remove('*') #If * vs. base, return base
+            finalBase = (sorted(finalBases))[0]
     return finalBase
 
-###############################################
-#if __name__ == "__main__":
-#    path=sys.argv[1]
-#    contig_file = sys.argv[2]
+    #If we can find a mapper to handle degenerate bases...
+    #degenDict = {"ACGT":"N","GT":"K","AC":"M","AG":"R","CT":"Y","CG":"S","AT":"W","CGT":"B","AGT":"D","ACT":"H"}
+    #counter=Counter(cleanBases)
+    #baseList = sorted([key for key, _ in counter.most_common()])
+    #if '*' in baseList:
+    #    finalBase = 'N'
+    #else:
+    #    finalBase = degenDict[baseList]
+    #return finalBase
 
+###############################################
 def main(path, contig_file):
 
     allbases=getallbases(path)      #dictionary of combined pileups - locus/pos:bases(as list)
     if len(allbases)==0:
-        print('No data for '+path)
+        print('No data for '+path,flush=True)
         sys.exit(1)
 
     # Read contig fasta file into dictionary with sequence ID as the key
@@ -83,12 +110,10 @@ def main(path, contig_file):
         locus,pos = locus_pos.split('/')
         fasta_dict[locus][int(pos)-1] = base
 
-    #output = open(path+'/contigs.fa', 'wb')
     output = open(path+'/contigs.fa', 'w')
     for l,seq in sorted(fasta_dict.items()):
         output.write('>'+str(l)+"\n"+"".join(seq)+"\n")
     output.close()
-
 
 if __name__ == '__main__':
     path = sys.argv[1]
