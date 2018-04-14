@@ -7,6 +7,9 @@ from subprocess import Popen, PIPE
 class Process(object):
 
     def __init__(self, command, stdin=None, stdout=None):
+
+        self._command = command
+
         try:
             self.proc = Popen(command, stdin=stdin, stdout=stdout)
         except Exception as e:
@@ -14,7 +17,10 @@ class Process(object):
             raise e 
 
     def wait(self):
-        return self.proc.wait()
+        success = 0 == self.proc.wait()
+
+        if not success:
+            raise Exception("{} failed while running".format(self._command[0]))
 
     def pipe(self):
         return self.proc.stdout
@@ -35,5 +41,3 @@ class MpileupProcess(object):
             '-o', pileups_path
         ]
         Process(command).wait()
-
-    #parallel --jobs "${PROCESSORS}" 'samtools mpileup -f' "${OUTFOLDER}"/"${CONTIGS}"/contigs.fa '"$( echo {}/$(basename {} ) )".bam' '> "$( echo {}/$(basename {} ) )".pileups' ::: "${FOLDERLISTA[@]}"

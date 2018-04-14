@@ -97,10 +97,10 @@ class DirectoryLists(object):
                 if filename.endswith('.fastq'):
                     self._all_fastq.append(file_path)
 
-                if self._is_paired_read_filename(filename):
-                    self._paired.append(file_path)
-                else:
-                    self._unpaired.append(file_path)
+                    if self._is_paired_read_filename(filename):
+                        self._paired.append(file_path)
+                    else:
+                        self._unpaired.append(file_path)
 
         self._all_dirs = sorted(list(set([ os.path.dirname(x) for x in self._all_fastq ])))
 
@@ -173,12 +173,19 @@ def main():
     parser.add_argument('-c', '--continuous', default=1)
     parser.add_argument('-f', '--data-directory')
     parser.add_argument('-z', '--output-directory')
+    # TODO: implement overwrite flag as boolean
     parser.add_argument('--overwrite')
     parser.add_argument('-a', '--assembler', type=str, default='velvet')
     parser.add_argument('-p', '--num_processors', type=int, default=1)
     parser.add_argument('-m', '--missing', type=int, help="Num missing")
     parser.add_argument('-g', '--genome-size', type=int, help="Genome size",
             default=None)
+    parser.add_argument('-r', '--reference', type=str, help="Reference file")
+
+    # buildContigs specific
+    parser.add_argument(
+            '-k', '--kmer-size', type=int, default=21,
+            help="k-mer size (for assembly)")
 
     # identifyFixedSites specific
     parser.add_argument(
@@ -222,6 +229,8 @@ def main():
     args_dict['threshold'] = args.threshold
     args_dict['missing'] = args.missing
     args_dict['genome_size'] = args.genome_size
+    args_dict['reference'] = args.reference
+    args_dict['kmer_size'] = args.kmer_size
 
     command_name = args.command
 
