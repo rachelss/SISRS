@@ -7,6 +7,8 @@ from ..process import Process
 
 class VelvetAssembler(Assembler):
 
+    # NOTE: This is currently untested
+
     def __init__(self, dir_lists, out_dir, **kwargs):
         super().__init__(dir_lists, out_dir, **kwargs)
 
