@@ -7,5 +7,4 @@ docker run \
     --rm \
     -w /SISRS \
     --mount src=$PWD,dst=/SISRS,type=bind \
-    --mount src=$HOME/apps/SISRS,dst=/OG_SISRS,type=bind \
     anderspitman/sisrs${postfix} bash
