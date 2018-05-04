@@ -88,24 +88,43 @@ class DirectoryLists(object):
     def __init__(self, base_dir):
 
         self._all_fastq = []
+        self._paired = []
+        self._unpaired = []
 
         for root, dirs, files in os.walk(base_dir):
             for filename in files:
 
                 file_path = os.path.join(root, filename)
 
-                if (filename.endswith('.fastq') or filename.endswith('.fq') or filename.endswith('.fq.gz') or filename.endswith('.fastq.gz')):
+                if (filename.endswith('.fastq') or
+                        filename.endswith('.fq') or
+                        filename.endswith('.fq.gz') or
+                        filename.endswith('.fastq.gz')):
+
                     self._all_fastq.append(file_path)
 
-                    #if self._is_paired_read_filename(filename):
-                    #    self._paired.append(file_path)
-                    #else:
-                    #    self._unpaired.append(file_path)
+                    if self._is_paired_read_filename(filename):
+                        self._paired.append(file_path)
+                    else:
+                        self._unpaired.append(file_path)
 
         self._all_dirs = sorted(list(set([ os.path.dirname(x) for x in self._all_fastq ])))
 
     def get_all_dirs(self):
         return self._all_dirs
+
+    def get_paired(self):
+        return self._paired
+
+    def get_unpaired(self):
+        return self._unpaired
+
+    def _is_paired_read_filename(self, filename):
+        return ('_R1' in filename or
+                '_R2' in filename or
+                # TODO: is it true that subsampled files are always paired?
+                'subsampled' in filename)
+
 
 def setup_output_directory(data_directory, output_directory, overwrite):
 
