@@ -4,6 +4,6 @@ services: docker
 dist: trusty
 before_install: 
     - docker pull anderspitman/sisrs
-    - git clone --depth=1 https://github.com/anderspitman/SISRS_ci_data pipeline_stages
+    - git clone --depth=1 https://github.com/anderspitman/SISRS_ci_data_2 test_data
 install: true
 script: docker run --mount src=$PWD,dst=/SISRS,type=bind anderspitman/sisrs ./run_tests.sh

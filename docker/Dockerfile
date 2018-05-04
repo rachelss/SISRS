@@ -1,8 +1,5 @@
 FROM ubuntu:14.04
 
-# Note: dependencies are grouped below. Since I can't do inline comments to say
-# which deps are for what, I'll list them in order here:
-# 1. general 2. samtools 3. BamHash 4. sisrs
 RUN apt-get update && apt-get install -y \
     build-essential \
     bzip2 \
@@ -33,7 +30,7 @@ RUN tar xf samtools-${SAMTOOLS_VERSION}.tar.bz2 \
     && rm -rf samtools-${SAMTOOLS_VERSION}.tar.bz2
     
 # install bowtie2
-ENV BOWTIE2_VERSION 2.3.3.1
+ENV BOWTIE2_VERSION 2.3.4.1
 RUN wget https://github.com/BenLangmead/bowtie2/releases/download/v${BOWTIE2_VERSION}/bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
 RUN unzip bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip \
     && rm bowtie2-${BOWTIE2_VERSION}-linux-x86_64.zip
@@ -65,15 +62,6 @@ RUN tar xf mafft-${MAFFT_VERSION}-without-extensions-src.tgz \
     && cd ../../ \
     && rm -rf mafft-${MAFFT_VERSION}-without-extensions-src.tgz \
     && rm -rf mafft-${MAFFT_VERSION}-without-extensions
-
-# install BamHash for comparing bam files
-RUN git clone https://github.com/DecodeGenetics/BamHash \
-    && cd BamHash \
-    && git checkout 1c987784929f5c6cf28b9d36d00017380b922c71 \
-    && make \
-    && cp bamhash_checksum_bam /usr/local/bin \
-    && cd .. \
-    && rm -rf BamHash
 
 # install custom python using Miniconda
 RUN wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;

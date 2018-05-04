@@ -7,7 +7,8 @@ import argparse
 from glob import glob
 from pprint import pprint
 from .subsample import SubsampleCommand
-from .align_contigs import AlignContigsCommand
+from .build_contigs import BuildContigsCommand
+from .align_contigs import AlignContigsCommand 
 from .identify_fixed_sites import IdentifyFixedSitesCommand
 from .output_alignment import OutputAlignmentCommand
 from .change_missing import ChangeMissingCommand
@@ -19,10 +20,11 @@ class SISRSPipeline(object):
 
         self._pipeline = [
             [ 'subSample', self._subsample ],
+            [ 'buildContigs', self._build_contigs ],
             [ 'alignContigs', self._align_contigs ],
             [ 'identifyFixedSites', self._identify_fixed_sites ],
-            [ 'outputAlignment', self._output_alignment],
-            [ 'changeMissing', self._change_missing],
+            [ 'outputAlignment', self._output_alignment ],
+            [ 'changeMissing', self._change_missing ],
         ]
 
         self._pipeline_lookup = {
@@ -56,6 +58,11 @@ class SISRSPipeline(object):
         command.run()
 
     @staticmethod
+    def _build_contigs(args):
+        command = BuildContigsCommand(args)
+        command.run()
+
+    @staticmethod
     def _align_contigs(args):
         command = AlignContigsCommand(args)
         command.run()
@@ -81,19 +88,43 @@ class DirectoryLists(object):
     def __init__(self, base_dir):
 
         self._all_fastq = []
+        self._paired = []
+        self._unpaired = []
 
         for root, dirs, files in os.walk(base_dir):
             for filename in files:
 
                 file_path = os.path.join(root, filename)
 
-                if (filename.endswith('.fastq') or filename.endswith('.fq') or filename.endswith('.fq.gz') or filename.endswith('.fastq.gz')):
+                if (filename.endswith('.fastq') or
+                        filename.endswith('.fq') or
+                        filename.endswith('.fq.gz') or
+                        filename.endswith('.fastq.gz')):
+
                     self._all_fastq.append(file_path)
+
+                    if self._is_paired_read_filename(filename):
+                        self._paired.append(file_path)
+                    else:
+                        self._unpaired.append(file_path)
 
         self._all_dirs = sorted(list(set([ os.path.dirname(x) for x in self._all_fastq ])))
 
     def get_all_dirs(self):
         return self._all_dirs
+
+    def get_paired(self):
+        return self._paired
+
+    def get_unpaired(self):
+        return self._unpaired
+
+    def _is_paired_read_filename(self, filename):
+        return ('_R1' in filename or
+                '_R2' in filename or
+                # TODO: is it true that subsampled files are always paired?
+                'subsampled' in filename)
+
 
 def setup_output_directory(data_directory, output_directory, overwrite):
 
@@ -148,12 +179,19 @@ def main():
     parser.add_argument('-c', '--continuous', default=1)
     parser.add_argument('-f', '--data-directory')
     parser.add_argument('-z', '--output-directory')
+    # TODO: implement overwrite flag as boolean
     parser.add_argument('--overwrite')
     parser.add_argument('-a', '--assembler', type=str, default='velvet')
     parser.add_argument('-p', '--num_processors', type=int, default=1)
     parser.add_argument('-m', '--missing', type=int, help="Num missing")
     parser.add_argument('-g', '--genome-size', type=int, help="Genome size",
             default=None)
+    parser.add_argument('-r', '--reference', type=str, help="Reference file")
+
+    # buildContigs specific
+    parser.add_argument(
+            '-k', '--kmer-size', type=int, default=21,
+            help="k-mer size (for assembly)")
 
     # identifyFixedSites specific
     parser.add_argument(
@@ -195,6 +233,8 @@ def main():
     args_dict['threshold'] = args.threshold
     args_dict['missing'] = args.missing
     args_dict['genome_size'] = args.genome_size
+    args_dict['reference'] = args.reference
+    args_dict['kmer_size'] = args.kmer_size
 
     command_name = args.command
 
