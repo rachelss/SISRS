@@ -8,7 +8,7 @@ from os.path import join, exists
 
 data_base_dir = 'test_data'
 out_base_dir = 'output'
-num_proc = 16
+num_proc = 1
 
 taxon_names = [
     'GorGor',
