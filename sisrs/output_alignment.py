@@ -14,6 +14,4 @@ class OutputAlignmentCommand(Command):
 
         all_dirs = dir_lists.get_all_dirs()
         num_missing = len(all_dirs) - 2
-        get_alignment(num_missing, 'X', out_dir, assembler)
-
-
+        get_alignment(num_missing, out_dir, assembler)

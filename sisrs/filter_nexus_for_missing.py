@@ -28,8 +28,11 @@ def main(alignment_filename, missing_str):
     fformat = formats[alignment_filename.split('.')[-1]]
     missing = int(missing_str)
     data = SeqIO.to_dict(SeqIO.parse(alignment_filename, fformat))
-    locline = linecache.getline(alignment_filename, 8)
-    locs = locline.split()
+
+    #Extract loc IDs from nexus
+    locline = linecache.getline(alignment_filename, 7)
+    locs = locline.split()[1:-1] #Remove brackets from top and bottom
+
     species = list(data.keys())
     minsp = len(species)-missing
     newlocs = list()
@@ -43,15 +46,15 @@ def main(alignment_filename, missing_str):
         if len(set(site)) > 1 and len(site) >= minsp:
             for sp in species:
                 newdata[sp].append(data[sp][i])
-            newlocs.append(locs[i+1])
+            newlocs.append(locs[i])
 
     datalist = []
     for k,v in sorted(newdata.items()):
         seq = SeqRecord(Seq(''.join(v)), id=k)
         datalist.append(seq)
 
-    SeqIO.write(datalist, path.dirname(alignment_filename)+'/'+path.basename(alignment_filename).split('.')[0]+'_m'+missing_str+'.phylip-relaxed', "phylip-relaxed")
-    locfile = open(path.dirname(alignment_filename)+'/locs_m'+missing_str+'.txt', 'w')
+    SeqIO.write(datalist, path.dirname(alignment_filename) + '/'+ path.basename(alignment_filename).split('.')[0] + '_m'+missing_str+'.phylip-relaxed', "phylip-relaxed")
+    locfile = open(path.dirname(alignment_filename)+'/'+ path.basename(alignment_filename).replace('.nex','') + '_locs_m'+missing_str+'.txt', 'w')
     locfile.write("\n".join(newlocs))
     locfile.close()
     origLength = len(data[species[0]])
@@ -62,5 +65,4 @@ def main(alignment_filename, missing_str):
 if __name__ == '__main__':
     alignment_filename = sys.argv[1]
     missing_str = sys.argv[2]
-
     main(alignment_filename, missing_str)

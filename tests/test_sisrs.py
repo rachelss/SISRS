@@ -6,9 +6,9 @@ import pickle
 from filecmp import cmp
 from os.path import join, exists
 
-data_base_dir = 'pipeline_stages'
+data_base_dir = 'test_data'
 out_base_dir = 'output'
-num_proc = 1
+num_proc = 16
 
 taxon_names = [
     'GorGor',
@@ -70,8 +70,8 @@ def test_align_contigs():
 
     setup()
 
-    data_dir = join(data_base_dir, '0_RawData_PremadeGenome')
-    exp_base_dir = join(data_base_dir, '1_alignContigs')
+    data_dir = join(data_base_dir, 'RawTestData')
+    exp_base_dir = join(data_base_dir, '1_AlignContigs')
     contig_dirname = 'premadeoutput'
     contig_dir = join(out_base_dir, contig_dirname)
 
@@ -104,8 +104,8 @@ def test_identify_fixed_sites():
 
     setup()
 
-    data_dir = join(data_base_dir, '1_alignContigs')
-    exp_base_dir = join(data_base_dir, '2_identifyFixedSites')
+    data_dir = join(data_base_dir, '1_AlignContigs')
+    exp_base_dir = join(data_base_dir, '2_IdentifyFixedSites')
     contig_dirname = 'premadeoutput'
     contig_dir = join(out_base_dir, contig_dirname)
 
@@ -132,10 +132,6 @@ def test_identify_fixed_sites():
         exp_bam_path = join(exp_dir, taxon_name + '.bam')
 
         assert(bam_match(out_bam_path, exp_bam_path))
-
-        assert(pkls_match(
-            join(out_dir, 'pruned_dict.pkl'),
-            join(exp_dir, 'pruned_dict.pkl')))
 
         filenames = [
             'contigs.1.bt2',
@@ -172,12 +168,13 @@ def test_output_alignment():
 
     setup()
 
-    data_dir = join(data_base_dir, '2_identifyFixedSites')
-    exp_dir = join(data_base_dir, '3_outputAlignment')
+    data_dir = join(data_base_dir, '2_IdentifyFixedSites')
+    exp_dir = join(data_base_dir, '3_OutputAlignment')
     out_dir = out_base_dir
 
     command = [
         'sisrs-python',
+        '-a', 'premade',
         '-f', data_dir,
         '-z', out_dir,
         '-c', '0',
@@ -202,8 +199,8 @@ def test_change_missing():
 
     setup()
 
-    data_dir = join(data_base_dir, '3_outputAlignment')
-    exp_dir = join(data_base_dir, '4_changeMissing')
+    data_dir = join(data_base_dir, '3_OutputAlignment')
+    exp_dir = join(data_base_dir, '4_ChangeMissing')
     out_dir = out_base_dir
 
     command = [
@@ -221,38 +218,36 @@ def test_change_missing():
         join(exp_dir, 'alignment_m0.phylip-relaxed'))
 
     assert cmp(
-        join(out_dir, 'locs_m0.txt'),
-        join(exp_dir, 'locs_m0.txt'))
+        join(out_dir, 'alignment_locs_m0.txt'),
+        join(exp_dir, 'alignment_locs_m0.txt'))
     assert cmp(
-        join(out_dir, 'locs_m0_Clean.txt'),
-        join(exp_dir, 'locs_m0_Clean.txt'))
+        join(out_dir, 'alignment_locs_m0_Clean.txt'),
+        join(exp_dir, 'alignment_locs_m0_Clean.txt'))
 
 
-    assert exists(join(out_dir, 'alignmentDataWithoutSingletons'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithoutSingletons', 'alignment_pi.nex'),
-        join(exp_dir, 'alignmentDataWithoutSingletons', 'alignment_pi.nex'))
+        join(out_dir, 'alignment_pi.nex'),
+        join(exp_dir, 'alignment_pi.nex'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithoutSingletons', 'alignment_pi_m0.phylip-relaxed'),
-        join(exp_dir, 'alignmentDataWithoutSingletons', 'alignment_pi_m0.phylip-relaxed'))
+        join(out_dir, 'alignment_pi_m0.phylip-relaxed'),
+        join(exp_dir, 'alignment_pi_m0.phylip-relaxed'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithoutSingletons', 'locs_m0.txt'),
-        join(exp_dir, 'alignmentDataWithoutSingletons', 'locs_m0.txt'))
+        join(out_dir, 'alignment_pi_locs_m0.txt'),
+        join(exp_dir, 'alignment_pi_locs_m0.txt'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithoutSingletons', 'locs_m0_Clean.txt'),
-        join(exp_dir, 'alignmentDataWithoutSingletons', 'locs_m0_Clean.txt'))
+        join(out_dir, 'alignment_pi_locs_m0_Clean.txt'),
+        join(exp_dir, 'alignment_pi_locs_m0_Clean.txt'))
 
 
-    assert exists(join(out_dir, 'alignmentDataWithOnlyBiallelic'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi.nex'),
-        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi.nex'))
+        join(out_dir, 'alignment_bi.nex'),
+        join(exp_dir, 'alignment_bi.nex'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi_m0.phylip-relaxed'),
-        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'alignment_bi_m0.phylip-relaxed'))
+        join(out_dir, 'alignment_bi_m0.phylip-relaxed'),
+        join(exp_dir, 'alignment_bi_m0.phylip-relaxed'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m0.txt'),
-        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m0.txt'))
+        join(out_dir, 'alignment_bi_locs_m0.txt'),
+        join(exp_dir, 'alignment_bi_locs_m0.txt'))
     assert cmp(
-        join(out_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m0_Clean.txt'),
-        join(exp_dir, 'alignmentDataWithOnlyBiallelic', 'locs_m0_Clean.txt'))
+        join(out_dir, 'alignment_bi_locs_m0_Clean.txt'),
+        join(exp_dir, 'alignment_bi_locs_m0_Clean.txt'))
