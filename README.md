@@ -1,3 +1,7 @@
+THIS VERSION IS DEPRECATED
+GO TO https://github.com/SchwartzLabURI/SISRS/
+
+
 SISRS
 =====
 
