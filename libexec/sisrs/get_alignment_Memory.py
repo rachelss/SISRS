@@ -147,7 +147,7 @@ def get_ref_info(alignment,reference,mainfolder,assembler):
     return nodedict,ref
 
 def write_alignment(fi,alignment,numbi):
-    spp = alignment.species_data.keys()
+    spp = sorted(alignment.species_data.keys())
 
     if len(alignment.ref) == 0:
         ntax = str(len(alignment.species_data))
